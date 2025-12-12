@@ -75,6 +75,10 @@
       light.position.set(1.0, 1.0, 1.0).normalize();
       scene.add(light);
 
+      // lookat target
+      const lookAtTarget = new THREE.Object3D();
+      camera.add(lookAtTarget);
+
       const defaultModelUrl = "./AvatarSample_A.vrm";
 
       // gltf and vrm
@@ -121,6 +125,8 @@
 
             // put the model to the scene
             currentVrm = vrm;
+            vrm.lookAt.target = lookAtTarget;
+
             scene.add(vrm.scene);
 
             // create AnimationMixer for VRM
@@ -248,6 +254,16 @@
         } else {
           loadVRM(url);
         }
+      });
+
+      // mouse listener
+      window.addEventListener("mousemove", (event) => {
+        lookAtTarget.position.x =
+          10.0 *
+          ((event.clientX - 0.5 * window.innerWidth) / window.innerHeight);
+        lookAtTarget.position.y =
+          -10.0 *
+          ((event.clientY - 0.5 * window.innerHeight) / window.innerHeight);
       });
     </script>
   </body>
