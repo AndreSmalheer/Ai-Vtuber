@@ -11,7 +11,8 @@ export function animate(
   renderer,
   scene,
   camera,
-  loadedActions
+  loadedActions,
+  lookAtTarget
 ) {
   function loop() {
     requestAnimationFrame(loop);
@@ -21,6 +22,8 @@ export function animate(
     updateBlink(vrm, clock);
     updateRandomIdle(vrm, loadedActions, clock);
     updateLipSync(vrm);
+
+    vrm.update(deltaTime);
 
     if (vrm) vrm.update(deltaTime);
     renderer.render(scene, camera);

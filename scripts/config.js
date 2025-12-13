@@ -6,3 +6,5 @@ export const animationUrls = [
 ];
 
 export const audioUrl = "../assets/tts/ttsmaker-file-2025-12-13-11-59-56.mp3";
+
+export let eyeTrackingEnabled = false;

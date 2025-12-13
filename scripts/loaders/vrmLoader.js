@@ -3,7 +3,7 @@ import { VRMLoaderPlugin, VRMUtils } from "@pixiv/three-vrm";
 
 let currentVrm = null;
 
-export async function loadVRM(modelUrl, scene) {
+export async function loadVRM(modelUrl, scene, lookAtTarget) {
   return new Promise((resolve, reject) => {
     const loader = new GLTFLoader();
 
@@ -24,6 +24,7 @@ export async function loadVRM(modelUrl, scene) {
         }
 
         currentVrm = vrm;
+        vrm.lookAt.target = lookAtTarget;
         scene.add(vrm.scene);
 
         resolve(vrm);
