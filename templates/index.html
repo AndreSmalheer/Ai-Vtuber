@@ -127,20 +127,31 @@
       const input = document.querySelector(".styled-input");
       const textSpan = document.getElementById("text_span");
 
-      function showTextWithAnimation(text) {
-        textSpan.innerHTML = text;
-        textSpan.classList.remove("animate-text");
-
-        void textSpan.offsetWidth;
-
-        textSpan.classList.add("animate-text");
-      }
-
       if (input) {
         input.addEventListener("keydown", function (event) {
           if (event.key === "Enter") {
-            showTextWithAnimation(input.value);
+            const userText = input.value;
             input.value = "";
+
+            textSpan.innerHTML = userText;
+            textSpan.classList.remove("animate-text");
+            void textSpan.offsetWidth;
+            textSpan.classList.add("animate-text");
+
+            function onUserAnimationEnd() {
+              textSpan.removeEventListener("animationend", onUserAnimationEnd);
+
+              setTimeout(() => {
+                const aiResponse = "this is a test for the ai";
+
+                textSpan.innerHTML = aiResponse;
+                textSpan.classList.remove("animate-text");
+                void textSpan.offsetWidth;
+                textSpan.classList.add("animate-text");
+              }, 1000);
+            }
+
+            textSpan.addEventListener("animationend", onUserAnimationEnd);
           }
         });
       }
