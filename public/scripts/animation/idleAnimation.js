@@ -3,7 +3,7 @@ import * as THREE from "three";
 
 let nextAnimationTime = 0;
 const minAnimationInterval = 1;
-const maxAnimationInterval = 8;
+const maxAnimationInterval = 3;
 let isAnimating = false;
 
 export function updateRandomIdle(vrm, loadedActions, clock) {
