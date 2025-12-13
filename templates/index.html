@@ -37,11 +37,70 @@
         border-color: #4caf50;
         box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
       }
+
+      #text_span {
+        box-sizing: border-box;
+        padding: 12px 18px;
+        border: none;
+        border-radius: 12px;
+        background-color: #f1f1f1;
+        font-size: 16px;
+        color: #333;
+        width: fit-content;
+        max-width: 80%;
+        position: absolute;
+        bottom: 100px;
+        left: 50%;
+        transform: translateX(-50%);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+        word-wrap: break-word;
+        opacity: 0;
+        transition: opacity 2s linear;
+      }
+
+      @keyframes fadeInOut {
+        0% {
+          opacity: 0;
+          transform: translateX(-50%) translateY(10px) scale(0.95);
+          color: #555;
+          text-shadow: 0 0 0px rgba(0, 0, 0, 0);
+        }
+        5% {
+          opacity: 1;
+          transform: translateX(-50%) translateY(0) scale(1);
+          color: #000;
+          text-shadow: 0 0 2px rgba(0, 0, 0, 0.2);
+        }
+        50% {
+          opacity: 1;
+          color: #222;
+          text-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
+        }
+        80% {
+          opacity: 1;
+          transform: translateX(-50%) translateY(0) scale(1);
+          color: #000;
+          text-shadow: 0 0 2px rgba(0, 0, 0, 0.2);
+        }
+        100% {
+          opacity: 0;
+          transform: translateX(-50%) translateY(-10px) scale(0.95);
+          color: #555;
+          text-shadow: 0 0 0px rgba(0, 0, 0, 0);
+        }
+      }
+
+      .animate-text {
+        animation: fadeInOut 1.2s forwards;
+      }
     </style>
   </head>
 
   <body>
     <input type="text" class="styled-input" placeholder="Type something..." />
+    <div id="text_container">
+      <span id="text_span"></span>
+    </div>
 
     <script>
       document.addEventListener("visibilitychange", function () {
@@ -61,6 +120,29 @@
           "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/",
           "@pixiv/three-vrm": "https://cdn.jsdelivr.net/npm/@pixiv/three-vrm@3.4.4/lib/three-vrm.module.js"
         }
+      }
+    </script>
+
+    <script>
+      const input = document.querySelector(".styled-input");
+      const textSpan = document.getElementById("text_span");
+
+      function showTextWithAnimation(text) {
+        textSpan.innerHTML = text;
+        textSpan.classList.remove("animate-text");
+
+        void textSpan.offsetWidth;
+
+        textSpan.classList.add("animate-text");
+      }
+
+      if (input) {
+        input.addEventListener("keydown", function (event) {
+          if (event.key === "Enter") {
+            showTextWithAnimation(input.value);
+            input.value = "";
+          }
+        });
       }
     </script>
 
