@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Ai Chat Prototype</title>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+      }
+
+      canvas {
+        display: block;
+      }
+
+      .styled-input {
+        box-sizing: border-box;
+        padding: 10px 15px;
+        border: 2px solid #ccc;
+        border-radius: 8px;
+        font-size: 16px;
+        outline: none;
+        transition: all 0.3s ease;
+        width: 250px;
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+
+      .styled-input:focus {
+        border-color: #4caf50;
+        box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
+      }
+    </style>
+  </head>
+
+  <body>
+    <input type="text" class="styled-input" placeholder="Type something..." />
+
+    <script>
+      document.addEventListener("visibilitychange", function () {
+        if (document.hidden) {
+          fetch("/show_overlay");
+        } else {
+          fetch("/hide_overlay");
+        }
+      });
+    </script>
+
+    <script type="importmap">
+      {
+        "imports": {
+          "fflate": "https://cdn.jsdelivr.net/npm/fflate@0.7.4/esm/browser.js",
+          "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/",
+          "@pixiv/three-vrm": "https://cdn.jsdelivr.net/npm/@pixiv/three-vrm@3.4.4/lib/three-vrm.module.js"
+        }
+      }
+    </script>
+
+    <script
+      type="module"
+      src="{{ url_for('static', filename='scripts/main.js') }}"
+    ></script>
+  </body>
+</html>
