@@ -8,19 +8,48 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
+
     <style>
-      body {
-        margin: 0;
-        overflow: hidden;
+      .hidden {
+        display: none !important;
       }
 
-      canvas {
-        display: block;
+      #chatSubmit,
+      .styled-input {
+        pointer-events: auto !important;
       }
     </style>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/main.css') }}"
+    />
   </head>
 
   <body>
+    <input
+      type="text"
+      class="styled-input hidden"
+      placeholder="Type something..."
+    />
+
+    <div id="chatSubmit" class="hidden">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        fill="white"
+        viewBox="0 0 24 24"
+      >
+        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+      </svg>
+    </div>
+
+    <div id="text_container">
+      <span id="text_span"></span>
+    </div>
+
+    <div id="ollama-text-debug"></div>
+
     <script type="importmap">
       {
         "imports": {
@@ -39,4 +68,20 @@
       data-overlay="true"
     ></script>
   </body>
+
+  <script>
+    const { ipcRenderer } = require("electron");
+
+    ipcRenderer.on("toggle-visibility", () => {
+      const input = document.querySelector(".styled-input");
+      const chatSubmit = document.getElementById("chatSubmit");
+
+      input.classList.toggle("hidden");
+      chatSubmit.classList.toggle("hidden");
+
+      if (!input.classList.contains("hidden")) {
+        input.focus();
+      }
+    });
+  </script>
 </html>

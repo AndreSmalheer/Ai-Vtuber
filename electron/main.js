@@ -1,4 +1,4 @@
-const { app, BrowserWindow, screen } = require("electron");
+const { app, BrowserWindow, screen, globalShortcut } = require("electron");
 const express = require("express");
 
 let overlayWindow;
@@ -27,11 +27,26 @@ function createWindow() {
   });
 
   overlayWindow.loadURL("http://127.0.0.1:5000/overlay");
-  overlayWindow.setIgnoreMouseEvents(true, { forward: true });
   overlayWindow.hide();
+  overlayWindow.setIgnoreMouseEvents(true, { forward: true });
 }
 
-app.whenReady().then(createWindow);
+let overlayVisible = false;
+
+app.whenReady().then(() => {
+  createWindow();
+
+  globalShortcut.register("Control+Shift+O", () => {
+    overlayVisible = !overlayVisible;
+
+    if (overlayVisible) {
+      overlayWindow.setIgnoreMouseEvents(false);
+    } else {
+      overlayWindow.setIgnoreMouseEvents(true, { forward: true });
+    }
+    overlayWindow.webContents.send("toggle-visibility");
+  });
+});
 
 // Electron API
 const api = express();
