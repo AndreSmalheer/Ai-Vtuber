@@ -345,6 +345,8 @@
           textSpan.classList.remove("animate-text-ai-fade-out");
           void textSpan.offsetWidth;
 
+          document.getElementById("ollama-text-debug").innerHTML = "";
+
           setTimeout(() => {
             textSpan.classList.add("animate-text-ai-fade-out");
           }, FADE_OUT_DELAY);
@@ -406,7 +408,7 @@
                 // debug
                 if (DEBUG) {
                   for (let i = 0; i < data.text.length; i++) {
-                    const container =
+                    let container =
                       document.getElementById("ollama-text-debug");
 
                     const char = data.text[i];
