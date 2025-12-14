@@ -288,9 +288,35 @@
         textSpan.addEventListener("animationend", onUserAnimationEnd);
       }
 
-      function callTTS(input) {
-        console.log("calling tts for", input);
-      }
+      const callTTS = (() => {
+        const ttsQueue = [];
+        let isPlaying = false;
+
+        const playNext = () => {
+          if (ttsQueue.length === 0) {
+            isPlaying = false;
+            return;
+          }
+
+          isPlaying = true;
+          const nextInput = ttsQueue.shift();
+
+          console.log("Processing TTS:", nextInput);
+
+          // Simulate TTS playback duration (~50ms per character)
+          const simulatedDuration = Math.max(500, nextInput.length * 50);
+          setTimeout(() => {
+            console.log("Finished TTS:", nextInput);
+            playNext();
+          }, simulatedDuration);
+        };
+
+        return (input) => {
+          console.log("Queueing TTS for:", input);
+          ttsQueue.push(input);
+          if (!isPlaying) playNext();
+        };
+      })();
 
       function showTextChunk(chunk) {
         textQueue += chunk;
