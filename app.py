@@ -26,7 +26,8 @@ def say():
     if not text:
         return "Please provide ?text=...", 400
 
-    filename = os.path.join(os.getcwd(), f"tts_{uuid.uuid4().hex}.mp3")
+
+    filename = os.path.join(os.getcwd(),  "public/assets/tts",  f"tts_{uuid.uuid4().hex}.mp3")
     tts = gTTS(text=text, lang='en')
     tts.save(filename)
 
