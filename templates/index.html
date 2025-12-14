@@ -301,12 +301,15 @@
                 textSpan.innerHTML += char;
                 currentChunk += char;
 
-                if (char === " ") {
+                if (char === " " || [".", "!", "?"].includes(char)) {
                   chunks.push(currentChunk);
                   currentChunk = "";
 
-                  if (chunks.length >= threshold) {
-                    callTTS(chunks.join(""));
+                  if (
+                    chunks.length >= threshold ||
+                    [".", "!", "?"].includes(char)
+                  ) {
+                    callTTS(chunks.join(" "));
                     chunks = [];
                   }
                 }
