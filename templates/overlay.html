@@ -10,6 +10,14 @@
     />
 
     <style>
+      body {
+        width: auto !important;
+        height: 600px !important;
+        position: absolute;
+        right: -200px;
+        bottom: 0;
+        margin-right: 0;
+      }
       .hidden {
         display: none !important;
       }
@@ -17,6 +25,12 @@
       #chatSubmit,
       .styled-input {
         pointer-events: auto !important;
+      }
+
+      canvas {
+        width: auto !important;
+        height: 600px !important;
+        z-index: -9999;
       }
     </style>
     <link

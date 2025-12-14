@@ -7,14 +7,11 @@ function createWindow() {
   const { width: screenWidth, height: screenHeight } =
     screen.getPrimaryDisplay().workAreaSize;
 
-  const winWidth = 500;
-  const winHeight = 600;
-
   overlayWindow = new BrowserWindow({
-    width: winWidth,
-    height: winHeight,
-    x: screenWidth - winWidth,
-    y: screenHeight - winHeight,
+    width: screenWidth,
+    height: screenHeight,
+    x: 0,
+    y: 0,
     transparent: true,
     frame: false,
     alwaysOnTop: true,
