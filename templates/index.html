@@ -38,6 +38,34 @@
         box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
       }
 
+      #chatSubmit {
+        position: absolute;
+        bottom: 21px;
+        left: calc(50% + 165px);
+        transform: translateX(-50%);
+        width: 40px;
+        height: 40px;
+        background-color: white;
+        border: 1px solid #ccc;
+        border-radius: 30%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background-color 0.2s, transform 0.1s;
+      }
+
+      #chatSubmit:hover {
+        background-color: #f0f0f0;
+        transform: translateX(-50%) scale(1.1);
+      }
+
+      #chatSubmit svg {
+        fill: black;
+        width: 24px;
+        height: 24px;
+      }
+
       #text_span {
         box-sizing: border-box;
         padding: 12px 18px;
@@ -159,6 +187,19 @@
 
   <body>
     <input type="text" class="styled-input" placeholder="Type something..." />
+
+    <div id="chatSubmit">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        fill="white"
+        viewBox="0 0 24 24"
+      >
+        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+      </svg>
+    </div>
+
     <div id="text_container">
       <span id="text_span"></span>
     </div>
@@ -187,6 +228,32 @@
     <script>
       const input = document.querySelector(".styled-input");
       const textSpan = document.getElementById("text_span");
+      const chatSubmit = document.getElementById("chatSubmit");
+
+      function handleUserInput(input) {
+        const userText = input.value;
+        input.value = "";
+
+        textSpan.innerHTML = userText;
+        textSpan.classList.remove("animate-text");
+        void textSpan.offsetWidth;
+        textSpan.classList.add("animate-text");
+
+        function onUserAnimationEnd() {
+          textSpan.removeEventListener("animationend", onUserAnimationEnd);
+
+          setTimeout(async () => {
+            textSpan.innerHTML = "";
+            textSpan.classList.remove("animate-text-ai");
+            void textSpan.offsetWidth;
+            textSpan.classList.add("animate-text-ai");
+
+            await streamOllamaResponse(userText);
+          }, 1000);
+        }
+
+        textSpan.addEventListener("animationend", onUserAnimationEnd);
+      }
 
       async function streamOllamaResponse(prompt) {
         textSpan.innerHTML = "Loading";
@@ -232,7 +299,6 @@
           }
         }
 
-        // Fade out after delay
         const fadeOutDelay = 1000;
         textSpan.classList.remove("animate-text-ai-fade-out");
         void textSpan.offsetWidth;
@@ -245,34 +311,16 @@
       if (input) {
         input.addEventListener("keydown", async function (event) {
           if (event.key === "Enter") {
-            const userText = input.value;
-            input.value = "";
-
-            // Animate user text
-            textSpan.innerHTML = userText;
-            textSpan.classList.remove("animate-text");
-            void textSpan.offsetWidth;
-            textSpan.classList.add("animate-text");
-
-            function onUserAnimationEnd() {
-              textSpan.removeEventListener("animationend", onUserAnimationEnd);
-
-              setTimeout(async () => {
-                // Animate AI response container
-                textSpan.innerHTML = "";
-                textSpan.classList.remove("animate-text-ai");
-                void textSpan.offsetWidth;
-                textSpan.classList.add("animate-text-ai");
-
-                // Stream AI response
-                await streamOllamaResponse(userText);
-              }, 1000);
-            }
-
-            textSpan.addEventListener("animationend", onUserAnimationEnd);
+            handleUserInput(input);
           }
         });
       }
+
+      chatSubmit.addEventListener("click", () => {
+        if (input.value) {
+          handleUserInput(input);
+        }
+      });
     </script>
 
     <script
