@@ -255,6 +255,10 @@
         textSpan.addEventListener("animationend", onUserAnimationEnd);
       }
 
+      function callTTS(input) {
+        console.log("calling tts for", input);
+      }
+
       async function streamOllamaResponse(prompt) {
         textSpan.innerHTML = "Loading";
         textSpan.classList.add("loading");
@@ -270,6 +274,10 @@
 
         const textAnimationSpeed = 200;
         let firstChunk = true;
+
+        let chunks = [];
+        let currentChunk = "";
+        let threshold = 2;
 
         while (true) {
           const { value, done } = await reader.read();
@@ -291,12 +299,31 @@
 
               for (const char of data.text) {
                 textSpan.innerHTML += char;
+                currentChunk += char;
+
+                if (char === " ") {
+                  chunks.push(currentChunk);
+                  currentChunk = "";
+
+                  if (chunks.length >= threshold) {
+                    callTTS(chunks.join(""));
+                    chunks = [];
+                  }
+                }
+
                 await new Promise((resolve) =>
                   setTimeout(resolve, textAnimationSpeed)
                 );
               }
             }
           }
+        }
+
+        chunks.push(currentChunk);
+        currentChunk = "";
+
+        if (chunks.length > 0) {
+          callTTS(chunks.join(""));
         }
 
         const fadeOutDelay = 1000;
