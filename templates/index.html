@@ -86,6 +86,28 @@
         transition: opacity 2s linear;
       }
 
+      #ollama-text-debug {
+        padding: 10px 14px;
+        max-height: 160px;
+        overflow-y: auto;
+        font-family: monospace;
+        font-size: 14px;
+        line-height: 1.4;
+        background: rgba(0, 0, 0, 0.6);
+        color: #9efc9e;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 6px;
+        white-space: pre-wrap;
+        word-break: break-word;
+        box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.6);
+        max-width: 200px;
+        position: absolute;
+      }
+
+      #ollama-text-debug:empty {
+        display: none;
+      }
+
       @keyframes fadeInOut {
         0% {
           opacity: 0;
@@ -204,6 +226,8 @@
       <span id="text_span"></span>
     </div>
 
+    <div id="ollama-text-debug"></div>
+
     <script>
       document.addEventListener("visibilitychange", function () {
         if (document.hidden) {
@@ -229,6 +253,15 @@
       const input = document.querySelector(".styled-input");
       const textSpan = document.getElementById("text_span");
       const chatSubmit = document.getElementById("chatSubmit");
+
+      // config
+      const TTS_CHUNK_THRESHOLD = 2;
+      const TEXT_ANIMATION_SPEED_MS = 200;
+      const OLLAMA_STREAM_URL = "http://127.0.0.1:5000/ollama_stream";
+      const DEBUG = true;
+
+      let textQueue = "";
+      let isTyping = false;
 
       function handleUserInput(input) {
         const userText = input.value;
@@ -259,83 +292,126 @@
         console.log("calling tts for", input);
       }
 
+      function showTextChunk(chunk) {
+        textQueue += chunk;
+
+        if (isTyping) return;
+
+        isTyping = true;
+
+        (async function typeLoop() {
+          while (textQueue.length > 0) {
+            const char = textQueue[0];
+            textQueue = textQueue.slice(1);
+
+            textSpan.innerHTML += char;
+            await new Promise((r) => setTimeout(r, TEXT_ANIMATION_SPEED_MS));
+          }
+
+          isTyping = false;
+        })().catch(console.error);
+      }
+
       async function streamOllamaResponse(prompt) {
-        textSpan.innerHTML = "Loading";
-        textSpan.classList.add("loading");
+        try {
+          textSpan.innerHTML = "Loading";
+          textSpan.classList.add("loading");
 
-        const response = await fetch("http://127.0.0.1:5000/ollama_stream", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt }),
-        });
+          const response = await fetch(OLLAMA_STREAM_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ prompt }),
+          });
 
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder("utf-8");
+          if (!response.ok) {
+            throw new Error(`Server returned ${response.status}`);
+          }
 
-        const textAnimationSpeed = 200;
-        let firstChunk = true;
+          const reader = response.body.getReader();
+          const decoder = new TextDecoder("utf-8");
 
-        let chunks = [];
-        let currentChunk = "";
-        let threshold = 2;
+          let firstChunk = true;
 
-        while (true) {
-          const { value, done } = await reader.read();
-          if (done) break;
+          let chunks = [];
+          let currentChunk = "";
 
-          const chunk = decoder.decode(value, { stream: true });
-          const lines = chunk.split("\n\n");
+          while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
 
-          for (const line of lines) {
-            if (line.startsWith("data: ")) {
-              const data = JSON.parse(line.replace("data: ", ""));
-              if (data.finish_reason === "stop") continue;
+            const chunk = decoder.decode(value, { stream: true });
+            const lines = chunk.split("\n\n");
 
-              if (firstChunk) {
-                textSpan.innerHTML = "";
-                textSpan.classList.remove("loading");
-                firstChunk = false;
-              }
+            for (const line of lines) {
+              if (!line) continue;
+              if (line.startsWith("data: ")) {
+                const jsonStr = line.replace("data: ", "").trim();
+                if (!jsonStr || jsonStr === "[DONE]") continue;
 
-              for (const char of data.text) {
-                textSpan.innerHTML += char;
-                currentChunk += char;
+                let data;
+                try {
+                  data = JSON.parse(jsonStr);
+                } catch (err) {
+                  console.warn("Failed to parse stream line as JSON:", jsonStr);
+                  continue;
+                }
 
-                if (char === " " || [".", "!", "?"].includes(char)) {
-                  chunks.push(currentChunk);
-                  currentChunk = "";
+                if (data.finish_reason === "stop") continue;
 
-                  if (
-                    chunks.length >= threshold ||
-                    [".", "!", "?"].includes(char)
-                  ) {
-                    callTTS(chunks.join(" "));
-                    chunks = [];
+                if (firstChunk) {
+                  textSpan.innerHTML = "";
+                  textSpan.classList.remove("loading");
+                  firstChunk = false;
+                }
+
+                // debug
+                if (DEBUG) {
+                  for (let i = 0; i < data.text.length; i++) {
+                    const container =
+                      document.getElementById("ollama-text-debug");
+
+                    const char = data.text[i];
+                    container.innerHTML += char;
                   }
                 }
 
-                await new Promise((resolve) =>
-                  setTimeout(resolve, textAnimationSpeed)
-                );
+                showTextChunk(data.text);
+
+                for (const char of data.text) {
+                  currentChunk += char;
+
+                  if (char === " " || [".", "!", "?"].includes(char)) {
+                    chunks.push(currentChunk);
+                    currentChunk = "";
+
+                    if (
+                      chunks.length >= TTS_CHUNK_THRESHOLD ||
+                      [".", "!", "?"].includes(char)
+                    ) {
+                      callTTS(chunks.join(" "));
+                      chunks = [];
+                    }
+                  }
+                }
               }
             }
           }
+
+          if (currentChunk.length > 0) {
+            chunks.push(currentChunk);
+            currentChunk = "";
+          }
+
+          if (chunks.length > 0) {
+            callTTS(chunks.join(""));
+          }
+        } catch (err) {
+          console.error("streamOllamaResponse error:", err);
+          textSpan.classList.remove("loading");
+          textSpan.innerHTML = `Error: ${err.message}`;
+        } finally {
+          textSpan.classList.remove("loading");
         }
-
-        chunks.push(currentChunk);
-        currentChunk = "";
-
-        if (chunks.length > 0) {
-          callTTS(chunks.join(""));
-        }
-
-        const fadeOutDelay = 1000;
-        textSpan.classList.remove("animate-text-ai-fade-out");
-        void textSpan.offsetWidth;
-
-        setTimeout(() => {
-          textSpan.classList.add("animate-text-ai-fade-out");
-        }, fadeOutDelay);
       }
 
       if (input) {
