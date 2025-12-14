@@ -49,9 +49,9 @@ animate(
   lookAtTarget
 );
 
-document.addEventListener("click", () => {
-  playAudioWithLipSync(audioUrl, vrm);
-});
+// document.addEventListener("click", () => {
+//   playAudioWithLipSync(audioUrl, vrm);
+// });
 
 window.addEventListener("mousemove", (event) => {
   if (!eyeTrackingEnabled) return;
