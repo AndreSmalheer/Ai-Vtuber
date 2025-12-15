@@ -38,7 +38,11 @@ export const callTTS = (() => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ text: nextInput }),
+        body: JSON.stringify({
+          model: "Example",
+          infer_text: nextInput,
+          output_lan: "en",
+        }),
       });
 
       const payload = await response.json();

@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, Response, send_file
+from flask import Flask, render_template, request, Response, send_file, jsonify
 import requests
 import time
 import json
@@ -15,10 +15,10 @@ GPT_SOVITS_URL = "http://127.0.0.1:9880"
 
 
 def validate_tts_request(data):
-    try:
-        r = requests.get(GPT_SOVITS_URL, timeout=2)
-    except requests.exceptions.RequestException:
-        return ["Gpt Sovits is not running"], 503
+    # try:
+    #     r = requests.get(GPT_SOVITS_URL, timeout=2)
+    # except requests.exceptions.RequestException:
+    #     return ["Gpt Sovits is not running"], 503
 
     if not isinstance(data, dict):
      return {"errors": ["Request body must be JSON"]}, 400
@@ -37,7 +37,7 @@ def validate_tts_request(data):
     split_bucket =        data.get("split_bucket", True)                  # (optional) bool: whether to split the batch into multiple buckets  
            
     speed_factor =        float(data.get("speed_factor", 1.0))            # (optional) float: control the speed of the synthesized audio  
-    streaming_mode =      data.get("streaming_mode", False)               # (optional) bool or int: return audio chunk by chunk the available options are: 0,1,2,3 or True/False (0/False: Disabled | 1/True: Best Quality, Slowest response speed (old version streaming_mode) | 2: Medium Quality, Slow response speed | 3: Lower Quality, Faster response speed )  
+    streaming_mode =      data.get("streaming_mode", True)               # (optional) bool or int: return audio chunk by chunk the available options are: 0,1,2,3 or True/False (0/False: Disabled | 1/True: Best Quality, Slowest response speed (old version streaming_mode) | 2: Medium Quality, Slow response speed | 3: Lower Quality, Faster response speed )  
     fragment_interval =   float(data.get("fragment_interval", 0.3))       # (optional) float. to control the interval of the audio fragment.
     seed =                data.get("seed", -1)                            # (optional) int: random seed for reproducibility  
     parallel_infer =      data.get("parallel_infer", True)                # (optional) bool: whether to use parallel inference  
@@ -119,13 +119,13 @@ def validate_tts_request(data):
          errors.append(f"Model {model} does not exist")   
  
 
-     extra_refs_dir = os.path.join(script_dir, "models", model, "extra_refs")
+    extra_refs_dir = os.path.join(script_dir, "models", model, "extra_refs")
 
-     extra_refs = [
+    extra_refs = [
          os.path.join(extra_refs_dir, f).replace("\\", "/")
          for f in os.listdir(extra_refs_dir)
          if os.path.isfile(os.path.join(extra_refs_dir, f)) and any(f.endswith(ext) for ext in ['.mp3', '.wav', '.ogg', '.flac', '.m4a'])
-     ] if os.path.exists(extra_refs_dir) else []  
+    ] if os.path.exists(extra_refs_dir) else []  
 
 
     #  path erroes
@@ -158,8 +158,9 @@ def validate_tts_request(data):
     for var, expected_type, message in type_checks:
      if (var is None or (isinstance(var, str) and var.strip() == "")) and message.startswith(("model", "infer_text")):
          continue
-     if type(var) is not expected_type:
-         errors.append(message)  
+     if not isinstance(var, expected_type):
+         errors.append(message)
+
 
 
     if errors:
@@ -195,20 +196,22 @@ def validate_tts_request(data):
 def tts():
     data = request.get_json()
 
-    payload, code = validate_tts_request(data)
+    payload, status = validate_tts_request(data)
 
-    if code != 200:
-        return payload, code 
+    if status != 200:
+        return jsonify(payload), status
+
     
     # call tts
     streaming_mode =  payload.get("streaming_mode")
 
     if streaming_mode:
-        pass 
+        print("streaming tts")
 
-    else:
-        pass
-        # handle streaming logic  
+        return jsonify(payload), status
+    
+    return jsonify(payload), status
+
 
 @app.route('/')
 def home():
