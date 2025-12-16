@@ -7,13 +7,7 @@ const maxAnimationInterval = 3;
 let isAnimating = false;
 
 export function updateRandomIdle(vrm, loadedActions, clock) {
-  if (
-    !vrm ||
-    isAnimating ||
-    lipSyncActive ||
-    Object.keys(loadedActions).length === 0
-  )
-    return;
+  if (!vrm || isAnimating || Object.keys(loadedActions).length === 0) return;
   const time = clock.elapsedTime;
   if (time <= nextAnimationTime) return;
 
