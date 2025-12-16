@@ -9,8 +9,8 @@ export const callTTS = (() => {
   const audioQueue = [];
   const playedAudioLog = [];
 
-  let isPlaying = false;
   let isGenerating = false;
+  let playLock = false;
 
   const generateAudioIfNeeded = async () => {
     if (isGenerating) return;
@@ -18,41 +18,81 @@ export const callTTS = (() => {
     if (textQueue.length === 0) return;
 
     isGenerating = true;
-    const shouldStartAfterFirst = !isPlaying && audioQueue.length === 0;
 
-    while (audioQueue.length < MIN_BUFFER && textQueue.length > 0) {
-      const text = textQueue.shift();
-      const ttsUrl = `http://127.0.0.1:5000/say?text=${encodeURIComponent(
-        text
-      )}`;
+    try {
+      while (audioQueue.length < MIN_BUFFER && textQueue.length > 0) {
+        const text = textQueue.shift();
+        const ttsUrl = `http://127.0.0.1:5000/say?text=${encodeURIComponent(
+          text
+        )}`;
 
+        try {
+          const resp = await fetch(ttsUrl);
+          if (!resp.ok) {
+            show_error(`TTS failed for: "${text}"`);
+            continue;
+          }
+
+          const blob = await resp.blob();
+          const blobUrl = URL.createObjectURL(blob);
+          const filename = resp.headers.get("X-TTS-Filename");
+
+          audioQueue.push({ text, url: blobUrl, filename });
+        } catch (err) {
+          show_error(`Problem generating audio for: "${text}"`);
+        }
+      }
+    } finally {
+      isGenerating = false;
+    }
+
+    if (!playLock && audioQueue.length > 0) {
+      void playbackLoop();
+    }
+  };
+
+  const playOne = (url) =>
+    new Promise((resolve) => {
       try {
-        const resp = await fetch(ttsUrl);
-        if (!resp.ok) {
-          show_error(`TTS failed for: "${text}"`);
+        playAudioWithLipSync(url, window.vrm, () => {
+          resolve();
+        });
+      } catch (err) {
+        console.error("playAudioWithLipSync error:", err);
+        resolve();
+      }
+    });
+
+  const playbackLoop = async () => {
+    if (playLock) return;
+    playLock = true;
+
+    try {
+      while (audioQueue.length > 0) {
+        const { text, url, filename } = audioQueue.shift();
+
+        if (!url) {
+          show_error(`Audio missing for: "${text}"`);
           continue;
         }
 
-        const blob = await resp.blob();
-        const blobUrl = URL.createObjectURL(blob);
-        const filename = resp.headers.get("X-TTS-Filename");
+        const displayName = filename || "unknown_file";
+        playedAudioLog.push(displayName);
 
-        audioQueue.push({ text, url: blobUrl, filename });
-
-        if (shouldStartAfterFirst && audioQueue.length > 0) {
-          playNext();
+        try {
+          await playOne(url);
+        } finally {
+          try {
+            URL.revokeObjectURL(url);
+          } catch (e) {
+            // ignore revoke errors
+          }
         }
-      } catch (err) {
-        show_error(`Problem generating audio for: "${text}"`);
+
+        void generateAudioIfNeeded();
       }
-    }
 
-    isGenerating = false;
-  };
-
-  const playNext = () => {
-    if (audioQueue.length === 0) {
-      if (textQueue.length === 0 && !isGenerating) {
+      if (textQueue.length === 0 && audioQueue.length === 0 && !isGenerating) {
         console.log("✅ TTS LOOP FINISHED (all text spoken)");
         console.log("📜 Played audio files:", playedAudioLog);
 
@@ -65,35 +105,11 @@ export const callTTS = (() => {
           .then((data) => console.log("Deleted files:", data.deleted))
           .catch(console.error);
       } else {
-        generateAudioIfNeeded();
+        void generateAudioIfNeeded();
       }
-
-      isPlaying = false;
-      return;
+    } finally {
+      playLock = false;
     }
-
-    isPlaying = true;
-    const { text, url, filename } = audioQueue.shift();
-
-    if (!url) {
-      show_error(`Audio missing for: "${text}"`);
-      setTimeout(playNext, 0);
-      return;
-    }
-
-    const displayName = filename || "unknown_file";
-    playedAudioLog.push(displayName);
-
-    playAudioWithLipSync(url, window.vrm, () => {
-      try {
-        URL.revokeObjectURL(url);
-      } catch (e) {
-        // ignore revoke errors
-      }
-
-      generateAudioIfNeeded();
-      playNext();
-    });
   };
 
   return (input) => {
@@ -104,9 +120,5 @@ export const callTTS = (() => {
 
     textQueue.push(input);
     void generateAudioIfNeeded();
-
-    if (!isPlaying && audioQueue.length > 0) {
-      playNext();
-    }
   };
 })();

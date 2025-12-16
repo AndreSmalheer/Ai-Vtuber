@@ -19,6 +19,8 @@ with open("config.json") as f:
 ELECTRON_URL = config["ELECTRON_URL"]
 PIPER_PATH = config["PIPER_PATH"]
 VOICE_MODEL = config["VOICE_MODEL"]
+OLLAMA_URL =  "http://localhost:11434"
+OLLAMA_MODEL = "gemma3:4b"
 
 
 @app.route("/config")
@@ -125,14 +127,35 @@ def delete_tts():
         })
     
 def generate_fake_stream(prompt):
-    time.sleep(3)
+    payload = {
+        "model": OLLAMA_MODEL,
+        "prompt": prompt,
+        "stream": True
+    }
 
-    fake_response = f"Rain tapped softly against the old café window. Clara stirred her coffee, watching the streets glisten under the dim streetlights."
-    for char in fake_response:
+    response = requests.post(
+        f"{OLLAMA_URL}/api/generate",
+        json=payload,
+        stream=True
+    )
 
-        chunk = json.dumps({"text": char})  
-        yield f"data: {chunk}\n\n"
-        time.sleep(0.05)  
+    for line in response.iter_lines():
+        if not line:
+            continue
+
+        decoded = line.decode("utf-8")
+
+        try:
+            data = json.loads(decoded)
+        except json.JSONDecodeError:
+            continue
+
+        if "response" in data:
+            yield f"data: {json.dumps({'text': data['response']})}\n\n"
+            time.sleep(0.2)
+
+        if data.get("done"):
+            break
 
     yield f"data: {json.dumps({'finish_reason': 'stop'})}\n\n"
 
