@@ -126,7 +126,7 @@ def delete_tts():
             "code": 200
         })
     
-def generate_fake_stream(prompt):
+def generate_ollama_stream(prompt):
     payload = {
         "model": OLLAMA_MODEL,
         "prompt": prompt,
@@ -163,7 +163,7 @@ def generate_fake_stream(prompt):
 def ollama_stream():
     data = request.json
     prompt = data.get("prompt", "")
-    return Response(generate_fake_stream(prompt), mimetype="text/event-stream")
+    return Response(generate_ollama_stream(prompt), mimetype="text/event-stream")
 
 @app.route("/show_overlay")
 def show_overlay():
