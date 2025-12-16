@@ -1,75 +1,103 @@
 import { playAudioWithLipSync } from "../lipSync/lipSync.js";
 
-function error_animate(errors) {
-  const existingDiv = document.getElementById("error_container");
-  if (existingDiv) {
-    existingDiv.remove();
-  }
-
-  const div = document.createElement("div");
-  div.id = "error_container";
-  div.innerHTML = "";
-
-  for (const error of errors) {
-    div.innerHTML += error;
-  }
-
-  document.body.appendChild(div);
-}
-
 export const callTTS = (() => {
-  const ttsQueue = [];
-  let isPlaying = false;
+  const textQueue = [];
+  const audioQueue = [];
 
-  const playNext = async () => {
-    if (ttsQueue.length === 0) {
+  let isPlaying = false;
+  let isGenerating = false;
+
+  const MIN_BUFFER = 3;
+
+  const generateAudioIfNeeded = async () => {
+    if (isGenerating) return;
+    if (audioQueue.length >= MIN_BUFFER) return;
+    if (textQueue.length === 0) return;
+
+    isGenerating = true;
+
+    // If playback hasn't started yet and we have no audio, we'll want to start
+    const shouldStartAfterFirst = !isPlaying && audioQueue.length === 0;
+
+    while (audioQueue.length < MIN_BUFFER && textQueue.length > 0) {
+      const text = textQueue.shift();
+      console.log("Generating TTS audio for:", text);
+
+      const ttsUrl = `http://127.0.0.1:5000/say?text=${encodeURIComponent(
+        text
+      )}`;
+
+      try {
+        const resp = await fetch(ttsUrl);
+        if (!resp.ok) {
+          console.error(
+            `TTS endpoint error for "${text}":`,
+            resp.status,
+            resp.statusText
+          );
+          continue;
+        }
+
+        const blob = await resp.blob();
+        const blobUrl = URL.createObjectURL(blob);
+
+        audioQueue.push({ text, url: blobUrl });
+        console.log("Generated and queued audio for:", text);
+
+        // If playback hasn't started, start it as soon as we have at least one file
+        if (shouldStartAfterFirst && audioQueue.length > 0) {
+          playNext();
+        }
+      } catch (err) {
+        console.error("Error fetching TTS audio for:", text, err);
+      }
+    }
+
+    isGenerating = false;
+  };
+
+  const playNext = () => {
+    if (audioQueue.length === 0) {
+      // No generated audio available.
+      if (textQueue.length > 0) generateAudioIfNeeded();
       isPlaying = false;
       return;
     }
 
     isPlaying = true;
-    const nextInput = ttsQueue.shift();
+    const { text, url } = audioQueue.shift();
 
-    console.log("Processing TTS:", nextInput);
+    console.log("Playing TTS:", text);
 
-    try {
-      const response = await fetch("http://127.0.0.1:5000/tts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "Example",
-          infer_text: nextInput,
-          output_lan: "en",
-        }),
-      });
+    playAudioWithLipSync(url, window.vrm, () => {
+      console.log("Finished TTS:", text);
 
-      if (!response.ok) {
-        const text = await response.text();
-        console.error("TTS request failed:", text);
-        error_animate([text]);
-        playNext();
-        return;
+      try {
+        URL.revokeObjectURL(url);
+      } catch (e) {
+        // ignoring revoke errors
       }
 
-      // Convert the response to a blob (audio)
-      const audioBlob = await response.blob();
-      const audioUrl = URL.createObjectURL(audioBlob);
+      generateAudioIfNeeded();
 
-      // Create an audio element and play it
-      const audio = new Audio(audioUrl);
-      audio.onended = () => {
-        playNext(); // play the next in queue when done
-      };
-      audio.play();
-    } catch (err) {
-      console.error("Error calling TTS:", err);
       playNext();
-    }
+    });
   };
 
+  // public function: enqueue text for TTS
   return (input) => {
-    console.log("Queueing TTS for:", input);
-    ttsQueue.push(input);
-    if (!isPlaying) playNext();
+    if (!input || typeof input !== "string") {
+      console.warn("callTTS expects a non-empty string input.");
+      return;
+    }
+
+    // console.log("Queueing TTS for:", input);
+    // textQueue.push(input);
+
+    void generateAudioIfNeeded();
+
+    if (!isPlaying && audioQueue.length > 0) {
+      playNext();
+    }
   };
 })();

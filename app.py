@@ -248,7 +248,7 @@ def say():
 def generate_fake_stream(prompt):
     time.sleep(3)
 
-    fake_response = f"Simulated streaming Ollama response for: {prompt}"
+    fake_response = f"Rain tapped softly against the old café window. Clara stirred her coffee, watching the streets glisten under the dim streetlights. She hadn’t expected him to show up, yet there he was, dripping wet, smiling awkwardly. Memories of laughter and whispered secrets filled the tiny space between them. “I didn’t think you’d come,” she whispered. He shrugged, settling into the chair across from her. “Some things are worth the storm,” he said. Outside, the city slept, unaware of the reunion happening in its heart. For a moment, time paused, leaving only warmth, rain, and the promise of new beginnings."
     for char in fake_response:
 
         chunk = json.dumps({"text": char})  

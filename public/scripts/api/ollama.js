@@ -2,7 +2,7 @@ import { showTextChunk } from "../text-animations/textAnimator.js";
 import { callTTS } from "../tts/tts.js";
 
 export const OLLAMA_STREAM_URL = "http://127.0.0.1:5000/ollama_stream";
-export const TTS_CHUNK_THRESHOLD = 2;
+export const TTS_CHUNK_THRESHOLD = 10;
 export const DEBUG = true;
 
 export async function streamOllamaResponse(textSpan, prompt) {
