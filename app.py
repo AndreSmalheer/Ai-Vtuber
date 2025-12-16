@@ -9,7 +9,7 @@ import uuid
 import subprocess
 from pathlib import Path
 
-
+TTS_DIR = Path(os.getcwd()) / "public/assets/tts"
 
 app = Flask(__name__, static_folder='public')
 ELECTRON_URL = "http://localhost:8123"
@@ -281,19 +281,66 @@ def say():
         )
     except subprocess.CalledProcessError as e:
         return f"Piper TTS failed: {e}", 500
+    
 
-    return send_file(
+    response = send_file(
         output_file,
         mimetype="audio/wav",
         as_attachment=False
     )
 
+    response.headers["X-TTS-Filename"] = output_file.name
 
+    return response
+
+
+@app.route("/delete_tts", methods=["POST"])
+def delete_tts():
+    """
+    Delete TTS audio files.
+    Optional JSON body: { "files": ["tts_abc.wav", "tts_xyz.wav"] }
+    If "files" is omitted, deletes all TTS files in the folder.
+    """
+    if not TTS_DIR.exists():
+        return jsonify({"status": "error", "message": "TTS directory not found"}), 404
+
+    data = request.get_json(silent=True) or {}
+    files_to_delete = data.get("files")  # optional list of filenames
+
+    deleted = []
+    failed = []
+
+    if files_to_delete:
+        # delete specific files
+        for fname in files_to_delete:
+            fpath = TTS_DIR / fname
+            if fpath.exists():
+                try:
+                    fpath.unlink()
+                    deleted.append(fname)
+                except Exception as e:
+                    failed.append({"file": fname, "error": str(e)})
+            else:
+                failed.append({"file": fname, "error": "File not found"})
+    else:
+        # delete all files
+        for fpath in TTS_DIR.glob("*.wav"):
+            try:
+                fpath.unlink()
+                deleted.append(fpath.name)
+            except Exception as e:
+                failed.append({"file": fpath.name, "error": str(e)})
+
+    return jsonify({
+        "status": "success",
+        "deleted": deleted,
+        "failed": failed
+    })
 
 def generate_fake_stream(prompt):
     time.sleep(3)
 
-    fake_response = f"Rain tapped softly against the old café window. Clara stirred her coffee, watching the streets glisten under the dim streetlights. She hadn’t expected him to show up, yet there he was, dripping wet, smiling awkwardly. Memories of laughter and whispered secrets filled the tiny space between them. “I didn’t think you’d come,” she whispered. He shrugged, settling into the chair across from her. “Some things are worth the storm,” he said. Outside, the city slept, unaware of the reunion happening in its heart. For a moment, time paused, leaving only warmth, rain, and the promise of new beginnings."
+    fake_response = f"Rain tapped softly against the old café window. Clara stirred her coffee, watching the streets glisten under the dim streetlights."
     for char in fake_response:
 
         chunk = json.dumps({"text": char})  
