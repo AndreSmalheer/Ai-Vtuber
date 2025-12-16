@@ -17,7 +17,6 @@ export const callTTS = (() => {
 
     isGenerating = true;
 
-    // If playback hasn't started yet and we have no audio, we'll want to start
     const shouldStartAfterFirst = !isPlaying && audioQueue.length === 0;
 
     while (audioQueue.length < MIN_BUFFER && textQueue.length > 0) {
@@ -39,14 +38,11 @@ export const callTTS = (() => {
           continue;
         }
 
-        // read filename header (may be null if backend didn't set it)
         const filename = resp.headers.get("X-TTS-Filename") || null;
 
-        // get audio blob and create object URL for playback
         const blob = await resp.blob();
         const blobUrl = URL.createObjectURL(blob);
 
-        // push a consistent object shape into the queue
         audioQueue.push({ text, url: blobUrl, filename });
 
         console.log(
@@ -55,7 +51,6 @@ export const callTTS = (() => {
           filename ? `as ${filename}` : `(no filename header)`
         );
 
-        // If playback hasn't started, start it as soon as we have at least one file
         if (shouldStartAfterFirst && audioQueue.length > 0) {
           playNext();
         }
@@ -82,7 +77,6 @@ export const callTTS = (() => {
           .then((data) => console.log("Deleted files:", data.deleted))
           .catch(console.error);
       } else {
-        // try to generate more audio if we still have text
         generateAudioIfNeeded();
       }
 
@@ -92,16 +86,13 @@ export const callTTS = (() => {
 
     isPlaying = true;
 
-    // destructure the correct properties
     const { text, url, filename } = audioQueue.shift();
 
-    // safety: ensure url exists
     if (!url) {
       console.error("No audio URL found for queue item, skipping:", {
         text,
         filename,
       });
-      // continue to next item
       setTimeout(playNext, 0);
       return;
     }
@@ -120,15 +111,12 @@ export const callTTS = (() => {
         // ignore revoke errors
       }
 
-      // try to keep buffer full
       generateAudioIfNeeded();
 
-      // play the next item in the queue
       playNext();
     });
   };
 
-  // public function: enqueue text for TTS
   return (input) => {
     if (!input || typeof input !== "string") {
       console.warn("callTTS expects a non-empty string input.");
