@@ -1,10 +1,13 @@
 import { lipSyncActive, lipSyncData, analyser } from "../lipSync/lipSync.js";
 import * as THREE from "three";
+import { configPromise } from "../config.js";
+const config = await configPromise;
+
+const minAnimationInterval = config.animation.minAnimationInterval;
+const maxAnimationInterval = config.animation.maxAnimationInterval;
+let isAnimating = config.animation.isAnimating;
 
 let nextAnimationTime = 0;
-const minAnimationInterval = 1;
-const maxAnimationInterval = 3;
-let isAnimating = false;
 
 export function updateRandomIdle(vrm, loadedActions, clock) {
   if (!vrm || isAnimating || Object.keys(loadedActions).length === 0) return;

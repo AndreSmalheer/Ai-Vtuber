@@ -1,11 +1,18 @@
-export const defaultModelUrl = "public/assets/vrm/AvatarSample_A.vrm";
+import { show_error } from "./errors.js";
 
-export const animationUrls = [
-  "/public/assets/animations/Idle.fbx",
-  "/public/assets/animations/Breathing Idle.fbx",
-];
+async function loadConfig() {
+  try {
+    const response = await fetch("/config");
+    if (!response.ok) {
+      throw new Error(`Failed to load config: ${response.status}`);
+    }
+    const config = await response.json(); // will throw if JSON is invalid
+    return config;
+  } catch (err) {
+    console.error("Error loading config:", err);
+    show_error("JSON file not configured properly");
+    return null;
+  }
+}
 
-export const audioUrl =
-  "/public/assets/tts/ttsmaker-file-2025-12-13-11-59-56.mp3";
-
-export let eyeTrackingEnabled = true;
+export const configPromise = loadConfig();

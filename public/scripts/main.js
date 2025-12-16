@@ -10,8 +10,6 @@ import { animate } from "./animation/animationLoop.js";
 import { playAudioWithLipSync } from "./lipSync/lipSync.js";
 import { loadVRM } from "./loaders/vrmLoader.js";
 import { loadAnimations } from "./animation/animationLoader.js";
-import { eyeTrackingEnabled } from "./config.js";
-
 // Try to get the script element
 const script = document.getElementById("main-script");
 
@@ -22,7 +20,11 @@ if (script && script.dataset && script.dataset.overlay !== undefined) {
 }
 
 // Config
-import { defaultModelUrl, animationUrls, audioUrl } from "./config.js";
+import { configPromise } from "./config.js";
+const config = await configPromise;
+const defaultModelUrl = config.defaultModelUrl;
+const animationUrls = config.animationUrls;
+const eyeTrackingEnabled = config.eyeTrackingEnabled;
 
 const { renderer, camera, controls, scene, light, lookAtTarget, clock } =
   init(overlay);
@@ -48,10 +50,6 @@ animate(
   loadedActions,
   lookAtTarget
 );
-
-// document.addEventListener("click", () => {
-//   playAudioWithLipSync(audioUrl, vrm);
-// });
 
 window.addEventListener("mousemove", (event) => {
   if (!eyeTrackingEnabled) return;

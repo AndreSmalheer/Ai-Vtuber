@@ -1,0 +1,28 @@
+{
+  "ELECTRON_URL": "http://localhost:8123",
+  "GPT_SOVITS_URL": "http://127.0.0.1:9880",
+  "WSL_HOME": "/home/andre",
+  "PIPER_PATH": "/home/andre/piper/piper",
+  "VOICE_MODEL": "/home/andre/en_US-amy-medium.onnx",
+  "defaultModelUrl": "public/assets/vrm/AvatarSample_A.vrm",
+  "animationUrls": [
+    "public/assets/animations/Idle.fbx",
+    "public/assets/animations/Breathing Idle.fbx"
+  ],
+  "eyeTrackingEnabled": true,
+  "blink": {
+    "nextBlinkTime": 0,
+    "blinkDuration": 0.1
+  },
+  "animation": {
+    "minAnimationInterval": 1,
+    "maxAnimationInterval": 3
+  },
+  "ollama": {
+    "ollamaUrl": "",
+    "ttsChunkThreshold": 10,
+    "debug": true
+  },
+  "textAnimationSpeedMs": 200,
+  "ttsMinBuffer": 3
+}

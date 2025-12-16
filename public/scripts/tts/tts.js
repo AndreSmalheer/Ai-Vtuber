@@ -1,4 +1,8 @@
 import { playAudioWithLipSync } from "../lipSync/lipSync.js";
+import { configPromise } from "../config.js";
+
+const config = await configPromise;
+const MIN_BUFFER = config.ttsMinBuffer;
 
 export const callTTS = (() => {
   const textQueue = [];
@@ -7,8 +11,6 @@ export const callTTS = (() => {
 
   let isPlaying = false;
   let isGenerating = false;
-
-  const MIN_BUFFER = 3;
 
   const generateAudioIfNeeded = async () => {
     if (isGenerating) return;

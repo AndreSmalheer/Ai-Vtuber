@@ -11,13 +11,22 @@ from pathlib import Path
 
 
 app = Flask(__name__, static_folder='public')
-ELECTRON_URL = "http://localhost:8123"
-GPT_SOVITS_URL = "http://127.0.0.1:9880"
-TTS_DIR = Path(os.getcwd()) / "public/assets/tts"
-WSL_HOME = "/home/andre"
-PIPER_PATH = f"{WSL_HOME}/piper/piper"
-VOICE_MODEL = f"{WSL_HOME}/en_US-amy-medium.onnx"
 
+
+with open("config.json") as f:
+    config = json.load(f)
+
+ELECTRON_URL = config["ELECTRON_URL"]
+GPT_SOVITS_URL = config["GPT_SOVITS_URL"]
+PIPER_PATH = config["PIPER_PATH"]
+VOICE_MODEL = config["VOICE_MODEL"]
+
+
+@app.route("/config")
+def get_config():
+    with open("config.json") as f:
+        config = json.load(f)
+    return jsonify(config)
 
 @app.route('/')
 def home():
@@ -34,7 +43,8 @@ def say():
         return "Please provide ?text=...", 400
 
     # Output file
-    output_file = TTS_DIR / f"tts_{uuid.uuid4().hex}.wav"
+    output_file = Path("public/assets/tts") / f"tts_{uuid.uuid4().hex}.wav"
+    output_file = output_file.resolve() 
 
     # Convert Windows path → WSL path (for WSL execution)
     drive = output_file.drive[0].lower()
@@ -65,7 +75,7 @@ def say():
 
 @app.route("/delete_tts", methods=["POST"])
 def delete_tts():
-    if not TTS_DIR.exists():
+    if not Path("public/assets/tts").exists():
         return jsonify({"status": "error", "message": "TTS directory not found"}), 404
 
     data = request.get_json(silent=True)
@@ -88,7 +98,8 @@ def delete_tts():
     failed = []
 
     for fname in files_to_delete:
-        fpath = TTS_DIR / fname
+        tts_dir = Path("public/assets/tts")
+        fpath = tts_dir / fname
         if fpath.exists():
             try:
                 fpath.unlink()

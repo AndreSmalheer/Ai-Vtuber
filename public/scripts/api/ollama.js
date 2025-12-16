@@ -1,9 +1,11 @@
 import { showTextChunk } from "../text-animations/textAnimator.js";
 import { callTTS } from "../tts/tts.js";
+import { configPromise } from "../config.js";
 
-export const OLLAMA_STREAM_URL = "http://127.0.0.1:5000/ollama_stream";
-export const TTS_CHUNK_THRESHOLD = 10;
-export const DEBUG = true;
+const config = await configPromise;
+const OLLAMA_STREAM_URL = "http://127.0.0.1:5000/ollama_stream";
+const TTS_CHUNK_THRESHOLD = config.ollama.ttsChunkThreshold;
+const DEBUG = config.ollama.debug;
 
 export async function streamOllamaResponse(textSpan, prompt) {
   try {

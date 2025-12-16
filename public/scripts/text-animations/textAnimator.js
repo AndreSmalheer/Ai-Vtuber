@@ -1,5 +1,8 @@
-export const TEXT_ANIMATION_SPEED_MS = 200;
-export const FADE_OUT_DELAY = 1000;
+import { configPromise } from "../config.js";
+const config = await configPromise;
+
+const TEXT_ANIMATION_SPEED_MS = config.textAnimationSpeedMs;
+const FADE_OUT_DELAY = 1000;
 
 let textQueue = "";
 let isTyping = false;
