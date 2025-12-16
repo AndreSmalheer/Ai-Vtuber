@@ -92,7 +92,7 @@ export const callTTS = (() => {
     }
 
     // console.log("Queueing TTS for:", input);
-    // textQueue.push(input);
+    textQueue.push(input);
 
     void generateAudioIfNeeded();
 
