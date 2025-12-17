@@ -2,8 +2,6 @@ from flask import Flask, render_template, request, Response, send_file, jsonify
 import requests
 import time
 import json
-
-from gtts import gTTS
 import os
 import uuid
 import subprocess
