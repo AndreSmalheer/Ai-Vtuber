@@ -1,0 +1,24 @@
+/* mouse click */
+.canvas-wrap {
+  position: relative;
+  overflow: hidden;
+}
+
+.canvas-wrap::after {
+  content: "";
+  position: absolute;
+  left: var(--mx);
+  top: var(--my);
+  width: 16px;
+  height: 16px;
+  background: radial-gradient(circle, rgba(0, 0, 0, 0.2), transparent 70%);
+
+  border-radius: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.canvas-wrap:active::after {
+  animation: ripple 1s ease-out;
+}

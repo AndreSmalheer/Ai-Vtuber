@@ -16,6 +16,25 @@ export function init(overlay) {
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(window.devicePixelRatio);
   document.body.appendChild(renderer.domElement);
+  const wrap = document.querySelector(".canvas-wrap");
+  wrap.appendChild(renderer.domElement);
+
+  wrap.addEventListener("pointerdown", (e) => {
+    const rect = wrap.getBoundingClientRect();
+
+    wrap.style.setProperty("--mx", `${e.clientX - rect.left}px`);
+    wrap.style.setProperty("--my", `${e.clientY - rect.top}px`);
+  });
+
+  const canvas = renderer.domElement;
+
+  let holdTimer;
+
+  canvas.addEventListener("pointerdown", () => {
+    holdTimer = setTimeout(() => {
+      console.log("Held");
+    }, 500);
+  });
 
   // camera
   let camera;

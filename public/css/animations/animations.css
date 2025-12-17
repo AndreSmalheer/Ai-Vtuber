@@ -110,6 +110,18 @@
   }
 }
 
+/* mouse click */
+@keyframes ripple {
+  from {
+    transform: translate(-50%, -50%) scale(6);
+    opacity: 1;
+  }
+  to {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0;
+  }
+}
+
 .loading::after {
   content: "";
   animation: blinkDots 1s steps(1, end) infinite;
