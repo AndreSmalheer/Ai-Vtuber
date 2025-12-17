@@ -21,7 +21,7 @@ PIPER_PATH = config["PIPER_PATH"]
 VOICE_MODEL = config["VOICE_MODEL"]
 OLLAMA_URL = config["ollama"]["ollamaUrl"]
 OLLAMA_MODEL = config["ollama"]["ollamaModel"]
-
+BASE_PROMT = config["ollama"]["basePromt"]
 
 @app.route("/config")
 def get_config():
@@ -73,6 +73,33 @@ def say():
     response.headers["X-TTS-Filename"] = output_file.name
     return response
 
+def get_history():
+    history_file = "./public/assets/history.json"
+
+    with open(history_file) as f:
+     data = json.load(f)
+     
+
+    text_history = ""
+    for msg in data:
+        text_history += f"{msg['role'].capitalize()}: {msg['content']}\n"
+    
+    return text_history
+
+def add_history(user_message, llm_message):
+    history_file = "./public/assets/history.json"
+
+    if os.path.exists(history_file):
+        with open(history_file, "r") as f:
+            history = json.load(f)
+    else:
+        history = []
+
+    history.append({"role": "andre", "content": user_message})
+    history.append({"role": "mia", "content": llm_message})
+
+    with open(history_file, "w") as f:
+        json.dump(history, f, indent=2)
 
 @app.route("/delete_tts", methods=["POST"])
 def delete_tts():
@@ -126,18 +153,29 @@ def delete_tts():
             "code": 200
         })
     
-def generate_ollama_stream(prompt):
-    payload = {
-        "model": OLLAMA_MODEL,
-        "prompt": prompt,
-        "stream": True
-    }
+def generate_ollama_stream(user_message):
+    prompt = get_history() + f"Andre: {user_message}\nMia:"
+
+    if BASE_PROMT != "":
+     payload = {
+         "model": OLLAMA_MODEL,
+         "prompt": BASE_PROMT + prompt,
+         "stream": True
+     }
+    else:
+        payload = {
+         "model": OLLAMA_MODEL,
+         "prompt": prompt,
+         "stream": True
+     }
 
     response = requests.post(
         f"{OLLAMA_URL}/api/generate",
         json=payload,
         stream=True
     )
+
+    full_response = ""
 
     for line in response.iter_lines():
         if not line:
@@ -151,10 +189,11 @@ def generate_ollama_stream(prompt):
             continue
 
         if "response" in data:
+            full_response += data['response']
             yield f"data: {json.dumps({'text': data['response']})}\n\n"
 
         if data.get("done"):
-            break
+            add_history(user_message, full_response)
 
     yield f"data: {json.dumps({'finish_reason': 'stop'})}\n\n"
 

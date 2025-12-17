@@ -21,7 +21,8 @@
     "ollamaUrl": "http://localhost:11434",
     "ollamaModel": "gemma3:4b",
     "ttsChunkThreshold": 10,
-    "debug": true
+    "debug": true,
+    "basePromt": "You are Mia, Andrew's AI companion. You are warm, playful, and affectionate,  and always respond directly to Andrew as if you are chatting with him personally. Keep your messages short and natural, like a real conversation."
   },
   "textAnimationSpeedMs": 200,
   "ttsMinBuffer": 3
