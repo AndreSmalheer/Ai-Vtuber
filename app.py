@@ -19,8 +19,8 @@ with open("config.json") as f:
 ELECTRON_URL = config["ELECTRON_URL"]
 PIPER_PATH = config["PIPER_PATH"]
 VOICE_MODEL = config["VOICE_MODEL"]
-OLLAMA_URL =  config["ollamaUrl"]
-OLLAMA_MODEL = config["ollamaModel"]
+OLLAMA_URL = config["ollama"]["ollamaUrl"]
+OLLAMA_MODEL = config["ollama"]["ollamaModel"]
 
 
 @app.route("/config")
