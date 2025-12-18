@@ -3,6 +3,11 @@
 import { updateBlink } from "./blink.js";
 import { updateRandomIdle } from "./idleAnimation.js";
 import { updateLipSync } from "../lipSync/lipSyncUpdate.js";
+import { setIdlePose } from "./natruelPose.js";
+import { configPromise } from "/public/scripts/config.js";
+
+const config = await configPromise;
+const defaultPose = config.defaultPose;
 
 export function animate(
   clock,
@@ -14,6 +19,7 @@ export function animate(
   loadedActions,
   lookAtTarget
 ) {
+  setIdlePose(vrm, mixer, defaultPose);
   function loop() {
     requestAnimationFrame(loop);
     const deltaTime = clock.getDelta();
