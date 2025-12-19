@@ -1,32 +1,99 @@
 const settings_btn = document.getElementById("settings-icon");
+const useBasePrompt_checkbox = document.getElementById("useBasePrompt");
 
-async function verifyConnection(url, statusDiv) {
+async function verifyHttpConnection(url, statusDiv) {
   statusDiv.textContent = "Verifying...";
+  statusDiv.style.color = "";
 
   try {
-    const response = await fetch(url + "/status", { method: "GET" });
-    const data = await response.json();
+    const response = await fetch(url);
+    if (!response.ok) throw new Error("Server not reachable");
 
-    if (data.visible === true) {
-      statusDiv.textContent = "Connection successful!";
-      statusDiv.style.color = "green";
-    } else {
-      statusDiv.textContent = "Connection failed: status is false";
-      statusDiv.style.color = "red";
-    }
+    const data = await response.json();
+    // Adjust success check depending on API; here we just assume HTTP success
+    statusDiv.textContent = "Connection successful!";
+    statusDiv.style.color = "green";
   } catch (error) {
     statusDiv.textContent = "Connection error: " + error.message;
     statusDiv.style.color = "red";
   }
 }
 
-document.getElementById("verifyBtn").addEventListener("click", () => {
-  const url = document.getElementById("electronUrl").value;
-  const statusDiv = document.getElementById("status");
+document.getElementById("verifyBtnElectron").addEventListener("click", () => {
+  const url = document.getElementById("electronUrl").value + "/status";
+  const statusDiv = document.getElementById("status-electron");
+  verifyHttpConnection(url, statusDiv);
+});
+
+document.getElementById("verifyBtnOllama").addEventListener("click", () => {
+  const url = document.getElementById("ollamaUrl").value + "/api/version";
+  const statusDiv = document.getElementById("status-ollama");
+  verifyHttpConnection(url, statusDiv);
+
+  populateOllamaModels();
+});
+
+document.getElementById("verifyBtnPiper").addEventListener("click", () => {
+  const statusDiv = document.getElementById("status-piper");
+  const piperPathInput = document.getElementById("piperPath");
+  const voiceModelInput = document.getElementById("voiceModel");
+
+  const piperPath = encodeURIComponent(piperPathInput.value);
+  const voiceModel = encodeURIComponent(voiceModelInput.value);
+
+  const url = `/status_piper?piper_path=${piperPath}&voice_model=${voiceModel}`;
+
   verifyConnection(url, statusDiv);
+});
+
+useBasePrompt_checkbox.addEventListener("change", (event) => {
+  const basePrompt_element = document.getElementById("basePrompt");
+  const basePromptLabel = document.querySelector('label[for="basePrompt"]');
+
+  if (event.target.checked) {
+    basePrompt_element.classList.remove("hidden");
+    basePromptLabel.classList.remove("hidden");
+  } else {
+    basePrompt_element.classList.add("hidden");
+    basePromptLabel.classList.add("hidden");
+  }
 });
 
 settings_btn.addEventListener("click", () => {
   const settingsPanel = document.getElementById("settings");
   settingsPanel.classList.toggle("hidden");
+});
+
+async function populateOllamaModels() {
+  const select = document.getElementById("ollamaModel");
+  const url = document.getElementById("ollamaUrl").value + "/api/tags";
+
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+
+    const modelsArray = Array.isArray(data.models) ? data.models : [];
+
+    select.innerHTML = "";
+
+    modelsArray.forEach(function (modelObj) {
+      const option = document.createElement("option");
+      option.value = modelObj.model;
+      option.textContent = modelObj.name;
+      select.appendChild(option);
+    });
+  } catch (error) {
+    console.error("Failed to fetch models:", error);
+  }
+}
+
+populateOllamaModels();
+
+const form = document.getElementById("settingsForm");
+
+form.addEventListener("submit", function (event) {
+  event.preventDefault();
+  const formData = new FormData(form);
+  const data = Object.fromEntries(formData.entries());
+  console.log(data);
 });

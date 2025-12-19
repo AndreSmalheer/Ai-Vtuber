@@ -1,10 +1,13 @@
 import { configPromise } from "../config.js";
 const config = await configPromise;
-let { nextBlinkTime, blinkDuration } = config.blink;
+let blinkDuration = config.blinkDuration;
+let blink = config.blink;
 let blinkStartTime = 0;
 let isBlinking = false;
+let nextBlinkTime = 0;
 
 export function updateBlink(vrm, clock) {
+  if (!blink) return;
   if (!vrm) return;
   const time = clock.elapsedTime;
   if (!isBlinking && time > nextBlinkTime) {

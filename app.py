@@ -76,6 +76,39 @@ def say():
     response.headers["X-TTS-Filename"] = output_file.name
     return response
 
+@app.route("/status_piper")
+def status_piper():
+    piper_path = request.args.get("piper_path")
+    voice_model = request.args.get("voice_model")
+    
+    if not piper_path or not voice_model:
+        return {"visible": False, "error": "Missing piper_path or voice_model"}, 400
+
+    test_text = "Testing Piper connection"
+    try:
+        # Output file (temporary, discard)
+        output_file = Path("/tmp/test.wav")
+        output_file.parent.mkdir(parents=True, exist_ok=True)
+
+        # Convert Windows path → WSL path
+        drive = output_file.drive[0].lower() if output_file.drive else "c"
+        wsl_output_file = f"/mnt/{drive}{output_file.as_posix()[2:]}"
+        
+        # Run Piper via WSL
+        subprocess.run(
+            [
+                "wsl",
+                piper_path,
+                "--model", voice_model,
+                "--output_file", wsl_output_file
+            ],
+            input=test_text.encode("utf-8"),
+            check=True
+        )
+        return {"visible": True}
+    except subprocess.CalledProcessError as e:
+        return {"visible": False, "error": str(e)}, 500
+    
 def get_history():
     history_file = "./public/assets/history.json"
 

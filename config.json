@@ -10,10 +10,8 @@
     "public/assets/animations/Breathing Idle.fbx"
   ],
   "eyeTrackingEnabled": true,
-  "blink": {
-    "nextBlinkTime": 0,
-    "blinkDuration": 0.1
-  },
+  "blink": false,
+  "blinkDuration": 0.1,
   "animation": {
     "minAnimationInterval": 1,
     "maxAnimationInterval": 3
