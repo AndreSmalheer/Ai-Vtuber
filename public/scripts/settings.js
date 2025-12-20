@@ -43,7 +43,7 @@ document.getElementById("verifyBtnPiper").addEventListener("click", () => {
 
   const url = `/status_piper?piper_path=${piperPath}&voice_model=${voiceModel}`;
 
-  verifyConnection(url, statusDiv);
+  verifyHttpConnection(url, statusDiv);
 });
 
 useBasePrompt_checkbox.addEventListener("change", (event) => {
