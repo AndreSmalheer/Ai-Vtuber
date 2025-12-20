@@ -6,13 +6,11 @@
     <div class="form-section" id="electron-settings">
       <h3>Electron Settings</h3>
       <div class="field-group">
-        <label for="electronUrl">ELECTRON_URL</label>
-        <input
-          type="text"
-          id="electronUrl"
-          name="ELECTRON_URL"
-          value="http://localhost:8123"
-        />
+        <div title="Path to your Linux home directory inside WSL">
+          <label for="wslHome"> WSL_HOME: </label>
+          <input type="text" id="wslHome" name="WSL_HOME" value="/home/andre" />
+        </div>
+
         <div id="status-electron" class="status-resut"></div>
       </div>
       <button type="button" id="verifyBtnElectron" class="verifyBtn">
@@ -25,26 +23,35 @@
       <h3>Piper Settings</h3>
 
       <div class="field-group">
-        <label for="wslHome">WSL_HOME:</label>
-        <input type="text" id="wslHome" name="WSL_HOME" value="/home/andre" />
+        <div title="Path to your Linux home directory inside WSL">
+          <label for="wslHome">WSL_HOME:</label>
+          <input type="text" id="wslHome" name="WSL_HOME" value="/home/andre" />
+        </div>
 
-        <label for="piperPath">PIPER_PATH:</label>
-        <input
-          type="text"
-          id="piperPath"
-          name="PIPER_PATH"
-          value="/home/andre/piper/piper"
-        />
+        <div title="Path to the Piper TTS executable">
+          <label for="piperPath">PIPER_PATH:</label>
+          <input
+            type="text"
+            id="piperPath"
+            name="PIPER_PATH"
+            value="/home/andre/piper/piper"
+          />
+        </div>
 
-        <label for="voiceModel">VOICE_MODEL:</label>
-        <input
-          type="text"
-          id="voiceModel"
-          name="VOICE_MODEL"
-          value="/home/andre/en_US-amy-medium.onnx"
-        />
+        <div title="Path to the Piper voice model (.onnx)">
+          <label for="voiceModel">VOICE_MODEL:</label>
+          <input
+            type="text"
+            id="voiceModel"
+            name="VOICE_MODEL"
+            value="/home/andre/en_US-amy-medium.onnx"
+          />
+        </div>
 
-        <div class="number_contaier">
+        <div
+          class="number_contaier"
+          title="Minimum TTS buffer in seconds before playback"
+        >
           <label>TTS Min Buffer (seconds):</label>
           <input type="number" name="ttsMinBuffer" value="3" step="1" min="0" />
         </div>
@@ -62,27 +69,33 @@
       <h3>Animation Settings</h3>
 
       <div class="field-group">
-        <label for="defaultModelUrl">Default Model URL:</label>
-        <input
-          type="text"
-          id="defaultModelUrl"
-          name="defaultModelUrl"
-          value="public/assets/vrm/AvatarSample_A.vrm"
-        />
+        <div title="Path to the default VRM avatar model">
+          <label for="defaultModelUrl">Default Model URL:</label>
+          <input
+            type="text"
+            id="defaultModelUrl"
+            name="defaultModelUrl"
+            value="public/assets/vrm/AvatarSample_A.vrm"
+          />
+        </div>
 
-        <label for="defaultPose">Default Pose:</label>
-        <input
-          type="text"
-          id="defaultPose"
-          name="defaultPose"
-          value="public/assets/animations/Idle.fbx"
-        />
+        <div title="Default pose/animation file used on startup">
+          <label for="defaultPose">Default Pose:</label>
+          <input
+            type="text"
+            id="defaultPose"
+            name="defaultPose"
+            value="public/assets/animations/Idle.fbx"
+          />
+        </div>
 
         <p>Animations to Use:</p>
         <div id="animations_list">
-          <div class="animation_container">
+          <div
+            class="animation_container"
+            title="Idle animation for the avatar"
+          >
             <label for="idle">Idle.fbx</label>
-
             <input
               type="checkbox"
               id="idle"
@@ -91,9 +104,11 @@
               checked
             />
           </div>
-          <div class="animation_container">
+          <div
+            class="animation_container"
+            title="Breathing Idle animation for the avatar"
+          >
             <label for="breathingIdle">Breathing Idle.fbx</label>
-
             <input
               type="checkbox"
               id="breathingIdle"
@@ -104,8 +119,11 @@
           </div>
         </div>
 
-        <div class="number_contaier">
-          <label for="minAnimationInterval">Min Interval </label>
+        <div
+          class="number_contaier"
+          title="Minimum time interval between animations (seconds)"
+        >
+          <label for="minAnimationInterval">Min Interval</label>
           <input
             type="number"
             id="minAnimationInterval"
@@ -115,8 +133,11 @@
           />
         </div>
 
-        <div class="number_contaier">
-          <label for="maxAnimationInterval">Max Interval </label>
+        <div
+          class="number_contaier"
+          title="Maximum time interval between animations (seconds)"
+        >
+          <label for="maxAnimationInterval">Max Interval</label>
           <input
             type="number"
             id="maxAnimationInterval"
@@ -132,14 +153,28 @@
     <div class="form-section" id="eye-settings">
       <h3>Eye Settings</h3>
       <div class="field-group">
-        <div class="checkbox_container">
-          Eye Tracking Enabled:
-          <input type="checkbox" name="eyeTrackingEnabled" checked />
+        <div
+          class="checkbox_container"
+          title="Enable or disable eye tracking for the avatar"
+        >
+          <label for="eyeTrackingEnabled">Eye Tracking Enabled:</label>
+          <input
+            type="checkbox"
+            id="eyeTrackingEnabled"
+            name="eyeTrackingEnabled"
+            checked
+          />
         </div>
 
-        <div class="number_contaier">
-          Blink Duration (seconds):
-          <input type="number" name="blinkDuration" value="0.1" step="0.01" />
+        <div class="number_contaier" title="Duration of a blink in seconds">
+          <label for="blinkDuration">Blink Duration (seconds):</label>
+          <input
+            type="number"
+            id="blinkDuration"
+            name="blinkDuration"
+            value="0.1"
+            step="0.01"
+          />
         </div>
       </div>
     </div>
@@ -150,12 +185,15 @@
 
       <div class="field-group">
         <!-- Connection -->
-        <div class="field">
+        <div class="field" title="Ollama API endpoint URL">
           <label for="ollamaUrl" style="margin-bottom: 12px">Ollama URL</label>
           <input type="text" id="ollamaUrl" value="http://localhost:11434" />
         </div>
 
-        <div class="field number_contaier">
+        <div
+          class="field number_contaier"
+          title="Select the Ollama model to use for text generation"
+        >
           <label for="ollamaModel">Ollama Model</label>
           <select id="ollamaModel">
             <option value="gemma3:4b" selected>gemma3:4b</option>
@@ -172,13 +210,19 @@
         </button>
 
         <!-- Numeric settings -->
-        <div class="number_contaier">
+        <div
+          class="number_contaier"
+          title="Minimum number of characters before TTS starts speaking"
+        >
           <label for="ttsChunkThreshold">TTS Chunk Threshold</label>
           <input type="number" id="ttsChunkThreshold" value="10" />
         </div>
 
-        <div class="number_contaier">
-          <label for="textAnimationSpeedMs"> Text Animation Speed (ms) </label>
+        <div
+          class="number_contaier"
+          title="Time in milliseconds for each character when animating text"
+        >
+          <label for="textAnimationSpeedMs">Text Animation Speed (ms)</label>
           <input
             type="number"
             id="textAnimationSpeedMs"
@@ -189,21 +233,35 @@
         </div>
 
         <!-- Toggles -->
-        <div class="checkbox_container">
+        <div
+          class="checkbox_container"
+          title="Enable or disable debug mode for extra logging"
+        >
           <label for="debug">Debug Mode</label>
           <input type="checkbox" id="debug" checked />
         </div>
 
-        <div class="checkbox_container">
-          <label for="useBasePrompt"> Use Base Prompt </label>
+        <div
+          class="checkbox_container"
+          title="Defines whether to use a base prompt or not"
+        >
+          <label for="useBasePrompt">Use Base Prompt</label>
           <input type="checkbox" id="useBasePrompt" />
         </div>
 
         <!-- Prompt -->
-        <label for="basePrompt">Base Prompt</label>
-        <textarea id="basePrompt" rows="4">
+        <label
+          for="basePrompt"
+          title="System prompt that defines the personality and behavior"
+          >Base Prompt</label
+        >
+        <textarea
+          id="basePrompt"
+          rows="4"
+          title="System prompt that defines the personality and behavior"
+        >
 You are Mia, Andrew's AI companion. You are warm, playful, and affectionate, and always respond directly to Andrew as if you are chatting with him personally. Keep your messages short and natural, like a real conversation.
-      </textarea
+</textarea
         >
       </div>
     </div>
