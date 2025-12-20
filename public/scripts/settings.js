@@ -105,3 +105,13 @@ form.addEventListener("submit", function (event) {
 
   console.log(data);
 });
+
+const canvas_wrap = document.querySelectorAll(".canvas-wrap");
+
+canvas_wrap.forEach((canvas) => {
+  canvas.addEventListener("click", () => {
+    const settings_container = document.getElementById("settings");
+
+    settings_container.classList.add("hidden");
+  });
+});
