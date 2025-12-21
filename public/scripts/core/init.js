@@ -69,7 +69,7 @@ export function init(overlay) {
   let scene = new THREE.Scene();
 
   // light
-  let light = new THREE.DirectionalLight(0xffffff, Math.PI);
+  let light = new THREE.AmbientLight(0xffffff, 2);
   light.position.set(1.0, 1.0, 1.0).normalize();
   scene.add(light);
 
