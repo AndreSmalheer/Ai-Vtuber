@@ -1,5 +1,7 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { configPromise } from "../config.js";
+const config = await configPromise;
 
 export function init(overlay) {
   // renderer
@@ -69,7 +71,16 @@ export function init(overlay) {
   let scene = new THREE.Scene();
 
   // light
-  let light = new THREE.AmbientLight(0xffffff, 2);
+  let rawColor = config.light_color ?? 0xffffff;
+
+  if (typeof rawColor === "string" && rawColor.startsWith("0x")) {
+    rawColor = parseInt(rawColor, 16);
+  }
+
+  const lightColor = new THREE.Color(rawColor);
+  const lightIntensity = config.light_intensety ?? 3;
+
+  let light = new THREE.AmbientLight(lightColor, lightIntensity);
   light.position.set(1.0, 1.0, 1.0).normalize();
   scene.add(light);
 

@@ -3,7 +3,7 @@
   "WSL_HOME": "/home/andre",
   "PIPER_PATH": "/home/andre/piper/piper",
   "VOICE_MODEL": "/home/andre/en_US-amy-medium.onnx",
-  "defaultModelUrl": "public/assets/vrm/AvatarSample_A.vrm",
+  "defaultModelUrl": "public/assets/vrm/Mia.vrm",
   "defaultPose": "public/assets/animations/Idle.fbx",
   "animationUrls": [
     "public/assets/animations/Idle.fbx",
@@ -24,5 +24,7 @@
     "basePromt": "You are Mia, Andrew's AI companion. You are warm, playful, and affectionate,  and always respond directly to Andrew as if you are chatting with him personally. Keep your messages short and natural, like a real conversation."
   },
   "textAnimationSpeedMs": 200,
-  "ttsMinBuffer": 3
+  "ttsMinBuffer": 3,
+  "light_color": "0xffffff",
+  "light_intensety": 3
 }
