@@ -281,6 +281,11 @@
     & input[type="file"] {
       display: none;
     }
+
+    & .highlight {
+      border-color: #4a90e2;
+      background-color: #f0f8ff;
+    }
   }
 }
 

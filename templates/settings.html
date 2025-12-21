@@ -126,11 +126,16 @@
 
         <div id="drop-area">
           <p>
-            Drag & Drop a file here<br />or<br /><button id="file-btn">
-              Select a file
-            </button>
+            Drag & Drop a file here<br />or<br />
+            <button type="button" id="file-btn">Select a file</button>
           </p>
-          <input type="file" id="file-input" />
+          <input
+            type="file"
+            id="file-input"
+            accept=".fbx"
+            style="display: none"
+            multiple
+          />
         </div>
 
         <div

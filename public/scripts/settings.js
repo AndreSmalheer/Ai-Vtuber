@@ -95,13 +95,17 @@ form.addEventListener("submit", function (event) {
   event.preventDefault();
 
   const formData = new FormData(form);
-  formData.delete("USE_BASE_PROMPT");
+
+  const data = Object.fromEntries(formData.entries());
+
+  data.animationUrls = formData.getAll("animationUrls");
 
   const useBasePrompt = form.querySelector("#useBasePrompt").checked;
   if (!useBasePrompt) {
-    formData.set("BASE_PROMPT", "");
+    data.BASE_PROMPT = "";
   }
-  const data = Object.fromEntries(formData.entries());
+
+  delete data.USE_BASE_PROMPT;
 
   console.log(data);
 });
@@ -128,4 +132,140 @@ for (const checkbox of checkboxes) {
     checkbox.checked = !checkbox.checked;
     checkbox.dispatchEvent(new Event("change"));
   });
+}
+
+const fileBtn = document.getElementById("file-btn");
+const fileInput = document.getElementById("file-input");
+
+fileBtn.addEventListener("click", () => {
+  fileInput.click();
+});
+
+fileInput.addEventListener("change", () => {
+  const selectedFiles = Array.from(fileInput.files);
+
+  const fbxFiles = selectedFiles.filter((file) =>
+    file.name.toLowerCase().endsWith(".fbx")
+  );
+
+  if (fbxFiles.length > 0) {
+    add_Animation(fbxFiles);
+  } else if (selectedFiles.length > 0) {
+    alert("Please select .fbx files only.");
+    fileInput.value = "";
+  }
+});
+
+const dropArea = document.getElementById("drop-area");
+
+["dragenter", "dragover", "dragleave", "drop"].forEach((eventName) => {
+  dropArea.addEventListener(
+    eventName,
+    (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+    },
+    false
+  );
+});
+
+["dragenter", "dragover"].forEach((eventName) => {
+  dropArea.addEventListener(
+    eventName,
+    () => {
+      dropArea.classList.add("highlight");
+    },
+    false
+  );
+});
+
+["dragleave", "drop"].forEach((eventName) => {
+  dropArea.addEventListener(
+    eventName,
+    () => {
+      dropArea.classList.remove("highlight");
+    },
+    false
+  );
+});
+
+dropArea.addEventListener("drop", (e) => {
+  const dt = e.dataTransfer;
+  const droppedFiles = Array.from(dt.files);
+
+  const fbxFiles = droppedFiles.filter((file) =>
+    file.name.toLowerCase().endsWith(".fbx")
+  );
+
+  if (fbxFiles.length > 0) {
+    add_Animation(fbxFiles);
+  } else {
+    alert("Please drop .fbx files only.");
+  }
+});
+
+let animations = [
+  {
+    id: "idle",
+    name: "Idle.fbx",
+    url: "public/assets/animations/Idle.fbx",
+    desc: "Idle animation for the avatar",
+  },
+  {
+    id: "walk",
+    name: "Walk.fbx",
+    url: "public/assets/animations/Walk.fbx",
+    desc: "Walking animation",
+  },
+];
+
+const list = document.getElementById("animations_list");
+
+list.innerHTML = "";
+
+for (const anim of animations) {
+  const container = document.createElement("div");
+  container.className = "animation_container";
+  container.title = anim.desc;
+
+  const label = document.createElement("label");
+  label.setAttribute("for", anim.id);
+  label.textContent = anim.name;
+
+  const checkbox = document.createElement("input");
+  checkbox.type = "checkbox";
+  checkbox.id = anim.id;
+  checkbox.name = "animationUrls";
+  checkbox.value = anim.url;
+  checkbox.checked = true;
+
+  container.appendChild(label);
+  container.appendChild(checkbox);
+  list.appendChild(container);
+}
+
+function add_Animation(files) {
+  for (const file of files) {
+    const safeId = file.name.replace(/[^a-z0-9]/gi, "_");
+
+    const container = document.createElement("div");
+    container.className = "animation_container";
+    container.title = file.desc || `File: ${file.name}`;
+
+    const label = document.createElement("label");
+    label.setAttribute("for", safeId);
+    label.textContent = file.name;
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.id = safeId;
+    checkbox.name = "animationUrls";
+
+    checkbox.value = file.url || file.name;
+    checkbox.checked = true;
+
+    container.appendChild(label);
+    container.appendChild(checkbox);
+    list.appendChild(container);
+  }
 }
