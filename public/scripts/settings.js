@@ -115,3 +115,17 @@ canvas_wrap.forEach((canvas) => {
     settings_container.classList.add("hidden");
   });
 });
+
+const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+
+for (const checkbox of checkboxes) {
+  const parent = checkbox.parentElement;
+
+  parent.addEventListener("click", (event) => {
+    if (event.target === checkbox) {
+      return;
+    }
+    checkbox.checked = !checkbox.checked;
+    checkbox.dispatchEvent(new Event("change"));
+  });
+}
