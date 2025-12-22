@@ -95,6 +95,9 @@ const form = document.getElementById("settingsForm");
 form.addEventListener("submit", function (event) {
   event.preventDefault();
 
+  const settingsPanel = document.getElementById("settings");
+  settingsPanel.classList.add("hidden");
+
   const formData = new FormData(form);
   new_animations.flat().forEach((file) => {
     formData.append("animations", file);
@@ -106,8 +109,6 @@ form.addEventListener("submit", function (event) {
   }
 
   formData.delete("USE_BASE_PROMPT");
-
-  console.log(Array.from(formData.entries()));
 
   fetch("http://127.0.0.1:5000/api/update_settings", {
     method: "POST",
