@@ -6,6 +6,7 @@ import os
 import uuid
 import subprocess
 from pathlib import Path
+from werkzeug.utils import secure_filename
 
 
 app = Flask(__name__, static_folder='public')
@@ -20,11 +21,82 @@ VOICE_MODEL = config["VOICE_MODEL"]
 OLLAMA_URL = config["ollama"]["ollamaUrl"]
 OLLAMA_MODEL = config["ollama"]["ollamaModel"]
 BASE_PROMT = config["ollama"]["basePromt"]
+UPLOAD_FOLDER = 'public/assets/animations/'
 
 @app.route('/settings')
 def settings():
     return render_template('settings.html')
 
+
+@app.route('/api/update_settings', methods=['POST'])
+def update_settings():
+    ELECTRON_URL = request.form.get('ELECTRON_URL')
+    WSL_HOME = request.form.get('WSL_HOME')
+    PIPER_PATH = request.form.get('PIPER_PATH')
+    VOICE_MODEL = request.form.get('VOICE_MODEL')
+    DEFAULT_MODEL_URL = request.form.get('defaultModelUrl')
+    DEFAULT_POSE = request.form.get('defaultPose')
+    ANIMATIONS_URLS = request.form.getlist('animationUrls')
+
+    EYE_TRACKING = request.form.get('eyeTrackingEnabled') == 'on'
+    BLINK = request.form.get('blink') == 'on'
+    DEBUG = request.form.get('DEBUG_MODE') == 'on'
+
+    def to_int(val): return int(val) if val and str(val).isdigit() else 0
+    def to_float(val): 
+        try: return float(val)
+        except: return 0.0
+
+    FBX_FILES = request.files.getlist('animations')
+    for file in FBX_FILES:
+        if file.filename:
+            name = secure_filename(file.filename)
+            save_path = os.path.join(UPLOAD_FOLDER, name)
+            file.save(save_path)
+            new_url = f"public/assets/animations/uploaded/{name}"
+            if new_url not in ANIMATIONS_URLS:
+                ANIMATIONS_URLS.append(new_url)
+
+    # --- 4. STRUCTURE DATA ---
+    SETTINGS_DATA = {
+        "ELECTRON_URL": ELECTRON_URL,
+        "WSL_HOME": WSL_HOME,
+        "PIPER_PATH": PIPER_PATH,
+        "VOICE_MODEL": VOICE_MODEL,
+        "defaultModelUrl": DEFAULT_MODEL_URL,
+        "defaultPose": DEFAULT_POSE,
+        "animationUrls": ANIMATIONS_URLS,
+        "eyeTrackingEnabled": EYE_TRACKING,
+        "blink": BLINK,
+        "blinkDuration": to_float(request.form.get('blinkDuration')),
+        "animation": {
+            "minAnimationInterval": to_int(request.form.get('minAnimationInterval')),
+            "maxAnimationInterval": to_int(request.form.get('maxAnimationInterval'))
+        },
+        "ollama": {
+            "ollamaUrl": request.form.get('OLLAMA_URL'),
+            "ollamaModel": request.form.get('OLLAMA_MODEL'),
+            "ttsChunkThreshold": to_int(request.form.get('TTS_CHUNK_THRESHOLD')),
+            "debug": DEBUG,
+            "basePromt": request.form.get('BASE_PROMPT')
+        },
+        "textAnimationSpeedMs": to_int(request.form.get('TEXT_ANIMATION_SPEED_MS')),
+        "ttsMinBuffer": to_int(request.form.get('ttsMinBuffer')),
+        "light_color": request.form.get('light_color'),
+        "light_intensety": to_float(request.form.get('light_intensety'))
+    }
+
+    # print("\n" + "="*60)
+    # print("                SAVING UPDATED SETTINGS")
+    # print("="*60)
+    # # This prints it like a beautiful JSON object in your terminal
+    # print(json.dumps(SETTINGS_DATA, indent=2))
+    # print("="*60 + "\n")
+
+    with open('config.json', 'w', encoding='utf-8') as f:
+        json.dump(SETTINGS_DATA, f, indent=2)
+
+    return jsonify({"status": "success", "message": "Settings saved to disk"}), 200
 
 @app.route("/config")
 def get_config():

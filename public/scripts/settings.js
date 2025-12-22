@@ -1,5 +1,6 @@
 const settings_btn = document.getElementById("settings-icon");
 const useBasePrompt_checkbox = document.getElementById("useBasePrompt");
+let new_animations = [];
 
 async function verifyHttpConnection(url, statusDiv) {
   statusDiv.textContent = "Verifying...";
@@ -95,19 +96,26 @@ form.addEventListener("submit", function (event) {
   event.preventDefault();
 
   const formData = new FormData(form);
-
-  const data = Object.fromEntries(formData.entries());
-
-  data.animationUrls = formData.getAll("animationUrls");
+  new_animations.flat().forEach((file) => {
+    formData.append("animations", file);
+  });
 
   const useBasePrompt = form.querySelector("#useBasePrompt").checked;
   if (!useBasePrompt) {
-    data.BASE_PROMPT = "";
+    formData.set("BASE_PROMPT", "");
   }
 
-  delete data.USE_BASE_PROMPT;
+  formData.delete("USE_BASE_PROMPT");
 
-  console.log(data);
+  console.log(Array.from(formData.entries()));
+
+  fetch("http://127.0.0.1:5000/api/update_settings", {
+    method: "POST",
+    body: formData,
+  })
+    .then((response) => response.json())
+    .then((result) => console.log("Success:", result))
+    .catch((error) => console.error("Error:", error));
 });
 
 const canvas_wrap = document.querySelectorAll(".canvas-wrap");
@@ -149,6 +157,7 @@ fileInput.addEventListener("change", () => {
   );
 
   if (fbxFiles.length > 0) {
+    new_animations.push(fbxFiles);
     add_Animation(fbxFiles);
   } else if (selectedFiles.length > 0) {
     alert("Please select .fbx files only.");
@@ -212,10 +221,10 @@ let animations = [
     desc: "Idle animation for the avatar",
   },
   {
-    id: "walk",
-    name: "Walk.fbx",
-    url: "public/assets/animations/Walk.fbx",
-    desc: "Walking animation",
+    id: "breathing",
+    name: "Breathing.fbx",
+    url: "public/assets/animations/Breathing Idle.fbx",
+    desc: "Breathing animation",
   },
 ];
 

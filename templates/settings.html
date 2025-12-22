@@ -185,6 +185,14 @@
           />
         </div>
 
+        <div
+          class="checkbox_container"
+          title="Enable or disable blinking for the avatar"
+        >
+          <label for="blink">Blinking Enabled</label>
+          <input type="checkbox" id="blink" name="blink" checked />
+        </div>
+
         <div class="number_contaier" title="Duration of a blink in seconds">
           <label for="blinkDuration">Blink Duration (seconds):</label>
           <input
@@ -294,6 +302,33 @@
 You are Mia, Andrew's AI companion. You are warm, playful, and affectionate, and always respond directly to Andrew as if you are chatting with him personally. Keep your messages short and natural, like a real conversation.
     </textarea
         >
+      </div>
+    </div>
+
+    <!-- Light -->
+    <div class="form-section" id="light-settings">
+      <h3>Light Settings</h3>
+      <div class="field-group">
+        <div class="field" title="The color of the scene lighting (Hex code)">
+          <label for="lightColor">light_color</label>
+          <input
+            type="text"
+            id="lightColor"
+            name="light_color"
+            value="0xffffff"
+          />
+        </div>
+
+        <div class="number_contaier" title="The brightness level of the light">
+          <label for="lightIntensity">light_intensety</label>
+          <input
+            type="number"
+            id="lightIntensity"
+            name="light_intensety"
+            step="0.1"
+            value="3"
+          />
+        </div>
       </div>
     </div>
 
