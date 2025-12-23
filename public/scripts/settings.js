@@ -22,25 +22,53 @@ async function verifyHttpConnection(url, statusDiv) {
   }
 }
 
+async function load_all_animations(savedUrls = []) {
+  try {
+    const res = await fetch("/api/load_animations");
+    const allAnimations = await res.json();
+
+    // Clear the current global array
+    animations = allAnimations.map((anim) => ({
+      id: anim.name.toLowerCase().replace(".fbx", ""),
+      name: anim.name,
+      url: anim.url,
+      desc: `Animation: ${anim.name}`,
+    }));
+
+    // Render the checkboxes
+    add_Animation(allAnimations);
+
+    console.log(savedUrls);
+
+    for (const anim of allAnimations) {
+      const currentUrl = anim["url"];
+
+      const fileName = currentUrl.split("/").pop();
+
+      const isMatched = savedUrls.some((savedUrl) =>
+        savedUrl.endsWith(fileName)
+      );
+
+      if (isMatched) {
+        const fileName = currentUrl.split("/").pop();
+        const safeId = fileName.replace(/[ .]/g, "_");
+        let chekbox = document.getElementById(safeId);
+        if (chekbox) {
+          chekbox.checked = true;
+        } else {
+          console.error("Could not find element with ID:", safeId);
+        }
+      }
+    }
+  } catch (err) {
+    console.error("Failed to load animations from backend:", err);
+  }
+}
+
 function updateUI(settings) {
   if (!settings) return;
 
-  if (settings.animationUrls && Array.isArray(settings.animationUrls)) {
-    settings.animationUrls.forEach((url) => {
-      const exists = animations.some((anim) => anim.url === url);
-
-      if (!exists) {
-        const fileName = url.split("/").pop();
-        const newEntry = {
-          id: fileName.toLowerCase().replace(".fbx", ""),
-          name: fileName,
-          url: url,
-          desc: `Imported animation: ${fileName}`,
-        };
-        animations.push(newEntry);
-      }
-    });
-  }
+  load_all_animations(settings.animationUrls || []);
 
   add_Animation(animations);
 
@@ -414,11 +442,10 @@ function add_Animation(files) {
     checkbox.id = safeId;
     checkbox.name = "animationUrls";
     checkbox.value = file.url || file.name;
-    checkbox.checked = true;
+    checkbox.checked = false;
 
-    // FIX: Add the click logic right here!
     container.addEventListener("click", function (e) {
-      if (e.target === checkbox) return; // Don't double-toggle if clicking the checkbox itself
+      if (e.target === checkbox) return;
       checkbox.checked = !checkbox.checked;
       checkbox.dispatchEvent(new Event("change"));
     });

@@ -13,6 +13,7 @@ app = Flask(__name__, static_folder='public')
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 VRM_FOLDER = os.path.join(BASE_DIR, "public/assets/vrm")
+ANIMATIONS_FOLDER = os.path.join(BASE_DIR, "public/assets/animations")
 
 if not os.path.exists(VRM_FOLDER):
     os.makedirs(VRM_FOLDER)
@@ -73,6 +74,21 @@ def load_vrm_models():
     vrm_files = [f for f in os.listdir(VRM_FOLDER) if f.endswith('.vrm')]
 
     return jsonify(vrm_files), 200
+
+@app.route('/api/load_animations')
+def load_animations():
+    # List all FBX files in the folder
+    fbx_files = [f for f in os.listdir(ANIMATIONS_FOLDER) if f.endswith('.fbx')]
+    
+    # Return as a list of objects so the frontend has the name and the path
+    animation_data = []
+    for f in fbx_files:
+        animation_data.append({
+            "name": f,
+            "url": f"public/assets/animations/{f}"
+        })
+        
+    return jsonify(animation_data), 200
 
 @app.route('/api/update_settings', methods=['POST'])
 def update_settings():
