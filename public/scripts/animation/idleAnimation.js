@@ -1,4 +1,3 @@
-import { lipSyncActive, lipSyncData, analyser } from "../lipSync/lipSync.js";
 import * as THREE from "three";
 import { configPromise } from "../config.js";
 const config = await configPromise;

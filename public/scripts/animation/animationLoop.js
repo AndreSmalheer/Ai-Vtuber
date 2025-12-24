@@ -2,7 +2,7 @@
 // import { lipSyncActive, lipSyncData, analyser } from "../lipSync/lipSync.js";
 import { updateBlink } from "./blink.js";
 import { updateRandomIdle } from "./idleAnimation.js";
-import { updateLipSync } from "../lipSync/lipSyncUpdate.js";
+import { updateLipSync } from "../ui/VRM/lipSync.js";
 import { setIdlePose } from "./natruelPose.js";
 import { configPromise } from "/public/scripts/config.js";
 

@@ -1,3 +1,5 @@
+import * as THREE from "three";
+
 export let audioContext, analyser, audioSource, audioElement;
 export let lipSyncActive = false;
 export const lipSyncData = new Uint8Array(128);
@@ -34,4 +36,19 @@ export function playAudioWithLipSync(mp3Url, currentVrm, onEnded) {
     lipSyncActive = false;
     if (onEnded) onEnded();
   };
+}
+
+export function updateLipSync(vrm) {
+  if (!lipSyncActive || !vrm || !analyser) return;
+
+  analyser.getByteFrequencyData(lipSyncData);
+  let sum = 0;
+  for (let i = 0; i < lipSyncData.length; i++) sum += lipSyncData[i];
+
+  const volume = sum / lipSyncData.length / 255;
+  const mouthOpen = THREE.MathUtils.clamp(volume * 2.5, 0, 1);
+
+  vrm.expressionManager.setValue("aa", mouthOpen);
+  vrm.expressionManager.setValue("oh", mouthOpen * 0.5);
+  vrm.expressionManager.setValue("ee", mouthOpen * 0.3);
 }

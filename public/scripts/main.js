@@ -7,10 +7,9 @@ import * as THREE from "three";
 // Own modules
 import { init } from "./core/init.js";
 import { animate } from "./animation/animationLoop.js";
-import { playAudioWithLipSync } from "./lipSync/lipSync.js";
 import { loadVRM } from "./loaders/vrmLoader.js";
 import { loadAnimations } from "./animation/animationLoader.js";
-import { show_error } from "./errors.js";
+import { show_error } from "./ui/errors.js";
 // Try to get the script element
 const script = document.getElementById("main-script");
 
@@ -72,45 +71,47 @@ document.addEventListener("mouseout", () => {
   lookAtTarget.position.y = 0;
 });
 
-import { streamOllamaResponse } from "./api/ollama.js";
-import { showTextChunk } from "./text-animations/textAnimator.js";
+import "./ui/input.js";
 
-const input = document.querySelector(".styled-input");
-const textSpan = document.getElementById("text_span");
-const chatSubmit = document.getElementById("chatSubmit");
+// import { streamOllamaResponse } from "./api/ollama.js";
+// import { showTextChunk } from "./text-animations/textAnimator.js";
 
-function handleUserInput(input) {
-  const userText = input.value;
-  input.value = "";
+// const input = document.querySelector(".styled-input");
+// const textSpan = document.getElementById("text_span");
+// const chatSubmit = document.getElementById("chatSubmit");
 
-  textSpan.innerHTML = userText;
-  textSpan.className = "";
-  textSpan.classList.remove("animate-text");
-  void textSpan.offsetWidth;
-  textSpan.classList.add("animate-text");
+// function handleUserInput(input) {
+//   const userText = input.value;
+//   input.value = "";
 
-  function onUserAnimationEnd() {
-    textSpan.removeEventListener("animationend", onUserAnimationEnd);
+//   textSpan.innerHTML = userText;
+//   textSpan.className = "";
+//   textSpan.classList.remove("animate-text");
+//   void textSpan.offsetWidth;
+//   textSpan.classList.add("animate-text");
 
-    setTimeout(async () => {
-      textSpan.innerHTML = "";
-      textSpan.classList.remove("animate-text-ai");
-      void textSpan.offsetWidth;
-      textSpan.classList.add("animate-text-ai");
+//   function onUserAnimationEnd() {
+//     textSpan.removeEventListener("animationend", onUserAnimationEnd);
 
-      await streamOllamaResponse(textSpan, userText);
-    }, 1000);
-  }
+//     setTimeout(async () => {
+//       textSpan.innerHTML = "";
+//       textSpan.classList.remove("animate-text-ai");
+//       void textSpan.offsetWidth;
+//       textSpan.classList.add("animate-text-ai");
 
-  textSpan.addEventListener("animationend", onUserAnimationEnd);
-}
+//       await streamOllamaResponse(textSpan, userText);
+//     }, 1000);
+//   }
 
-if (input) {
-  input.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") handleUserInput(input);
-  });
-}
+//   textSpan.addEventListener("animationend", onUserAnimationEnd);
+// }
 
-chatSubmit.addEventListener("click", () => {
-  if (input.value) handleUserInput(input);
-});
+// if (input) {
+//   input.addEventListener("keydown", (event) => {
+//     if (event.key === "Enter") handleUserInput(input);
+//   });
+// }
+
+// chatSubmit.addEventListener("click", () => {
+//   if (input.value) handleUserInput(input);
+// });

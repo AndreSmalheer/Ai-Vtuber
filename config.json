@@ -17,7 +17,7 @@
     "maxAnimationInterval": 3
   },
   "ollama": {
-    "ollamaUrl": "http://localhost:11434",
+    "ollamaUrl": "http://127.0.0.1:5000",
     "ollamaModel": "gemma3:4b",
     "ttsChunkThreshold": 10,
     "debug": true,

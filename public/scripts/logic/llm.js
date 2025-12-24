@@ -1,9 +1,9 @@
-import { showTextChunk } from "../text-animations/textAnimator.js";
-import { callTTS } from "../tts/tts.js";
+import { showTextChunk } from "../ui/textAnimator.js";
+import { callTTS } from "./tts.js";
 import { configPromise } from "../config.js";
 
 const config = await configPromise;
-const OLLAMA_STREAM_URL = "http://127.0.0.1:5000/ollama_stream";
+const OLLAMA_STREAM_URL = `${config.ollama.ollamaUrl}/ollama_stream`;
 const TTS_CHUNK_THRESHOLD = config.ollama.ttsChunkThreshold;
 const DEBUG = config.ollama.debug;
 

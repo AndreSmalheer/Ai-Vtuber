@@ -1,4 +1,4 @@
-import { show_error } from "./errors.js";
+import { show_error } from "./ui/errors.js";
 
 async function loadConfig() {
   try {

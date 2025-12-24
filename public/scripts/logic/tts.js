@@ -1,4 +1,4 @@
-import { playAudioWithLipSync } from "../lipSync/lipSync.js";
+import { playAudioWithLipSync } from "../ui/VRM/lipSync.js";
 import { configPromise } from "../config.js";
 
 const config = await configPromise;
