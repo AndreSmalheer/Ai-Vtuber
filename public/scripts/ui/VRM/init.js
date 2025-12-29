@@ -7,6 +7,7 @@ import { configPromise } from "../../config.js";
 import { show_error } from "../errors.js";
 import { updateLipSync } from "./lipSync.js";
 import { updateBlink } from "./blink.js";
+import { updateAnimation } from "./animation.js";
 
 // ------------------------ Overlay Detection ------------------------
 function isOverlayEnabled() {
@@ -116,17 +117,12 @@ export async function loadVRM(modelUrl, scene, lookAtTarget) {
 
 // ------------------------ Animation Loop ------------------------
 export function animate(clock, mixer, vrm) {
-  const canvases = document.querySelectorAll(".canvas-wrap");
-  canvases.forEach((element) => element.classList.remove("hidden"));
+  // show canvas
+  const canvas_wrap = document.querySelectorAll(".canvas-wrap");
 
-  // Click animation
-  canvases.forEach((canvas) =>
-    canvas.addEventListener("pointerdown", (e) => {
-      const rect = canvas.getBoundingClientRect();
-      canvas.style.setProperty("--mx", `${e.clientX - rect.left}px`);
-      canvas.style.setProperty("--my", `${e.clientY - rect.top}px`);
-    })
-  );
+  canvas_wrap.forEach((canvas) => {
+    canvas.classList.remove("hidden");
+  });
 
   function loop() {
     requestAnimationFrame(loop);
@@ -134,6 +130,7 @@ export function animate(clock, mixer, vrm) {
     if (mixer) mixer.update(deltaTime);
 
     if (vrm) {
+      updateAnimation(vrm, mixer);
       updateBlink(vrm, clock);
       updateLipSync(vrm);
       vrm.update(deltaTime);
