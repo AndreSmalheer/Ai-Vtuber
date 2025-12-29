@@ -4,6 +4,7 @@ import { lipSyncActive } from "./lipSync.js";
 let animations = [];
 let is_playing = false;
 let current_action;
+let previous_action;
 
 // config
 let animation_fade_in = 0.15;
@@ -550,30 +551,37 @@ export function updateAnimation(vrm, mixer) {
     });
   }
 
-  if (lipSyncActive && !is_playing) {
-    playRandomOneShot();
-  } else if (!lipSyncActive && is_playing) {
-    const fallbackIdle =
-      typeof idle_action !== "undefined" && idle_action
-        ? idle_action
-        : animations[0] || null;
+  function idle() {
+    if (lipSyncActive && !is_playing) {
+      playRandomOneShot();
+    } else if (!lipSyncActive && is_playing) {
+      const fallbackIdle =
+        typeof idle_action !== "undefined" && idle_action
+          ? idle_action
+          : animations[0] || null;
 
-    if (fallbackIdle && current_action && current_action !== fallbackIdle) {
-      if (typeof current_action.crossFadeTo === "function") {
-        current_action.crossFadeTo(fallbackIdle, animation_fade_out, true);
-      } else {
-        fallbackIdle.reset();
-        fallbackIdle.play();
-        fallbackIdle.fadeIn(animation_fade_out);
-        if (typeof current_action.fadeOut === "function")
-          current_action.fadeOut(animation_fade_out);
+      if (fallbackIdle && current_action && current_action !== fallbackIdle) {
+        if (typeof current_action.crossFadeTo === "function") {
+          current_action.crossFadeTo(fallbackIdle, animation_fade_out, true);
+        } else {
+          fallbackIdle.reset();
+          fallbackIdle.play();
+          fallbackIdle.fadeIn(animation_fade_out);
+          if (typeof current_action.fadeOut === "function")
+            current_action.fadeOut(animation_fade_out);
+        }
+
+        current_action = fallbackIdle;
+      } else if (
+        current_action &&
+        typeof current_action.fadeOut === "function"
+      ) {
+        current_action.fadeOut(animation_fade_out);
       }
 
-      current_action = fallbackIdle;
-    } else if (current_action && typeof current_action.fadeOut === "function") {
-      current_action.fadeOut(animation_fade_out);
+      is_playing = false;
     }
-
-    is_playing = false;
   }
+
+  idle();
 }
