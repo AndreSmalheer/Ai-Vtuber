@@ -7,7 +7,7 @@ import uuid
 import subprocess
 from pathlib import Path
 from werkzeug.utils import secure_filename
-
+import tempfile
 
 app = Flask(__name__, static_folder='public')
 
@@ -173,34 +173,32 @@ def say():
     if not text:
         return "Please provide ?text=...", 400
 
-    # Output file
-    output_file = Path("public/assets/tts") / f"tts_{uuid.uuid4().hex}.wav"
-    output_file = output_file.resolve() 
+    url = "http://172.25.241.250:8080"
+    data = {"text": text}
 
-    # Convert Windows path → WSL path (for WSL execution)
-    drive = output_file.drive[0].lower()
-    wsl_output_file = f"/mnt/{drive}{output_file.as_posix()[2:]}"
+    tts_response = requests.post(url, json=data)
+    if tts_response.status_code != 200:
+        return "TTS error", 500
 
-    try:
-        subprocess.run(
-            [
-                "wsl",
-                PIPER_PATH,
-                "--model", VOICE_MODEL,
-                "--output_file", wsl_output_file
-            ],
-            input=text.encode("utf-8"),
-            check=True
-        )
-    except subprocess.CalledProcessError as e:
-        return f"Piper TTS failed: {e}", 500
+    # Create temp WAV file
+    temp = tempfile.NamedTemporaryFile(delete=False, suffix=".wav")
+    temp.write(tts_response.content)
+    temp.flush()
 
-    response = send_file(
-        output_file,
-        mimetype="audio/wav",
-        as_attachment=False
+    # Only send filename, not full path (safer)
+    temp_name = Path(temp.name).name
+    temp.close()
+
+    # Return RAW audio bytes
+    response = Response(
+        tts_response.content,
+        mimetype="audio/wav"
     )
-    response.headers["X-TTS-Filename"] = output_file.name
+
+    # Expose filename to browser
+    response.headers["X-TTS-Filename"] = temp_name
+    response.headers["Access-Control-Expose-Headers"] = "X-TTS-Filename"
+
     return response
 
 @app.route("/status_piper")

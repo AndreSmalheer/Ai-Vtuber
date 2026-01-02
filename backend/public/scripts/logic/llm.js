@@ -63,16 +63,13 @@ export async function streamOllamaResponse(textSpan, prompt) {
 
           for (const char of data.text) {
             currentChunk += char;
-            if (char === " " || [".", "!", "?"].includes(char)) {
-              chunks.push(currentChunk);
+
+            if ([".", "!", "?"].includes(char)) {
+              chunks.push(currentChunk.trim());
               currentChunk = "";
 
-              if (
-                chunks.length >= TTS_CHUNK_THRESHOLD ||
-                [".", "!", "?"].includes(char)
-              ) {
-                // callTTS(chunks.join(" "));
-                console.log("placholder call tts for", chunks.join(" "));
+              if (chunks.length >= TTS_CHUNK_THRESHOLD) {
+                callTTS(chunks.join(" "));
                 chunks = [];
               }
             }

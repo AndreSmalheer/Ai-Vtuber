@@ -4,7 +4,7 @@ export let audioContext, analyser, audioSource, audioElement;
 export let lipSyncActive = false;
 export const lipSyncData = new Uint8Array(128);
 
-export function playAudioWithLipSync(mp3Url, currentVrm, onEnded) {
+export async function playAudioWithLipSync(mp3Url, currentVrm, onEnded) {
   if (!currentVrm) return;
 
   if (!audioContext) audioContext = new AudioContext();
