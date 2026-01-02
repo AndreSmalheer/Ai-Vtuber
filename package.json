@@ -28,11 +28,13 @@
     "electron-builder": "^26.0.12"
   },
   "build": {
-    "appId": "com.andre.companionai",
-    "productName": "Companion AI",
+    "appId": "com.myapp.ai",
     "win": {
-      "target": "portable",
-      "icon": "assets/icon.ico"
-    }
+      "target": "portable"
+    },
+    "files": [
+      "**/*",
+      "backend/dist/app.exe"
+    ]
   }
 }

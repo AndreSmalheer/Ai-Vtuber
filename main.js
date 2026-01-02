@@ -10,6 +10,7 @@ const {
 } = require("electron");
 const express = require("express");
 const path = require("path");
+const { spawn } = require("child_process");
 
 let overlayVisible;
 
@@ -39,8 +40,12 @@ function create_tray() {
     {
       label: "Restart",
       click: () => {
-        app.relaunch();
-        app.exit(0);
+        flaskProcess.kill();
+
+        setTimeout(() => {
+          app.relaunch();
+          app.exit(0);
+        }, 100);
       },
     },
     {
@@ -94,6 +99,9 @@ function create_overlay_window() {
 }
 
 app.whenReady().then(() => {
+  const flaskPath = path.join(__dirname, "backend", "dist", "app.exe");
+  flaskProcess = spawn(flaskPath, [], { stdio: "inherit" });
+
   create_overlay_window();
   create_tray();
 
@@ -138,4 +146,10 @@ api.listen(PORT, () => {
 
 ipcMain.on("set-ignore-mouse-events", (event, ignore, options) => {
   overlayWindow.setIgnoreMouseEvents(ignore, options);
+});
+
+app.on("will-quit", () => {
+  if (flaskProcess) {
+    spawn("taskkill", ["/pid", flaskProcess.pid, "/f", "/t"]);
+  }
 });
