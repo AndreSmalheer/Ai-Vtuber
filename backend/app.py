@@ -22,9 +22,6 @@ if not os.path.exists(VRM_FOLDER):
 with open(os.path.join(BASE_DIR, "config.json")) as f:
     config = json.load(f)    
 
-ELECTRON_URL = config["ELECTRON_URL"]
-PIPER_PATH = config["PIPER_PATH"]
-VOICE_MODEL = config["VOICE_MODEL"]
 OLLAMA_URL = config["ollama"]["ollamaUrl"]
 OLLAMA_MODEL = config["ollama"]["ollamaModel"]
 BASE_PROMT = config["ollama"]["basePromt"]
@@ -41,10 +38,6 @@ def load_settings():
         data = json.load(file)
 
     SETTINGS_DATA = {
-        "ELECTRON_URL": data.get("ELECTRON_URL"),
-        "WSL_HOME": data.get("WSL_HOME"),
-        "PIPER_PATH": data.get("PIPER_PATH"),
-        "VOICE_MODEL": data.get("VOICE_MODEL"),
         "defaultModelUrl": data.get("defaultModelUrl"),
         "animationUrls": data.get("animationUrls"),
         "eyeTrackingEnabled": data.get("eyeTrackingEnabled"),
@@ -97,10 +90,6 @@ def get_animation_json():
 
 @app.route('/api/update_settings', methods=['POST'])
 def update_settings():
-    ELECTRON_URL = request.form.get('ELECTRON_URL')
-    WSL_HOME = request.form.get('WSL_HOME')
-    PIPER_PATH = request.form.get('PIPER_PATH')
-    VOICE_MODEL = request.form.get('VOICE_MODEL')
     DEFAULT_MODEL_URL = request.form.get('defaultModelUrl')
     ANIMATIONS_URLS = request.form.getlist('animationUrls')
 
@@ -134,10 +123,6 @@ def update_settings():
 
     # --- 4. STRUCTURE DATA ---
     SETTINGS_DATA = {
-        "ELECTRON_URL": ELECTRON_URL,
-        "WSL_HOME": WSL_HOME,
-        "PIPER_PATH": PIPER_PATH,
-        "VOICE_MODEL": VOICE_MODEL,
         "defaultModelUrl": f"public/assets/vrm/{DEFAULT_MODEL_URL}",
         "animationUrls": ANIMATIONS_URLS,
         "eyeTrackingEnabled": EYE_TRACKING,

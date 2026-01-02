@@ -243,27 +243,10 @@ async function verifyHttpConnection(url, statusDiv) {
 populateOllamaModels();
 
 function setupVerifyButtons() {
-  document.getElementById("verifyBtnElectron").addEventListener("click", () => {
-    const url = document.getElementById("electronUrl").value + "/status";
-    verifyHttpConnection(url, document.getElementById("status-electron"));
-  });
-
   document.getElementById("verifyBtnOllama").addEventListener("click", () => {
     const url = document.getElementById("ollamaUrl").value + "/api/version";
     verifyHttpConnection(url, document.getElementById("status-ollama"));
     populateOllamaModels();
-  });
-
-  document.getElementById("verifyBtnPiper").addEventListener("click", () => {
-    const piperPath = encodeURIComponent(
-      document.getElementById("piperPath").value
-    );
-    const voiceModel = encodeURIComponent(
-      document.getElementById("voiceModel").value
-    );
-
-    const url = `/status_piper?piper_path=${piperPath}&voice_model=${voiceModel}`;
-    verifyHttpConnection(url, document.getElementById("status-piper"));
   });
 }
 

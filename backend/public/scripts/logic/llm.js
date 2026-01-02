@@ -71,7 +71,8 @@ export async function streamOllamaResponse(textSpan, prompt) {
                 chunks.length >= TTS_CHUNK_THRESHOLD ||
                 [".", "!", "?"].includes(char)
               ) {
-                callTTS(chunks.join(" "));
+                // callTTS(chunks.join(" "));
+                console.log("placholder call tts for", chunks.join(" "));
                 chunks = [];
               }
             }

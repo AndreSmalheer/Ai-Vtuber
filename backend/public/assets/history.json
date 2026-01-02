@@ -22,5 +22,13 @@
   {
     "role": "mia",
     "content": "Hey there! Anything exciting happening with you today? \u2728"
+  },
+  {
+    "role": "andre",
+    "content": "hello"
+  },
+  {
+    "role": "mia",
+    "content": "Hey you! Just wanted to say hi! \ud83d\ude0a What\u2019s on your mind?"
   }
 ]
