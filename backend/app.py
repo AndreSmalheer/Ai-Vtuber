@@ -373,7 +373,7 @@ def ollama_stream():
 @app.route("/show_overlay")
 def show_overlay():
     try:
-        requests.get(f"{ELECTRON_URL}/show")
+        requests.get("http://localhost:8123/show")
     except:
         pass
     return "OK"
@@ -381,7 +381,7 @@ def show_overlay():
 @app.route("/hide_overlay")
 def hide_overlay():
     try:
-        requests.get(f"{ELECTRON_URL}/hide")
+        requests.get("http://localhost:8123/hide")
     except:
         pass
     return "OK"

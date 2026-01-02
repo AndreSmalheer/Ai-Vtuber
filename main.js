@@ -11,6 +11,8 @@ const {
 const express = require("express");
 const path = require("path");
 
+let overlayVisible;
+
 function create_tray() {
   tray = new Tray(
     path.join(__dirname, "backend", "public", "assets", "images", "logo.png")
@@ -88,10 +90,52 @@ function create_overlay_window() {
 
   overlayWindow.setIgnoreMouseEvents(true, { forward: true });
 
-  // overlayWindow.loadFile("index.html");
+  overlayWindow.loadURL("http://127.0.0.1:5000/overlay");
 }
 
 app.whenReady().then(() => {
   create_overlay_window();
   create_tray();
+
+  globalShortcut.register("Control+Shift+O", () => {
+    overlayVisible = !overlayVisible;
+    overlayWindow.webContents.send("toggle-visibility");
+  });
+});
+
+// Electron API
+const api = express();
+const PORT = 8123;
+
+api.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  next();
+});
+
+api.get("/show", (req, res) => {
+  overlayWindow.show();
+  showingOverlay = true;
+  res.send("shown");
+});
+
+api.get("/hide", (req, res) => {
+  overlayWindow.hide();
+  showingOverlay = false;
+  res.send("hidden");
+});
+
+api.get("/status", (req, res) => {
+  res.json({
+    visible: true,
+  });
+});
+
+api.listen(PORT, () => {
+  console.log("Electron overlay API running on port", PORT);
+});
+
+ipcMain.on("set-ignore-mouse-events", (event, ignore, options) => {
+  overlayWindow.setIgnoreMouseEvents(ignore, options);
 });
