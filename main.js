@@ -126,11 +126,14 @@ app.whenReady().then(async () => {
 
   if (app.isPackaged) {
     flaskPath = path.join(process.resourcesPath, "backend", "dist", "app.exe");
+    flaskProcess = spawn(flaskPath, [], { stdio: "inherit", shell: false });
   } else {
-    flaskPath = path.join(__dirname, "backend", "dist", "app.exe");
+    flaskPath = path.join(__dirname, "backend", "app.py");
+    flaskProcess = spawn("python", [flaskPath], {
+      stdio: "inherit",
+      shell: false,
+    });
   }
-
-  flaskProcess = spawn(flaskPath, [], { stdio: "inherit", shell: false });
 
   try {
     await waitForFlask("http://127.0.0.1:5000");
