@@ -1,0 +1,124 @@
+import { playAudioWithLipSync } from "../ui/VRM/lipSync.js";
+import { configPromise } from "../config.js";
+
+const config = await configPromise;
+const MIN_BUFFER = config.ttsMinBuffer;
+
+export const callTTS = (() => {
+  const textQueue = [];
+  const audioQueue = [];
+  const playedAudioLog = [];
+
+  let isGenerating = false;
+  let playLock = false;
+
+  const generateAudioIfNeeded = async () => {
+    if (isGenerating) return;
+    if (audioQueue.length >= MIN_BUFFER) return;
+    if (textQueue.length === 0) return;
+
+    isGenerating = true;
+
+    try {
+      while (audioQueue.length < MIN_BUFFER && textQueue.length > 0) {
+        const text = textQueue.shift();
+        const ttsUrl = `http://127.0.0.1:5000/say?text=${encodeURIComponent(
+          text
+        )}`;
+
+        try {
+          const resp = await fetch(ttsUrl);
+          if (!resp.ok) {
+            show_error(`TTS failed for: "${text}"`);
+            continue;
+          }
+
+          const blob = await resp.blob();
+          const blobUrl = URL.createObjectURL(blob);
+          const filename = resp.headers.get("X-TTS-Filename");
+
+          audioQueue.push({ text, url: blobUrl, filename });
+        } catch (err) {
+          show_error(`Problem generating audio for: "${text}"`);
+        }
+      }
+    } finally {
+      isGenerating = false;
+    }
+
+    if (!playLock && audioQueue.length > 0) {
+      void playbackLoop();
+    }
+  };
+
+  const playOne = (url) =>
+    new Promise((resolve) => {
+      try {
+        playAudioWithLipSync(url, window.vrm, () => {
+          resolve();
+        });
+      } catch (err) {
+        console.error("playAudioWithLipSync error:", err);
+        resolve();
+      }
+    });
+
+  const playbackLoop = async () => {
+    if (playLock) return;
+    playLock = true;
+
+    try {
+      while (audioQueue.length > 0) {
+        const { text, url, filename } = audioQueue.shift();
+
+        if (!url) {
+          show_error(`Audio missing for: "${text}"`);
+          continue;
+        }
+
+        const displayName = filename || "unknown_file";
+        playedAudioLog.push(displayName);
+
+        try {
+          await playOne(url);
+        } finally {
+          try {
+            URL.revokeObjectURL(url);
+          } catch (e) {
+            // ignore revoke errors
+          }
+        }
+
+        void generateAudioIfNeeded();
+      }
+
+      if (textQueue.length === 0 && audioQueue.length === 0 && !isGenerating) {
+        console.log("✅ TTS LOOP FINISHED (all text spoken)");
+        console.log("📜 Played audio files:", playedAudioLog);
+
+        fetch("http://127.0.0.1:5000/delete_tts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ files: playedAudioLog }),
+        })
+          .then((res) => res.json())
+          .then((data) => console.log("Deleted files:", data.deleted))
+          .catch(console.error);
+      } else {
+        void generateAudioIfNeeded();
+      }
+    } finally {
+      playLock = false;
+    }
+  };
+
+  return (input) => {
+    if (!input || typeof input !== "string") {
+      console.warn("callTTS expects a non-empty string input.");
+      return;
+    }
+
+    textQueue.push(input);
+    void generateAudioIfNeeded();
+  };
+})();

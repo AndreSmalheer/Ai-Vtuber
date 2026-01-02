@@ -1,0 +1,28 @@
+/* buttons.css */
+#chatSubmit {
+  position: absolute;
+  bottom: 21px;
+  left: calc(50% + 165px);
+  transform: translateX(-50%);
+  width: 40px;
+  height: 40px;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 30%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+#chatSubmit:hover {
+  background-color: #f0f0f0;
+  transform: translateX(-50%) scale(1.1);
+}
+
+#chatSubmit svg {
+  fill: black;
+  width: 24px;
+  height: 24px;
+}

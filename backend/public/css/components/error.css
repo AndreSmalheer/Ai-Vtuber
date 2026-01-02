@@ -1,0 +1,20 @@
+#error_container {
+  position: absolute;
+  left: 50%;
+  top: 20px;
+  transform: translateX(-50%);
+  box-sizing: border-box;
+  padding: 12px 18px;
+  border: none;
+  border-radius: 12px;
+  background-color: #f8d7da;
+  font-size: 16px;
+  color: #333;
+  width: fit-content;
+  max-width: 80%;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  word-wrap: break-word;
+  transition: opacity 2s linear;
+  opacity: 0;
+  animation: fadeInOutTop 3s forwards;
+}

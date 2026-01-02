@@ -1,0 +1,24 @@
+#loader {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  font-family: "Arial", sans-serif;
+  text-align: center;
+
+  & img {
+    width: 400px;
+    height: auto;
+    animation: pulse 1s infinite ease-in-out;
+  }
+
+  & h1 {
+    font-size: 2rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+    font-family: "Poppins", sans-serif;
+  }
+}

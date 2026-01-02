@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Companion-AI</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      .hidden {
+        display: none !important;
+      }
+    </style>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0,
+    minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+
+    <link
+      rel="icon"
+      type="image/png"
+      href="{{ url_for('static', filename='/assets/images/logo.png') }}"
+    />
+
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/main.css') }}"
+    />
+  </head>
+
+  <body>
+    <div id="loader">
+      <img src="{{ url_for('static', filename='/assets/images/logo.png') }}" />
+      <h1>Loading content</h1>
+    </div>
+
+    <div id="main_content" class="hidden">
+      <div class="canvas-wrap"></div>
+
+      <input type="text" class="styled-input" placeholder="Type something..." />
+
+      <div id="chatSubmit">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          fill="white"
+          viewBox="0 0 24 24"
+        >
+          <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+        </svg>
+      </div>
+
+      <div id="text_container">
+        <span id="text_span"></span>
+      </div>
+
+      <div id="ollama-text-debug"></div>
+
+      <div class="html-import" data-src="{{ url_for('settings') }}"></div>
+    </div>
+
+    <script>
+      document.addEventListener("visibilitychange", function () {
+        if (document.hidden) {
+          fetch("/show_overlay");
+        } else {
+          fetch("/hide_overlay");
+        }
+      });
+    </script>
+
+    <script type="importmap">
+      {
+        "imports": {
+          "fflate": "https://cdn.jsdelivr.net/npm/fflate@0.7.4/esm/browser.js",
+          "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/",
+          "@pixiv/three-vrm": "https://cdn.jsdelivr.net/npm/@pixiv/three-vrm@3.4.4/lib/three-vrm.module.js"
+        }
+      }
+    </script>
+
+    <script
+      type="module"
+      src="{{ url_for('static', filename='scripts/main.js') }}"
+    ></script>
+
+    <script
+      type="module"
+      src="{{ url_for('static', filename='himport/htmlImporter.js') }}"
+    ></script>
+  </body>
+</html>

@@ -1,0 +1,362 @@
+<div id="settings-icon"></div>
+
+<div id="settings" class="window hidden">
+  <form id="settingsForm">
+    <!-- Electron -->
+    <div class="form-section" id="electron-settings">
+      <h3>Electron Settings</h3>
+      <div class="field-group">
+        <div title="Path to your Linux home directory inside WSL">
+          <label for="electronUrl">ELECTRON_URL</label>
+          <input
+            type="text"
+            id="electronUrl"
+            name="ELECTRON_URL"
+            value="http://localhost:8123"
+          />
+        </div>
+
+        <div id="status-electron" class="status-resut"></div>
+      </div>
+      <button type="button" id="verifyBtnElectron" class="verifyBtn">
+        Verify Connection
+      </button>
+    </div>
+
+    <!-- Piper -->
+    <div class="form-section" id="piper-settings">
+      <h3>Piper Settings</h3>
+
+      <div class="field-group">
+        <div title="Path to your Linux home directory inside WSL">
+          <label for="wslHome">WSL_HOME:</label>
+          <input type="text" id="wslHome" name="WSL_HOME" value="/home/andre" />
+        </div>
+
+        <div title="Path to the Piper TTS executable">
+          <label for="piperPath">PIPER_PATH:</label>
+          <input
+            type="text"
+            id="piperPath"
+            name="PIPER_PATH"
+            value="/home/andre/piper/piper"
+          />
+        </div>
+
+        <div title="Path to the Piper voice model (.onnx)">
+          <label for="voiceModel">VOICE_MODEL:</label>
+          <input
+            type="text"
+            id="voiceModel"
+            name="VOICE_MODEL"
+            value="/home/andre/en_US-amy-medium.onnx"
+          />
+        </div>
+
+        <div
+          class="number_contaier"
+          title="Minimum TTS buffer in seconds before playback"
+        >
+          <label>TTS Min Buffer (seconds):</label>
+          <input type="number" name="ttsMinBuffer" value="3" step="1" min="0" />
+        </div>
+
+        <div id="status-piper" class="status-resut"></div>
+      </div>
+
+      <button type="button" id="verifyBtnPiper" class="verifyBtn">
+        Verify Connection
+      </button>
+    </div>
+
+    <!-- Animation -->
+    <div class="form-section" id="animation-settings">
+      <h3>Animation Settings</h3>
+
+      <div class="field-group">
+        <div class="field">
+          <label>Default Model:</label>
+          <select id="defaultModelSelect" name="defaultModelUrl">
+            <option value="">-- Select Model --</option>
+            <option value="add">Add New Item</option>
+          </select>
+
+          <input
+            type="file"
+            id="new_defalut_model"
+            accept=".vrm"
+            style="display: none"
+            multiple
+          />
+        </div>
+      </div>
+
+      <!-- <div class="field-group">
+        <div class="field">
+          <label>Default Model:</label>
+          <select id="defaultModelSelect" name="defaultModelUrl">
+            <option value="">-- Select Animation --</option>
+            <option value="add">Add New Item</option>
+          </select>
+
+          <input
+            type="file"
+            id="new_defalut_model"
+            accept=".vrm"
+            style="display: none"
+            multiple
+          />
+        </div>
+
+        <div title="Default pose/animation file used on startup">
+          <label for="defaultPoseSelect">Default Pose:</label>
+          <div class="field">
+            <select id="defaultPoseSelect" name="defaultPose">
+              <option value="">-- Select from Animations --</option>
+            </select>
+          </div>
+        </div>
+
+        <p>Animations to Use:</p>
+        <div id="animations_list">
+          <div
+            class="animation_container"
+            title="Idle animation for the avatar"
+          >
+            <label for="idle">Idle.fbx</label>
+            <input
+              type="checkbox"
+              id="idle"
+              name="animationUrls"
+              value="public/assets/animations/Idle.fbx"
+              checked
+            />
+          </div>
+          <div
+            class="animation_container"
+            title="Breathing Idle animation for the avatar"
+          >
+            <label for="breathingIdle">Breathing Idle.fbx</label>
+            <input
+              type="checkbox"
+              id="breathingIdle"
+              name="animationUrls"
+              value="public/assets/animations/Breathing Idle.fbx"
+              checked
+            />
+          </div>
+        </div>
+
+        <div id="drop-area">
+          <p>
+            Drag & Drop a file here<br />or<br />
+            <button type="button" id="file-btn">Select a file</button>
+          </p>
+          <input
+            type="file"
+            id="file-input"
+            accept=".fbx"
+            style="display: none"
+            multiple
+          />
+        </div>
+
+        <div
+          class="number_contaier"
+          title="Minimum time interval between animations (seconds)"
+        >
+          <label for="minAnimationInterval">Min Interval</label>
+          <input
+            type="number"
+            id="minAnimationInterval"
+            name="minAnimationInterval"
+            value="1"
+            step="0.1"
+          />
+        </div>
+
+        <div
+          class="number_contaier"
+          title="Maximum time interval between animations (seconds)"
+        >
+          <label for="maxAnimationInterval">Max Interval</label>
+          <input
+            type="number"
+            id="maxAnimationInterval"
+            name="maxAnimationInterval"
+            value="3"
+            step="0.1"
+          />
+        </div>
+      </div> -->
+    </div>
+
+    <!-- Eye  -->
+    <div class="form-section" id="eye-settings">
+      <h3>Eye Settings</h3>
+      <div class="field-group">
+        <div
+          class="checkbox_container"
+          title="Enable or disable eye tracking for the avatar"
+        >
+          <label for="eyeTrackingEnabled">Eye Tracking Enabled:</label>
+          <input
+            type="checkbox"
+            id="eyeTrackingEnabled"
+            name="eyeTrackingEnabled"
+            checked
+          />
+        </div>
+
+        <div
+          class="checkbox_container"
+          title="Enable or disable blinking for the avatar"
+        >
+          <label for="blink">Blinking Enabled</label>
+          <input type="checkbox" id="blink" name="blink" checked />
+        </div>
+
+        <div class="number_contaier" title="Duration of a blink in seconds">
+          <label for="blinkDuration">Blink Duration (seconds):</label>
+          <input
+            type="number"
+            id="blinkDuration"
+            name="blinkDuration"
+            value="0.1"
+            step="0.01"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- Ollama -->
+    <div class="form-section" id="ollama-settings">
+      <h3>Ollama Settings</h3>
+
+      <div class="field-group">
+        <!-- Connection -->
+        <div class="field" title="Ollama API endpoint URL">
+          <label for="ollamaUrl" style="margin-bottom: 12px">Ollama URL</label>
+          <input
+            type="text"
+            id="ollamaUrl"
+            name="OLLAMA_URL"
+            value="http://localhost:11434"
+          />
+        </div>
+
+        <div
+          class="field number_contaier"
+          title="Select the Ollama model to use for text generation"
+        >
+          <label for="ollamaModel">Ollama Model</label>
+          <select id="ollamaModel" name="OLLAMA_MODEL">
+            <option value="gemma3:4b" selected>gemma3:4b</option>
+            <option value="gemma2:4b">gemma2:4b</option>
+            <option value="gemma1:4b">gemma1:4b</option>
+            <option value="otherModel:4b">otherModel:4b</option>
+          </select>
+        </div>
+
+        <div id="status-ollama" class="status-resut"></div>
+
+        <button type="button" id="verifyBtnOllama" class="verifyBtn">
+          Verify Connection
+        </button>
+
+        <!-- Numeric settings -->
+        <div
+          class="number_contaier"
+          title="Minimum number of characters before TTS starts speaking"
+        >
+          <label for="ttsChunkThreshold">TTS Chunk Threshold</label>
+          <input
+            type="number"
+            id="ttsChunkThreshold"
+            name="TTS_CHUNK_THRESHOLD"
+            value="10"
+          />
+        </div>
+
+        <div
+          class="number_contaier"
+          title="Time in milliseconds for each character when animating text"
+        >
+          <label for="textAnimationSpeedMs">Text Animation Speed (ms)</label>
+          <input
+            type="number"
+            id="textAnimationSpeedMs"
+            name="TEXT_ANIMATION_SPEED_MS"
+            value="200"
+            step="10"
+            min="0"
+          />
+        </div>
+
+        <!-- Toggles -->
+        <div
+          class="checkbox_container"
+          title="Enable or disable debug mode for extra logging"
+        >
+          <label for="debug">Debug Mode</label>
+          <input type="checkbox" id="debug" name="DEBUG_MODE" checked />
+        </div>
+
+        <div
+          class="checkbox_container"
+          title="Defines whether to use a base prompt or not"
+        >
+          <label for="useBasePrompt">Use Base Prompt</label>
+          <input type="checkbox" id="useBasePrompt" name="USE_BASE_PROMPT" />
+        </div>
+
+        <!-- Prompt -->
+        <label
+          for="basePrompt"
+          title="System prompt that defines the personality and behavior"
+          >Base Prompt</label
+        >
+        <textarea
+          id="basePrompt"
+          name="BASE_PROMPT"
+          rows="4"
+          title="System prompt that defines the personality and behavior"
+        >
+You are Mia, Andrew's AI companion. You are warm, playful, and affectionate, and always respond directly to Andrew as if you are chatting with him personally. Keep your messages short and natural, like a real conversation.
+    </textarea
+        >
+      </div>
+    </div>
+
+    <!-- Light -->
+    <div class="form-section" id="light-settings">
+      <h3>Light Settings</h3>
+      <div class="field-group">
+        <div class="field" title="The color of the scene lighting (Hex code)">
+          <label for="lightColor">light_color</label>
+          <input
+            type="text"
+            id="lightColor"
+            name="light_color"
+            value="0xffffff"
+          />
+        </div>
+
+        <div class="number_contaier" title="The brightness level of the light">
+          <label for="lightIntensity">light_intensety</label>
+          <input
+            type="number"
+            id="lightIntensity"
+            name="light_intensety"
+            step="0.1"
+            value="3"
+          />
+        </div>
+      </div>
+    </div>
+
+    <button type="submit">Save Settings</button>
+  </form>
+</div>
+
+<script type="module" src="/public/scripts/settings.js"></script>
