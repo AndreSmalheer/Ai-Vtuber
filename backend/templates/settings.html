@@ -6,7 +6,27 @@
     <div class="form-section" id="piper-settings">
       <h3>Text To Speech</h3>
       <p>This is a work in progress</p>
+
+      <!-- <h3>Piper Settings</h3> -->
+
+      <div class="field" title="Piper API endpoint URL">
+        <label for="piperUrl" style="margin-bottom: 12px">Piper URL</label>
+        <input
+          type="text"
+          id="piperUrl"
+          name="PIPER_URL"
+          value="http://172.25.241.250:8080"
+        />
+      </div>
+
+      <div id="status-piper" class="status-resut"></div>
+
+      <button type="button" id="verifyBtnPiper" class="verifyBtn">
+        Verify Connection
+      </button>
+
       <!-- <h3>Piper Settings</h3>
+       
 
       <div class="field-group">
         <div title="Path to your Linux home directory inside WSL">

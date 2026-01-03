@@ -219,15 +219,23 @@ async function populateOllamaModels() {
 }
 
 async function verifyHttpConnection(url, statusDiv) {
-  // console.log("chekking url", url);
   statusDiv.textContent = "Verifying...";
   statusDiv.style.color = "";
 
   try {
     const response = await fetch(url);
-    if (!response.ok) throw new Error("Server not reachable");
 
-    const data = await response.json();
+    if (!response.ok)
+      throw new Error("Server not reachable (HTTP " + response.status + ")");
+
+    let data;
+    try {
+      data = await response.json();
+      if (!data.status && !data.version) {
+        throw new Error("Unexpected JSON format");
+      }
+    } catch {}
+
     statusDiv.textContent = "Connection successful!";
     statusDiv.style.color = "green";
   } catch (error) {
@@ -235,7 +243,7 @@ async function verifyHttpConnection(url, statusDiv) {
     statusDiv.style.color = "red";
   }
 
-  const myTimeout = setTimeout(() => {
+  setTimeout(() => {
     statusDiv.classList.add("animate-text-out");
   }, 2000);
 }
@@ -243,6 +251,12 @@ async function verifyHttpConnection(url, statusDiv) {
 populateOllamaModels();
 
 function setupVerifyButtons() {
+  document.getElementById("verifyBtnPiper").addEventListener("click", () => {
+    const url = document.getElementById("verifyBtnPiper").value;
+    console.log(url);
+    verifyHttpConnection(url, document.getElementById("status-piper"));
+  });
+
   document.getElementById("verifyBtnOllama").addEventListener("click", () => {
     const url = document.getElementById("ollamaUrl").value + "/api/version";
     verifyHttpConnection(url, document.getElementById("status-ollama"));
