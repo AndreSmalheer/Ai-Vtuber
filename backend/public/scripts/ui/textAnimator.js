@@ -1,4 +1,5 @@
 import { configPromise } from "../config.js";
+
 const config = await configPromise;
 
 const TEXT_ANIMATION_SPEED_MS = config.textAnimationSpeedMs;

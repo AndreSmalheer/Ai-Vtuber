@@ -5,6 +5,9 @@ import { configPromise } from "../config.js";
 const config = await configPromise;
 const TTS_CHUNK_THRESHOLD = config.ollama.ttsChunkThreshold;
 const DEBUG = config.ollama.debug;
+const LipSyncActive = config.LipSyncActive;
+
+export let IsOllamaStreaming = false;
 
 export async function streamOllamaResponse(textSpan, prompt) {
   try {
@@ -52,6 +55,7 @@ export async function streamOllamaResponse(textSpan, prompt) {
             textSpan.innerHTML = "";
             textSpan.classList.remove("loading");
             firstChunk = false;
+            IsOllamaStreaming = true;
           }
 
           if (DEBUG) {
@@ -69,7 +73,9 @@ export async function streamOllamaResponse(textSpan, prompt) {
               currentChunk = "";
 
               if (chunks.length >= TTS_CHUNK_THRESHOLD) {
-                callTTS(chunks.join(" "));
+                if (LipSyncActive) {
+                  callTTS(chunks.join(" "));
+                }
                 chunks = [];
               }
             }
@@ -79,7 +85,13 @@ export async function streamOllamaResponse(textSpan, prompt) {
     }
 
     if (currentChunk.length > 0) chunks.push(currentChunk);
-    if (chunks.length > 0) callTTS(chunks.join(""));
+    if (chunks.length > 0) {
+      if (LipSyncActive) {
+        callTTS(chunks.join(""));
+      }
+    }
+
+    IsOllamaStreaming = false;
   } catch (err) {
     console.error("streamOllamaResponse error:", err);
     textSpan.classList.remove("loading");

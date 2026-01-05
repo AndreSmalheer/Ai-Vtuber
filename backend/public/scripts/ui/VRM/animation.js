@@ -1,6 +1,8 @@
 import * as THREE from "three";
 import { lipSyncActive } from "./lipSync.js";
 import { configPromise } from "../../config.js";
+import { IsOllamaStreaming } from "../../logic/llm.js";
+
 const config = await configPromise;
 
 let animations = [];
@@ -22,6 +24,7 @@ let animation_fade_out_ms = config.animation_fade_out;
 let animation_fade_in = animation_fade_in_ms / 1000;
 let animation_fade_out = animation_fade_out_ms / 1000;
 const idleDelay = config.idleDelay;
+const ttsEnabled = false;
 
 const ALL_HUMANOID_BONES = [
   // Root & spine
@@ -220,6 +223,8 @@ export function load_animations_from_spec(
 export function updateAnimation(vrm, mixer) {
   if (!vrm) return;
 
+  const lipSyncActiveFlag = ttsEnabled ? lipSyncActive : IsOllamaStreaming;
+
   // load animations from json
   if (animations.length === 0) {
     for (let i = 0; i < specs.length; i++) {
@@ -295,7 +300,7 @@ export function updateAnimation(vrm, mixer) {
       is_playing = false;
 
       if (animation_type == "talking") {
-        if (lipSyncActive) {
+        if (lipSyncActiveFlag) {
           const nextAction =
             talkingAnimations[
               Math.floor(Math.random() * talkingAnimations.length)
@@ -306,7 +311,7 @@ export function updateAnimation(vrm, mixer) {
       }
 
       if (animation_type == "idle") {
-        if (!lipSyncActive) {
+        if (!lipSyncActiveFlag) {
           lastActiveTime = performance.now();
           if (current_action && current_action === finishedAction) {
             finishedAction.fadeOut(animation_fade_out);
@@ -329,7 +334,7 @@ export function updateAnimation(vrm, mixer) {
     const now = performance.now();
 
     if (
-      !lipSyncActive &&
+      !lipSyncActiveFlag &&
       (!is_playing || !playing_idle) &&
       now - lastActiveTime > idleDelay
     ) {
@@ -342,7 +347,7 @@ export function updateAnimation(vrm, mixer) {
       playing_talking = false;
       current_action = nextAction;
       play_animation(nextAction);
-    } else if (lipSyncActive && playing_idle) {
+    } else if (lipSyncActiveFlag && playing_idle) {
       if (current_action) current_action.fadeOut(animation_fade_out);
       is_playing = false;
       playing_idle = false;
@@ -350,7 +355,7 @@ export function updateAnimation(vrm, mixer) {
   }
 
   function talking_anims() {
-    if (lipSyncActive && (!is_playing || !playing_talking)) {
+    if (lipSyncActiveFlag && (!is_playing || !playing_talking)) {
       if (current_action && playing_idle)
         current_action.fadeOut(animation_fade_out);
 
@@ -363,7 +368,7 @@ export function updateAnimation(vrm, mixer) {
 
       current_action = nextAction;
       play_animation(nextAction);
-    } else if (!lipSyncActive && playing_talking) {
+    } else if (!lipSyncActiveFlag && playing_talking) {
       if (current_action) current_action.fadeOut(animation_fade_out);
       is_playing = false;
       playing_talking = false;
@@ -373,5 +378,5 @@ export function updateAnimation(vrm, mixer) {
   idle_anims();
   talking_anims();
 
-  if (lipSyncActive) lastActiveTime = performance.now();
+  if (lipSyncActiveFlag) lastActiveTime = performance.now();
 }

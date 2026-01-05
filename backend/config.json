@@ -18,5 +18,6 @@
   "light_intensety": 3.0,
   "animation_fade_in": "150",
   "animation_fade_out": "150",
-  "idleDelay": "3000"
+  "idleDelay": "3000",
+  "LipSyncActive": false
 }
