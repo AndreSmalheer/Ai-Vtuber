@@ -286,8 +286,8 @@ def add_history(user_message, llm_message):
     else:
         history = []
 
-    history.append({"role": "andre", "content": user_message})
-    history.append({"role": "mia", "content": llm_message})
+    history.append({"role": "User", "content": user_message})
+    history.append({"role": "Ai", "content": llm_message})
 
     with open(history_file, "w") as f:
         json.dump(history, f, indent=2)
@@ -347,7 +347,7 @@ def delete_tts():
         })
     
 def generate_ollama_stream(user_message):
-    prompt = get_history() + f"Andre: {user_message}\nMia:"
+    prompt = get_history() + f"User: {user_message}\AI:"
 
     if BASE_PROMT != "":
      payload = {

@@ -9,7 +9,7 @@
     "ollamaModel": "gemma3:4b",
     "ttsChunkThreshold": 10,
     "debug": true,
-    "basePromt": "You are Mia, Andrew's AI companion. You are warm, playful, and affectionate,  and always respond directly to Andrew as if you are chatting with him personally. Keep your messages short and natural, like a real conversation."
+    "basePromt": "You are a friendly Ai companion for a new user please be nice"
   },
   "textAnimationSpeedMs": 200,
   "ttsMinBuffer": 0,
