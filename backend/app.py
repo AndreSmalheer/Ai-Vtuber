@@ -27,66 +27,6 @@ OLLAMA_MODEL = config["ollama"]["ollamaModel"]
 BASE_PROMT = config["ollama"]["basePromt"]
 UPLOAD_FOLDER = os.path.join(BASE_DIR, 'public/assets/animations/')
 
-
-@app.route('/settings')
-def settings():
-    return render_template('settings.html')
-
-@app.route('/api/load_settings')
-def load_settings():
-    with open(os.path.join(BASE_DIR, "config.json"), 'r') as file:
-        data = json.load(file)
-
-    with open(os.path.join(BASE_DIR, "public", "assets", "animations.json"), 'r') as file:
-        animation_data = json.load(file) 
-
-    SETTINGS_DATA = {
-        "animations_data": animation_data,
-        "piperUrl": data.get("piperUrl"),
-        "defaultModelUrl": data.get("defaultModelUrl"),
-        "animationUrls": data.get("animationUrls"),
-        "eyeTrackingEnabled": data.get("eyeTrackingEnabled"),
-        "blink": data.get("blink"),
-        "ollama": {
-            "ollamaUrl": data.get("ollama", {}).get("ollamaUrl"),
-            "ollamaModel": data.get("ollama", {}).get("ollamaModel"),
-            "ttsChunkThreshold": data.get("ollama", {}).get("ttsChunkThreshold"),
-            "debug": data.get("ollama", {}).get("debug"),
-            "basePromt": data.get("ollama", {}).get("basePromt")
-        },
-        "textAnimationSpeedMs": data.get("textAnimationSpeedMs"),
-        "ttsMinBuffer": data.get("ttsMinBuffer"),
-        "light_color": data.get("light_color"),
-        "light_intensety": data.get("light_intensety"),
-        "animation_fade_in": data.get("animation_fade_in"),
-        "animation_fade_out": data.get("animation_fade_out"),
-        "idleDelay": data.get("idleDelay"),
-        "text_to_speech": data.get("text_to_speech")
-    }
-
-    return SETTINGS_DATA
-
-@app.route('/api/load_vrm_models')
-def load_vrm_models():
-    vrm_files = [f for f in os.listdir(VRM_FOLDER) if f.endswith('.vrm')]
-
-    return jsonify(vrm_files), 200
-
-@app.route('/api/load_animations')
-def load_animations():
-    # List all FBX files in the folder
-    fbx_files = [f for f in os.listdir(ANIMATIONS_FOLDER) if f.endswith('.fbx')]
-    
-    # Return as a list of objects so the frontend has the name and the path
-    animation_data = []
-    for f in fbx_files:
-        animation_data.append({
-            "name": f,
-            "url": f"public/assets/animations/{f}"
-        })
-        
-    return jsonify(animation_data), 200
-
 @app.route('/api/animations/json')
 def get_animation_json():
     json_file = os.path.join(BASE_DIR, "public","assets", "animations.json")
@@ -95,91 +35,6 @@ def get_animation_json():
         data = json.load(f)
 
     return jsonify(data)
-
-@app.route('/api/update_settings', methods=['POST'])
-def update_settings():
-    if "animations" in request.form:
-        animations_str = request.form.get("animations", "[]")
-    
-        try:
-            animations = json.loads(animations_str)
-        except json.JSONDecodeError:
-            return jsonify({"error": "Invalid JSON for animations"}), 400
-        
-        animations_file = os.path.join(BASE_DIR, "public", "assets", "animations.json")
-        with open(animations_file, "w") as f:
-            json.dump(animations, f, indent=2)
-
-
-    PIPERURL = request.form.get('PIPER_URL')
-    DEFAULT_MODEL_URL = request.form.get('defaultModelUrl')
-    ANIMATIONS_URLS = request.form.getlist('animationUrls')
-
-    EYE_TRACKING = request.form.get('eyeTrackingEnabled') == 'on'
-    BLINK = request.form.get('blink') == 'on'
-    DEBUG = request.form.get('DEBUG_MODE') == 'on'
-
-    def to_int(val): return int(val) if val and str(val).isdigit() else 0
-    def to_float(val): 
-        try: return float(val)
-        except: return 0.0
-
-    FBX_FILES = request.files.getlist('animations')
-    for file in FBX_FILES:
-        if file.filename:
-            name = secure_filename(file.filename)
-            save_path = os.path.join(UPLOAD_FOLDER, name)
-            file.save(save_path)
-            new_url = f"public/assets/animations/uploaded/{name}"
-            if new_url not in ANIMATIONS_URLS:
-                ANIMATIONS_URLS.append(new_url)
-
-
-    if 'vrm_file' in request.files:
-        vrm_file = request.files['vrm_file']
-        if vrm_file.filename != '':
-            vrm_name = secure_filename(vrm_file.filename)
-            vrm_save_path = os.path.join(VRM_FOLDER, vrm_name)
-            vrm_file.save(vrm_save_path)
-            DEFAULT_MODEL_URL = vrm_name            
-
-    # --- 4. STRUCTURE DATA ---
-    SETTINGS_DATA = {
-        "piperUrl": PIPERURL,
-        "defaultModelUrl": f"public/assets/vrm/{DEFAULT_MODEL_URL}",
-        "animationUrls": ANIMATIONS_URLS,
-        "eyeTrackingEnabled": EYE_TRACKING,
-        "blink": BLINK,
-        "ollama": {
-            "ollamaUrl": request.form.get('OLLAMA_URL'),
-            "ollamaModel": request.form.get('OLLAMA_MODEL'),
-            "ttsChunkThreshold": to_int(request.form.get('TTS_CHUNK_THRESHOLD')),
-            "debug": DEBUG,
-            "basePromt": request.form.get('BASE_PROMPT')
-        },
-        "textAnimationSpeedMs": to_int(request.form.get('TEXT_ANIMATION_SPEED_MS')),
-        "ttsMinBuffer": to_int(request.form.get('ttsMinBuffer')),
-        "light_color": request.form.get('light_color'),
-        "light_intensety": to_float(request.form.get('light_intensety')),
-        "animation_fade_in": request.form.get("animation_fade_in"),
-        "animation_fade_out": request.form.get("animation_fade_out"),
-        "idleDelay": request.form.get("idleDelay"),
-        "text_to_speech": bool(request.form.get("TextToSpeeach"))
-    }
-
-    
-
-    # print("\n" + "="*60)
-    # print("                SAVING UPDATED SETTINGS")
-    # print("="*60)
-    # # This prints it like a beautiful JSON object in your terminal
-    # print(json.dumps(SETTINGS_DATA, indent=2))
-    # print("="*60 + "\n")
-
-    with open(os.path.join(BASE_DIR, "config.json"), 'w', encoding='utf-8') as f:
-        json.dump(SETTINGS_DATA, f, indent=2)
-
-    return jsonify({"status": "success", "message": "Settings saved to disk"}), 200
 
 @app.route("/config")
 def get_config():
@@ -229,39 +84,6 @@ def say():
 
     return response
 
-@app.route("/status_piper")
-def status_piper():
-    piper_path = request.args.get("piper_path")
-    voice_model = request.args.get("voice_model")
-    
-    if not piper_path or not voice_model:
-        return {"visible": False, "error": "Missing piper_path or voice_model"}, 400
-
-    test_text = "Testing Piper connection"
-    try:
-        # Output file (temporary, discard)
-        output_file = Path("/tmp/test.wav")
-        output_file.parent.mkdir(parents=True, exist_ok=True)
-
-        # Convert Windows path → WSL path
-        drive = output_file.drive[0].lower() if output_file.drive else "c"
-        wsl_output_file = f"/mnt/{drive}{output_file.as_posix()[2:]}"
-        
-        # Run Piper via WSL
-        subprocess.run(
-            [
-                "wsl",
-                piper_path,
-                "--model", voice_model,
-                "--output_file", wsl_output_file
-            ],
-            input=test_text.encode("utf-8"),
-            check=True
-        )
-        return {"visible": True}
-    except subprocess.CalledProcessError as e:
-        return {"visible": False, "error": str(e)}, 500
-    
 def get_history():
     history_file = os.path.join(BASE_DIR, "public/assets/history.json")
     
@@ -347,7 +169,7 @@ def delete_tts():
         })
     
 def generate_ollama_stream(user_message):
-    prompt = get_history() + f"User: {user_message}\AI:"
+    prompt = get_history() + rf"User: {user_message}\AI:"
 
     if BASE_PROMT != "":
      payload = {
