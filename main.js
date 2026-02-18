@@ -17,7 +17,7 @@ let overlayVisible;
 
 function create_tray() {
   tray = new Tray(
-    path.join(__dirname, "backend", "public", "assets", "images", "logo.png")
+    path.join(__dirname, "backend", "public", "assets", "images", "logo.png"),
   );
 
   const contextMenu = Menu.buildFromTemplate([
@@ -84,7 +84,7 @@ function create_overlay_window() {
       "public",
       "assets",
       "images",
-      "logo.png"
+      "logo.png",
     ),
     webPreferences: {
       nodeIntegration: true,

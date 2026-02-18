@@ -1,22 +1,154 @@
 import * as THREE from "three";
+import { FBXLoader } from "three/addons/loaders/FBXLoader.js";
 import { lipSyncActive } from "./lipSync.js";
 import { configPromise } from "../../config.js";
 import { IsOllamaStreaming } from "../../logic/llm.js";
 
+function loadMixamoAnimation(url, vrm) {
+  const loader = new FBXLoader(); // A loader which loads FBX
+  return loader.loadAsync(url).then((asset) => {
+    const clip = THREE.AnimationClip.findByName(asset.animations, "mixamo.com"); // extract the AnimationClip
+
+    const tracks = []; // KeyframeTracks compatible with VRM will be added here
+
+    const restRotationInverse = new THREE.Quaternion();
+    const parentRestWorldRotation = new THREE.Quaternion();
+    const _quatA = new THREE.Quaternion();
+    const _vec3 = new THREE.Vector3();
+
+    // Adjust with reference to hips height.
+    const motionHipsHeight = asset.getObjectByName("mixamorigHips").position.y;
+    const vrmHipsHeight = vrm.humanoid.normalizedRestPose.hips.position[1];
+    const hipsPositionScale = vrmHipsHeight / motionHipsHeight;
+
+    clip.tracks.forEach((track) => {
+      // Convert each tracks for VRM use, and push to `tracks`
+      const trackSplitted = track.name.split(".");
+      const mixamoRigName = trackSplitted[0];
+      const vrmBoneName = mixamoVRMRigMap[mixamoRigName];
+      const vrmNodeName =
+        vrm.humanoid?.getNormalizedBoneNode(vrmBoneName)?.name;
+      const mixamoRigNode = asset.getObjectByName(mixamoRigName);
+
+      if (vrmNodeName != null) {
+        const propertyName = trackSplitted[1];
+
+        // Store rotations of rest-pose.
+        mixamoRigNode.getWorldQuaternion(restRotationInverse).invert();
+        mixamoRigNode.parent.getWorldQuaternion(parentRestWorldRotation);
+
+        if (track instanceof THREE.QuaternionKeyframeTrack) {
+          // Retarget rotation of mixamoRig to NormalizedBone.
+          for (let i = 0; i < track.values.length; i += 4) {
+            const flatQuaternion = track.values.slice(i, i + 4);
+
+            _quatA.fromArray(flatQuaternion);
+
+            // 親のレスト時ワールド回転 * トラックの回転 * レスト時ワールド回転の逆
+            _quatA
+              .premultiply(parentRestWorldRotation)
+              .multiply(restRotationInverse);
+
+            _quatA.toArray(flatQuaternion);
+
+            flatQuaternion.forEach((v, index) => {
+              track.values[index + i] = v;
+            });
+          }
+
+          tracks.push(
+            new THREE.QuaternionKeyframeTrack(
+              `${vrmNodeName}.${propertyName}`,
+              track.times,
+              track.values.map((v, i) =>
+                vrm.meta?.metaVersion === "0" && i % 2 === 0 ? -v : v,
+              ),
+            ),
+          );
+        } else if (track instanceof THREE.VectorKeyframeTrack) {
+          const value = track.values.map(
+            (v, i) =>
+              (vrm.meta?.metaVersion === "0" && i % 3 !== 1 ? -v : v) *
+              hipsPositionScale,
+          );
+          tracks.push(
+            new THREE.VectorKeyframeTrack(
+              `${vrmNodeName}.${propertyName}`,
+              track.times,
+              value,
+            ),
+          );
+        }
+      }
+    });
+
+    return new THREE.AnimationClip("vrmAnimation", clip.duration, tracks);
+  });
+}
+
+export const mixamoVRMRigMap = {
+  
+  mixamorigHips: "hips",
+  mixamorigSpine: "spine",
+  mixamorigSpine1: "chest",
+  mixamorigSpine2: "upperChest",
+  mixamorigNeck: "neck",
+  mixamorigHead: "head",
+  mixamorigLeftShoulder: "leftShoulder",
+  mixamorigLeftArm: "leftUpperArm",
+  mixamorigLeftForeArm: "leftLowerArm",
+  mixamorigLeftHand: "leftHand",
+  mixamorigLeftHandThumb1: "leftThumbMetacarpal",
+  mixamorigLeftHandThumb2: "leftThumbProximal",
+  mixamorigLeftHandThumb3: "leftThumbDistal",
+  mixamorigLeftHandIndex1: "leftIndexProximal",
+  mixamorigLeftHandIndex2: "leftIndexIntermediate",
+  mixamorigLeftHandIndex3: "leftIndexDistal",
+  mixamorigLeftHandMiddle1: "leftMiddleProximal",
+  mixamorigLeftHandMiddle2: "leftMiddleIntermediate",
+  mixamorigLeftHandMiddle3: "leftMiddleDistal",
+  mixamorigLeftHandRing1: "leftRingProximal",
+  mixamorigLeftHandRing2: "leftRingIntermediate",
+  mixamorigLeftHandRing3: "leftRingDistal",
+  mixamorigLeftHandPinky1: "leftLittleProximal",
+  mixamorigLeftHandPinky2: "leftLittleIntermediate",
+  mixamorigLeftHandPinky3: "leftLittleDistal",
+  mixamorigRightShoulder: "rightShoulder",
+  mixamorigRightArm: "rightUpperArm",
+  mixamorigRightForeArm: "rightLowerArm",
+  mixamorigRightHand: "rightHand",
+  mixamorigRightHandPinky1: "rightLittleProximal",
+  mixamorigRightHandPinky2: "rightLittleIntermediate",
+  mixamorigRightHandPinky3: "rightLittleDistal",
+  mixamorigRightHandRing1: "rightRingProximal",
+  mixamorigRightHandRing2: "rightRingIntermediate",
+  mixamorigRightHandRing3: "rightRingDistal",
+  mixamorigRightHandMiddle1: "rightMiddleProximal",
+  mixamorigRightHandMiddle2: "rightMiddleIntermediate",
+  mixamorigRightHandMiddle3: "rightMiddleDistal",
+  mixamorigRightHandIndex1: "rightIndexProximal",
+  mixamorigRightHandIndex2: "rightIndexIntermediate",
+  mixamorigRightHandIndex3: "rightIndexDistal",
+  mixamorigRightHandThumb1: "rightThumbMetacarpal",
+  mixamorigRightHandThumb2: "rightThumbProximal",
+  mixamorigRightHandThumb3: "rightThumbDistal",
+  mixamorigLeftUpLeg: "leftUpperLeg",
+  mixamorigLeftLeg: "leftLowerLeg",
+  mixamorigLeftFoot: "leftFoot",
+  mixamorigLeftToeBase: "leftToes",
+  mixamorigRightUpLeg: "rightUpperLeg",
+  mixamorigRightLeg: "rightLowerLeg",
+  mixamorigRightFoot: "rightFoot",
+  mixamorigRightToeBase: "rightToes",
+};
+
 const config = await configPromise;
 
+window.playAnimation = function (animationName) {
+  console.log("Playing animation:", animationName);
+};
+
 let animations = [];
-let idle_animations = [];
-let is_playing = false;
-let current_action;
-let previous_action;
-let specs = [];
-let idleAnimations;
-let talkingAnimations;
-let playing_idle;
-let playing_talking = false;
-let defaultAction = null;
-let lastActiveTime = performance.now();
 
 // config
 let animation_fade_in_ms = config.animation_fade_in;
@@ -26,357 +158,23 @@ let animation_fade_out = animation_fade_out_ms / 1000;
 const idleDelay = config.idleDelay;
 const TextToSpeeach = config.TextToSpeeach;
 
-const ALL_HUMANOID_BONES = [
-  // Root & spine
-  "hips",
-  "spine",
-  "chest",
-  "upperChest",
-  "neck",
-  "head",
-
-  // Left arm
-  "leftShoulder",
-  "leftUpperArm",
-  "leftLowerArm",
-  "leftHand",
-
-  // Right arm
-  "rightShoulder",
-  "rightUpperArm",
-  "rightLowerArm",
-  "rightHand",
-
-  // Left leg
-  "leftUpperLeg",
-  "leftLowerLeg",
-  "leftFoot",
-  "leftToes",
-
-  // Right leg
-  "rightUpperLeg",
-  "rightLowerLeg",
-  "rightFoot",
-  "rightToes",
-
-  // Left fingers
-  "leftThumbMetacarpal",
-  "leftThumbProximal",
-  "leftThumbDistal",
-
-  "leftIndexProximal",
-  "leftIndexIntermediate",
-  "leftIndexDistal",
-
-  "leftMiddleProximal",
-  "leftMiddleIntermediate",
-  "leftMiddleDistal",
-
-  "leftRingProximal",
-  "leftRingIntermediate",
-  "leftRingDistal",
-
-  "leftLittleProximal",
-  "leftLittleIntermediate",
-  "leftLittleDistal",
-
-  // Right fingers
-  "rightThumbMetacarpal",
-  "rightThumbProximal",
-  "rightThumbDistal",
-
-  "rightIndexProximal",
-  "rightIndexIntermediate",
-  "rightIndexDistal",
-
-  "rightMiddleProximal",
-  "rightMiddleIntermediate",
-  "rightMiddleDistal",
-
-  "rightRingProximal",
-  "rightRingIntermediate",
-  "rightRingDistal",
-
-  "rightLittleProximal",
-  "rightLittleIntermediate",
-  "rightLittleDistal",
-];
-
-function load_specs() {
-  fetch("http://127.0.0.1:5000/api/animations/json", {})
-    .then((response) => response.json())
-    .then((data) => {
-      specs = data;
-    })
-    .catch((error) => console.error("Error:", error));
-}
-
-load_specs();
-
-function buildTracksFromSpec(vrm, spec) {
-  const tracks = [];
-  let maxTime = 0;
-
-  const getBoneNode = (name) => {
-    try {
-      return vrm.humanoid.getNormalizedBoneNode(name);
-    } catch (e) {
-      return null;
-    }
-  };
-
-  for (const item of spec) {
-    const { bone, property, keyframes } = item;
-    if (!keyframes || keyframes.length === 0) continue;
-
-    const times = [];
-    const values = [];
-
-    if (property === "position") {
-      const node = getBoneNode(bone);
-      if (!node) continue;
-      for (const k of keyframes) {
-        times.push(k.time);
-        values.push(...k.value); // expect [x,y,z]
-        if (k.time > maxTime) maxTime = k.time;
-      }
-      tracks.push(
-        new THREE.VectorKeyframeTrack(node.name + ".position", times, values)
-      );
-    } else if (property === "quaternion") {
-      const node = getBoneNode(bone);
-      if (!node) continue;
-      for (const k of keyframes) {
-        times.push(k.time);
-        values.push(...k.value); // expect [x,y,z,w]
-        if (k.time > maxTime) maxTime = k.time;
-      }
-      tracks.push(
-        new THREE.QuaternionKeyframeTrack(
-          node.name + ".quaternion",
-          times,
-          values
-        )
-      );
-    } else if (property === "rotationEuler") {
-      const node = getBoneNode(bone);
-      if (!node) continue;
-      for (const k of keyframes) {
-        times.push(k.time);
-        const e = new THREE.Euler(k.value[0], k.value[1], k.value[2]);
-        const q = new THREE.Quaternion().setFromEuler(e);
-        values.push(...q.toArray());
-        if (k.time > maxTime) maxTime = k.time;
-      }
-      tracks.push(
-        new THREE.QuaternionKeyframeTrack(
-          node.name + ".quaternion",
-          times,
-          values
-        )
-      );
-    } else if (property === "number" || property === "expression") {
-      const timesNum = [];
-      const valsNum = [];
-      for (const k of keyframes) {
-        timesNum.push(k.time);
-        valsNum.push(k.value);
-        if (k.time > maxTime) maxTime = k.time;
-      }
-      if (property === "expression") {
-        const trackName = vrm.expressionManager.getExpressionTrackName(bone);
-        tracks.push(
-          new THREE.NumberKeyframeTrack(trackName, timesNum, valsNum)
-        );
-      } else {
-        tracks.push(new THREE.NumberKeyframeTrack(bone, timesNum, valsNum));
-      }
-    }
-  }
-
-  return { tracks, duration: maxTime };
-}
-
-export function load_animations_from_spec(
-  vrm,
-  mixer,
-  spec,
-  clipName = "SimpleClip",
-  type
-) {
-  if (!vrm || !mixer) return;
-
-  const { tracks, duration } = buildTracksFromSpec(vrm, spec);
-  if (tracks.length === 0) return;
-
-  const clip = new THREE.AnimationClip(clipName, duration, tracks);
-  const action = mixer.clipAction(clip);
-  action.type = type;
-  action.setLoop(THREE.LoopOnce, 1);
-  action.clampWhenFinished = true;
-
-  animations.push(action);
-
-  return action;
-}
-
-export function updateAnimation(vrm, mixer) {
+export async function updateAnimation(vrm, mixer) {
   if (!vrm) return;
 
-  const lipSyncActiveFlag = TextToSpeeach ? lipSyncActive : IsOllamaStreaming;
-
-  // load animations from json
   if (animations.length === 0) {
-    for (let i = 0; i < specs.length; i++) {
-      const { name, spec, type } = specs[i];
-      load_animations_from_spec(vrm, mixer, spec, name, type);
-    }
-
-    idleAnimations = animations.filter((action) => action.type === "idle");
-
-    talkingAnimations = animations.filter(
-      (action) => action.type === "talking"
+    let clip = await loadMixamoAnimation(
+      "./public/assets/animations/Hip Hop Dancing.fbx",
+      vrm,
     );
+    animations = clip;
 
-    defaultAction = animations.find((a) => a.type === "default");
+    const newAction = mixer.clipAction(animations);
+    newAction.reset().play();
 
-    if (defaultAction && !current_action) {
-      defaultAction.reset();
-      defaultAction.enabled = true;
-      defaultAction.setLoop(THREE.LoopRepeat);
-      defaultAction.play();
-
-      current_action = defaultAction;
-      previous_action = null;
-
-      is_playing = true;
-      playing_idle = false;
-      playing_talking = false;
-    }
+    console.log("Loaded animations:", animations);
   }
 
-  function crossFade(fromAction, toAction, fadeDuration) {
-    if (!fromAction || !toAction) return;
-
-    toAction.reset();
-    toAction.enabled = true;
-
-    if (
-      typeof THREE !== "undefined" &&
-      typeof toAction.setLoop === "function"
-    ) {
-      toAction.clampWhenFinished = true;
-    }
-
-    fromAction.enabled = true;
-    toAction.play();
-
-    if (typeof toAction.crossFadeFrom === "function") {
-      toAction.crossFadeFrom(fromAction, fadeDuration, true);
-    } else {
-      toAction.fadeIn(fadeDuration);
-      if (typeof fromAction.fadeOut === "function")
-        fromAction.fadeOut(fadeDuration);
-    }
-
-    previous_action = fromAction;
-    current_action = toAction;
-    is_playing = true;
-  }
-
-  function play_animation(animation) {
-    crossFade(current_action || defaultAction, animation, animation_fade_in);
-  }
-
-  if (!mixer.userData) mixer.userData = {};
-
-  if (!mixer.userData.hasAnimFinishListener) {
-    mixer.userData.hasAnimFinishListener = true;
-
-    mixer.addEventListener("finished", (e) => {
-      const finishedAction = e.action;
-      const animation_type = finishedAction.type;
-
-      is_playing = false;
-
-      if (animation_type == "talking") {
-        if (lipSyncActiveFlag) {
-          const nextAction =
-            talkingAnimations[
-              Math.floor(Math.random() * talkingAnimations.length)
-            ];
-
-          play_animation(nextAction);
-        }
-      }
-
-      if (animation_type == "idle") {
-        if (!lipSyncActiveFlag) {
-          lastActiveTime = performance.now();
-          if (current_action && current_action === finishedAction) {
-            finishedAction.fadeOut(animation_fade_out);
-            current_action = defaultAction;
-            if (defaultAction) {
-              defaultAction.reset();
-              defaultAction.enabled = true;
-              defaultAction.setLoop(THREE.LoopRepeat);
-              defaultAction.play();
-            }
-          }
-          playing_idle = false;
-          is_playing = false;
-        }
-      }
-    });
-  }
-
-  function idle_anims() {
-    const now = performance.now();
-
-    if (
-      !lipSyncActiveFlag &&
-      (!is_playing || !playing_idle) &&
-      now - lastActiveTime > idleDelay
-    ) {
-      if (current_action && playing_talking)
-        current_action.fadeOut(animation_fade_out);
-      const nextAction =
-        idleAnimations[Math.floor(Math.random() * idleAnimations.length)];
-      is_playing = true;
-      playing_idle = true;
-      playing_talking = false;
-      current_action = nextAction;
-      play_animation(nextAction);
-    } else if (lipSyncActiveFlag && playing_idle) {
-      if (current_action) current_action.fadeOut(animation_fade_out);
-      is_playing = false;
-      playing_idle = false;
-    }
-  }
-
-  function talking_anims() {
-    if (lipSyncActiveFlag && (!is_playing || !playing_talking)) {
-      if (current_action && playing_idle)
-        current_action.fadeOut(animation_fade_out);
-
-      const nextAction =
-        talkingAnimations[Math.floor(Math.random() * talkingAnimations.length)];
-
-      is_playing = true;
-      playing_talking = true;
-      playing_idle = false;
-
-      current_action = nextAction;
-      play_animation(nextAction);
-    } else if (!lipSyncActiveFlag && playing_talking) {
-      if (current_action) current_action.fadeOut(animation_fade_out);
-      is_playing = false;
-      playing_talking = false;
-    }
-  }
-
-  idle_anims();
-  talking_anims();
+  const lipSyncActiveFlag = TextToSpeeach ? lipSyncActive : IsOllamaStreaming;
 
   if (lipSyncActiveFlag) lastActiveTime = performance.now();
 }
