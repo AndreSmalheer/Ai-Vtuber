@@ -1,41 +1,66 @@
-# EXE Installation
+# AI Vtuber
 
-This guide explains how to create a standalone executable for the Flask backend.
+This project creates a Vtuber on
+your desktop and web. It integrates
+Ollama and text-to-speech from Piper. You can
+customize settings by modify the
+`backend/config.json` file.
 
-First, create and activate a virtual environment:
+**Installation Instructions:**
 
-```bash
-python -m venv venv
-```
+1.  **Clone the Repository:**
+    ```
+    https://github.com/AndreSmalheer/Ai-Vtuber/tree/main
+    ```
 
-```
+2.  **Install NPM Packages:**
+    ```
+    npm install
+    ```
 
-- **Windows:** `venv\Scripts\activate`
-- **Linux/macOS:** `source venv/bin/activate`
-```
+3.  **Install Python Dependencies:**  Choose one of the
+following methods:
 
-Then, install all required dependencies from `requirements.txt`:
+    *   **Virtual Environment (Recommended):**
+        ```bash
+        python3.14 -m venv venv
+        .\venv\Scripts\activate
+        pip install -r requirements.txt
+        ```
+    *   **Local Install:**
+        ```bash
+        pip install -r requirements.txt
+        ```
 
-```bash
-pip install -r requirements.txt
-```
+4.  **Configure Settings:**  Modify the
+`backend/config.json` file.:
 
-Next, navigate to the `backend` directory
+    ```json
+    {
+      "piperUrl": "Change this to your piper URL",
+      "ollamaUrl": "Change this to your Ollama URL",
+      "ollamaModel": "Change this to your Ollama Model",
+    }
+    ```
 
-```bash
-cd backend
-```
+    **Note:** If you don't have Ollama or Piper installed,
+refer to their respective GitHub repositories for
+installation instructions:
 
-Use PyInstaller to build a single executable file for your Flask app:
+    *   **Ollama:**
+            https://github.com/ollama/ollama
+    *   **Piper TTS:** (Make sure to install an api server)
+            https://github.com/OHF-Voice/piper1-gpl/blob/main/docs/API_HTTP.md
 
-```bash
-pyinstaller --onefile --noconsole --add-data "templates;templates" --add-data "public;public" --add-data "config.json;." app.py
-```
+5 **Start the aplication**
+    ```
+    npm start
+    ```
 
-Then just run
+---
 
-```bash
-nmp run build
-```
+# Technologies Used
 
-and now you have one single exe file in dist that runs flask and electron
+* Electron
+* npm
+* Flask
