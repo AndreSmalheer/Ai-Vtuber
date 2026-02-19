@@ -6,6 +6,7 @@ Ollama and text-to-speech from Piper. You can
 customize settings by modify the
 `backend/config.json` file.
 
+---
 **Installation Instructions:**
 
 1.  **Clone the Repository:**
@@ -13,14 +14,14 @@ customize settings by modify the
     https://github.com/AndreSmalheer/Ai-Vtuber
     ```
 
-2.  **Install NPM Packages:**
-    ```
-    npm install
-    ```
-
-3. **Change diractery**
+2. **Change diractery**
     ```
    cd Ai-Vtuber
+    ```
+
+3.  **Install NPM Packages:**
+    ```
+    npm install
     ```
 
 4.  **Install Python Dependencies:**  Choose one of the
