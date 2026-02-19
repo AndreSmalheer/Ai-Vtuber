@@ -10,7 +10,7 @@ customize settings by modify the
 
 1.  **Clone the Repository:**
     ```
-    https://github.com/AndreSmalheer/Ai-Vtuber/tree/main
+    https://github.com/AndreSmalheer/Ai-Vtuber
     ```
 
 2.  **Install NPM Packages:**
@@ -18,7 +18,12 @@ customize settings by modify the
     npm install
     ```
 
-3.  **Install Python Dependencies:**  Choose one of the
+3. **Change diractery**
+    ```
+   cd Ai-Vtuber
+    ```
+
+4.  **Install Python Dependencies:**  Choose one of the
 following methods:
 
     *   **Virtual Environment (Recommended):**
@@ -32,7 +37,7 @@ following methods:
         pip install -r requirements.txt
         ```
 
-4.  **Configure Settings:**  Modify the
+5.  **Configure Settings:**  Modify the
 `backend/config.json` file.:
 
     ```json
@@ -52,7 +57,7 @@ installation instructions:
     *   **Piper TTS:** (Make sure to install an api server)
             https://github.com/OHF-Voice/piper1-gpl/blob/main/docs/API_HTTP.md
 
-5 **Start the aplication**
+6. **Start the aplication**
     ```
     npm start
     ```
@@ -62,5 +67,6 @@ installation instructions:
 # Technologies Used
 
 * Electron
-* npm
+* node js
 * Flask
+* Three js
