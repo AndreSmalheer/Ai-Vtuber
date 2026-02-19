@@ -11,10 +11,10 @@ customize settings by modify the
 
 1.  **Clone the Repository:**
     ```
-    https://github.com/AndreSmalheer/Ai-Vtuber
+    git clone https://github.com/AndreSmalheer/Ai-Vtuber
     ```
 
-2. **Change diractery**
+2. **Change directory**
     ```
    cd Ai-Vtuber
     ```
