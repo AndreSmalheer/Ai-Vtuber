@@ -1,0 +1,50 @@
+:root {
+  --main-background: #f8f8f8;
+  --overlay-background: #ffffff;
+  --overlay-2-background: #f2f0f0;
+  --overlay-border: #dddddd;
+
+  --nav-btn: #1c274c;
+  --sub-btn: #1c274c;
+
+  --divador-color: #e2e2e2;
+
+  --h1-color: #000000;
+  --h1-user-color: #7bb3fe;
+
+  --h2-color: #1c1c1e;
+  --h3-color: #363636;
+
+  --theme-active: #5b7cff;
+}
+
+body.dark {
+  --main-background: #0f1115;
+  --overlay-background: #181a20;
+  --overlay-2-background: #181a20;
+  --overlay-border: #1f222a;
+
+  --nav-btn: #5b7cff;
+  --sub-btn: #4c6fff;
+
+  --divador-color: #23262f;
+
+  --h1-color: #e6e6e6;
+  --h1-user-color: #7bb3fe;
+
+  --h2-color: #cfcfd4;
+  --h3-color: #9a9aa0;
+
+  --theme-active: #a9c1ff;
+}
+
+body,
+html {
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  background-color: var(--main-background);
+  color: var(--h1-color);
+  font-family: "Poppins", Arial, sans-serif;
+}

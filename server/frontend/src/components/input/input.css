@@ -1,0 +1,58 @@
+.input-container {
+  margin: 0 auto;
+  width: 324px;
+  height: 51px;
+  border-radius: 8px;
+  display: flex;
+  align-items: flex-start;
+  background-color: var(--overlay-background);
+  border: 1px solid var(--overlay-border);
+  margin-top: 26px;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.input-container:focus-within {
+  border-color: var(--theme-active);
+}
+
+.input-container input {
+  width: 80%;
+  height: 100%;
+  border: none;
+  padding: 0 10px;
+  font-size: 16px;
+  background-color: transparent;
+  outline: none;
+  color: var(--h1-color);
+}
+
+.input-container input:disabled {
+  cursor: not-allowed;
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.input-container button {
+  width: 20%;
+  height: 100%;
+  border: none;
+  cursor: pointer;
+
+  background-color: var(--nav-btn);
+
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M2 21l21-9L2 3v7l15 2-15 2z'/%3E%3C/svg%3E");
+
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: 20px;
+  transition:
+    background-color 0.2s ease,
+    scale 0.2s ease;
+}
+
+.input-container button:hover {
+  background-color: var(--theme-active);
+  scale: 1.1;
+}
