@@ -1,20 +1,32 @@
 import "./header.css";
+import React from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+
 function Header({ backBtn, settingsBtn }) {
-  function navigate(location) {
-    window.location.href = location;
-  }
+  const navigate = useNavigate();
+  const location = useLocation();
+  const currentPagePath = location.pathname;
+
+  const handleBackClick = () => {
+    if (currentPagePath === "/settings" || currentPagePath === "/chat-history") {
+      navigate("/settings-nav");
+    } else {
+      navigate("/");
+    }
+  };
 
   return (
     <>
       <div className="header">
-        {backBtn && <button className="back-button" onClick={() => navigate("/")}></button>}
+        {backBtn && (
+          <button className="back-button" onClick={handleBackClick}></button>
+        )}
 
         {settingsBtn && (
-          <a
-            href="/settings-nav"
+          <button
             className="settings-button"
             onClick={() => navigate("/settings-nav")}
-          ></a>
+          ></button>
         )}
       </div>
     </>

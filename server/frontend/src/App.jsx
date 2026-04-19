@@ -1,33 +1,44 @@
+import { Routes, Route } from "react-router-dom";
+import Home from "./pages/Home/Home";
+import Settings from "./pages/Settings/Settings"; // This is now the menu component
+import GeneralSettings from "./pages/GeneralSettings/GeneralSettings"; // New settings page
+import ChatHistory from "./pages/ChatHistory/ChatHistory"; // New chat history page
 import Header from "./components/header/header";
-import Input from "./components/input/input";
-import Chat from "./components/chat/chat";
-import { useState } from "react";
 
 function App() {
-  const [chatmsg, setChatmsg] = useState("");
-  const [chatRole, setChatRole] = useState("");
-  const [chathidden, setChathidden] = useState(true);
-  const [inputmsg, setInputmsg] = useState("");
-
   return (
-    <>
-      <Header backBtn={false} settingsBtn={true} />
-      <Chat
-        chatmsg={chatmsg}
-        chathidden={chathidden}
-        setChathidden={setChathidden}
-        chatRole={chatRole}
-        setChatRole={setChatRole}
-        setChatmsg={setChatmsg}
+    <Routes>
+      <Route path="/" element={<Home />} />
+      {/* This route acts as the settings navigation menu */}
+      <Route
+        path="/settings-nav"
+        element={
+          <>
+            <Header backBtn={true} settingsBtn={false} />
+            <Settings /> {/* This component now acts as the menu */}
+          </>
+        }
       />
-      <Input
-        inputmsg={inputmsg}
-        setInputmsg={setInputmsg}
-        setChatmsg={setChatmsg}
-        chatRole={chatRole}
-        setChatRole={setChatRole}
+      {/* New routes for specific settings pages */}
+      <Route
+        path="/settings"
+        element={
+          <>
+            <Header backBtn={true} settingsBtn={false} />
+            <GeneralSettings />
+          </>
+        }
       />
-    </>
+      <Route
+        path="/chat-history"
+        element={
+          <>
+            <Header backBtn={true} settingsBtn={false} />
+            <ChatHistory />
+          </>
+        }
+      />
+    </Routes>
   );
 }
 

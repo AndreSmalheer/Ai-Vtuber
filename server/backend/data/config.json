@@ -1,0 +1,6 @@
+{
+    "ollama_url": "http://localhost:11434/",
+    "ollama_model": "tinyllama:latest",
+    "base_prompt": "You are a chatbot for the user",
+    "response_speed": 50
+}

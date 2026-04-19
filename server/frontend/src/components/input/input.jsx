@@ -1,6 +1,6 @@
 import "./input.css";
 
-function Input({ inputmsg, setInputmsg, setChatmsg, chatRole, setChatRole }) {
+function Input({ inputmsg, setInputmsg, setChatmsg, chatRole, setChatRole, inputLocked, setInputLocked }) {
   function handleInput() {
     setChatmsg(inputmsg);
     setInputmsg("");
@@ -8,15 +8,16 @@ function Input({ inputmsg, setInputmsg, setChatmsg, chatRole, setChatRole }) {
   }
 
   return (
-    <div className="input-container">
+    <div className={`input-container ${inputLocked ? "disabled" : ""}`}>
       <input
         type="text"
         placeholder="Type your message here..."
         value={inputmsg}
         onChange={(e) => setInputmsg(e.target.value)}
         onKeyPress={(e) => e.key === "Enter" && handleInput()}
+        disabled={inputLocked}
       />
-      <button className="send-btn" onClick={handleInput}></button>
+      <button disabled={inputLocked} className="send-btn" onClick={handleInput}></button>
     </div>
   );
 }

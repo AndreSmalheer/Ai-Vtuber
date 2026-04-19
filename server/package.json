@@ -14,5 +14,8 @@
   "type": "commonjs",
   "devDependencies": {
     "concurrently": "^9.2.1"
+  },
+  "dependencies": {
+    "three": "^0.184.0"
   }
 }
