@@ -7,38 +7,39 @@ import Header from "./components/header/header";
 
 function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Home />} />
-      {/* This route acts as the settings navigation menu */}
-      <Route
-        path="/settings-nav"
-        element={
-          <>
-            <Header backBtn={true} settingsBtn={false} />
-            <Settings /> {/* This component now acts as the menu */}
-          </>
-        }
-      />
-      {/* New routes for specific settings pages */}
-      <Route
-        path="/settings"
-        element={
-          <>
-            <Header backBtn={true} settingsBtn={false} />
-            <GeneralSettings />
-          </>
-        }
-      />
-      <Route
-        path="/chat-history"
-        element={
-          <>
-            <Header backBtn={true} settingsBtn={false} />
-            <ChatHistory />
-          </>
-        }
-      />
-    </Routes>
+    <div className="main-content">
+      <Routes>
+        <Route path="/" element={<Home />} />
+        {/* This route acts as the settings navigation menu */}
+        <Route
+          path="/settings-nav"
+          element={
+            <>
+              <Header backBtn={true} settingsBtn={false} />
+              <Settings /> {/* This component now acts as the menu */}
+            </>
+          }
+        />
+        {/* New routes for specific settings pages */}
+        <Route
+          path="/settings"
+          element={
+            <>
+              <Header backBtn={true} settingsBtn={false} fixed={true} />
+              <GeneralSettings />
+            </>
+          }
+        />
+        <Route
+          path="/chat-history"
+          element={
+            <>
+              <Header backBtn={true} settingsBtn={false} fixed={true} />
+              <ChatHistory />
+            </>
+          }
+        />      </Routes>
+    </div>
   );
 }
 

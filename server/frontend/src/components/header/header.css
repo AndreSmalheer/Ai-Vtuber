@@ -7,7 +7,14 @@
   align-items: center;
   box-sizing: border-box;
   padding: 0 20px;
-  z-index: 1;
+  z-index: 1000;
+}
+
+.header--fixed {
+  position: fixed;
+  top: 0;
+  left: 0;
+  background-color: var(--main-background);
 }
 
 .settings-button:hover {

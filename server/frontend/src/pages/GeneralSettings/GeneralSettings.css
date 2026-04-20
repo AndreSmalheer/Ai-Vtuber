@@ -1,5 +1,7 @@
 .general-settings {
   padding: 0 5vw;
+  padding-top: 60px;
+  padding-bottom: 100px;
 }
 
 .general-settings__form {
@@ -314,4 +316,39 @@ textarea.general-settings__input {
 #dark-mode-container{
     flex-direction: row;
     justify-content: space-between;
+}
+
+/* ── Mobile responsive additions ── */
+@media (max-width: 600px) {
+  .general-settings {
+    padding: 40px 4vw 100px;
+  }
+
+  .general-settings__section {
+    width: 100%;
+    padding: 16px 16px;
+  }
+
+  .general-settings__input-group {
+    flex-wrap: wrap;
+  }
+
+  .general-settings__input,
+  .custom-select {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  #ollama-url-group {
+    margin-left: 0;
+  }
+
+  textarea.general-settings__input {
+    width: 100%;
+  }
+
+  .save-btn {
+    width: calc(100% - 32px);
+    left: 16px;
+  }
 }

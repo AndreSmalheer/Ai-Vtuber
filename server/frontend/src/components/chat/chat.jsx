@@ -24,7 +24,7 @@ function Chat({
     // Fetch config for speed
     let speed = 50;
     try {
-      const configRes = await fetch("http://localhost:8000/api/config");
+      const configRes = await fetch("/api/config");
       const configData = await configRes.json();
       speed = parseInt(configData.response_speed) || 0;
     } catch (e) {
@@ -32,7 +32,7 @@ function Chat({
     }
 
     // call api
-    const response = await fetch("http://localhost:8000/api/ollama", {
+    const response = await fetch("/api/ollama", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

@@ -1,32 +1,46 @@
 # Ai-Vtuber Project Context
 
-This document outlines the core structure, technologies, and important considerations for the Ai-Vtuber project.
+This document outlines the core structure, technologies, and current status of the Ai-Vtuber project.
 
 ## Project Purpose
 
-The Ai-Vtuber project aims to develop an application that integrates AI capabilities with virtual avatar technology, likely for streaming, content creation, or interactive experiences.
+The Ai-Vtuber project is an AI-driven virtual avatar application that integrates local Large Language Models (LLMs) with a 3D avatar interface for interactive experiences.
 
 ## Technology Stack
 
-*   **Backend:** Python (core logic in `server/backend/main.py`)
-*   **Frontend:** React, Vite (core files in `server/frontend/src/`)
-*   **Styling:** CSS
-*   **Package Management:** npm/yarn (indicated by `package.json`, `package-lock.json`)
-*   **Linting:** ESLint (`eslint.config.js`)
+*   **Backend:** 
+    *   **Python (FastAPI):** Main API server in `server/backend/main.py`.
+    *   **Ollama:** Local LLM inference engine integrated via `requests`.
+*   **Frontend:** 
+    *   **React + Vite:** Core application logic and build tool.
+    *   **Three.js:** Utilized for the 3D avatar rendering (currently a placeholder).
+*   **Styling:** Vanilla CSS for component-based modularity.
+*   **Data Persistence:** Local JSON files for configuration (`config.json`) and conversation history (`history.json`).
 
 ## Directory Structure Overview
 
-*   **`server/backend/`**: Contains the Python-based backend services and logic.
-*   **`server/frontend/`**: Houses the React-based frontend application.
-    *   **`public/`**: Static assets.
-    *   **`src/`**: React source code.
-        *   **`components/`**: Reusable UI components (e.g., `chat`, `header`, `input`).
-        *   **`pages/`**: Top-level application views (e.g., `ChatHistory`, `Home`, `Settings`).
-*   **Root Directory**: Contains project-level configurations like `.gitignore`, `.venv`, and main `package.json` files.
+*   **`server/backend/`**:
+    *   **`main.py`**: Entry point defining FastAPI endpoints for configuration, chat, and history.
+    *   **`core/`**: Configuration management (`config.py`) and history logic (`history.py`).
+    *   **`services/`**: External integrations, specifically `ollama.py` for streaming LLM responses.
+    *   **`data/`**: Storage for JSON-based state.
+*   **`server/frontend/`**:
+    *   **`src/components/`**:
+        *   **`chat/`**: Implements SSE-based streaming response display with configurable speed.
+        *   **`avatar/`**: Contains the Three.js container for the 3D model (VRM/GLB loading pending).
+    *   **`src/pages/`**: Includes `Home`, `ChatHistory`, and `Settings` views.
 
-## Key Considerations for Future Development
+## Current Project Status
 
-*   The project follows a clear separation between the Python backend and the React frontend.
-*   Frontend development utilizes modern React practices with Vite for efficient builds.
-*   Component-based architecture is employed in the frontend for modularity.
-*   Ensure any new development respects the existing structure and chosen technologies.
+*   **LLM Integration:** Functional streaming via Ollama. History is appended to every prompt for context.
+*   **Frontend UX:** Dynamic chat interface with fade-in/out animations and real-time streaming feedback.
+*   **Avatar:** A skeleton `Avatar` component exists but does not yet load or animate 3D models.
+*   **Configuration:** Global settings (speed, base prompt, model name) are persistent across sessions.
+
+## Key Considerations & Future Roadmap
+
+*   **3D Model Loading:** Implement `@pixiv/three-vrm` to load and animate industry-standard VTuber models.
+*   **Lip-Sync & Audio:** Integrate TTS (Text-to-Speech) and map audio data to avatar blendshapes for realistic speech.
+*   **Emotion Detection:** Analyze LLM outputs to trigger avatar expressions (Joy, Sadness, etc.).
+*   **State Management:** Migrated from hardcoded URLs (localhost:8000) to relative paths via Vite proxy. Backend now listens on `0.0.0.0` for local network access.
+*   **Robustness:** Transition from JSON file storage to a more scalable database if multi-session or complex history management is required.

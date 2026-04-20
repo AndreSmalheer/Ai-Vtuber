@@ -9,7 +9,7 @@ function ChatHistory() {
   const [selectedDate, setSelectedDate] = useState("All");
 
   const fetchHistory = () => {
-    fetch("http://localhost:8000/api/history")
+    fetch("/api/history")
       .then((res) => res.json())
       .then((data) => setHistory(data))
       .catch((err) => console.error("Error fetching history:", err));
@@ -28,7 +28,7 @@ function ChatHistory() {
     if (indexToDelete === null) return;
     
     try {
-      const response = await fetch(`http://localhost:8000/api/history/${indexToDelete}`, {
+      const response = await fetch(`/api/history/${indexToDelete}`, {
         method: "DELETE",
       });
       if (response.ok) {
@@ -43,7 +43,7 @@ function ChatHistory() {
 
   const handleClearAll = async () => {
     try {
-      const response = await fetch("http://localhost:8000/api/history", {
+      const response = await fetch("/api/history", {
         method: "DELETE",
       });
       if (response.ok) {

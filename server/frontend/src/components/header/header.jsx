@@ -2,7 +2,7 @@ import "./header.css";
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
-function Header({ backBtn, settingsBtn }) {
+function Header({ backBtn, settingsBtn, fixed }) {
   const navigate = useNavigate();
   const location = useLocation();
   const currentPagePath = location.pathname;
@@ -17,7 +17,7 @@ function Header({ backBtn, settingsBtn }) {
 
   return (
     <>
-      <div className="header">
+      <div className={`header ${fixed ? "header--fixed" : ""}`}>
         {backBtn && (
           <button className="back-button" onClick={handleBackClick}></button>
         )}

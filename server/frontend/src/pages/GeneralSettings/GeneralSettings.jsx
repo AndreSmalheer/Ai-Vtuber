@@ -27,7 +27,7 @@ function GeneralSettings() {
   }, [isDark]);
 
   useEffect(() => {
-    fetch("http://localhost:8000/api/config")
+    fetch("/api/config")
       .then((res) => res.json())
       .then((data) => setConfig(data))
       .catch((err) => console.error("Error fetching config:", err));
@@ -41,7 +41,7 @@ function GeneralSettings() {
 
     try {
       const response = await fetch(
-        `http://localhost:8000/api/models?url=${encodeURIComponent(config.ollama_url)}`,
+        `/api/models?url=${encodeURIComponent(config.ollama_url)}`,
       );
       const data = await response.json();
       if (data.error) {
@@ -62,7 +62,7 @@ function GeneralSettings() {
   const handleSave = async (e) => {
     e.preventDefault();
     try {
-      await fetch("http://localhost:8000/api/config", {
+      await fetch("/api/config", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(config),
