@@ -7,6 +7,10 @@ function ChatHistory() {
   const [showClearAllConfirm, setShowClearAllConfirm] = useState(false);
   const [indexToDelete, setIndexToDelete] = useState(null);
   const [selectedDate, setSelectedDate] = useState("All");
+  const [config, setConfig] = useState({
+    user_name: "You",
+    ai_name: "AI",
+  });
 
   const fetchHistory = () => {
     fetch("/api/history")
@@ -17,6 +21,15 @@ function ChatHistory() {
 
   useEffect(() => {
     fetchHistory();
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/config")
+      .then((res) => res.json())
+      .then((data) => {
+        setConfig(data);
+      })
+      .catch((err) => console.error("Error fetching config:", err));
   }, []);
 
   const confirmDelete = (index) => {
@@ -107,7 +120,7 @@ function ChatHistory() {
           
           <div className="aiMessage">
             <div className="messageHeader">
-              <h1 className="aiLabel">AI</h1>
+              <h1 className="aiLabel">{config.ai_name}</h1>
               {entry.timestamp && (
                 <span className="messageTimestamp">
                   {new Date(entry.timestamp).toLocaleString()}
@@ -119,7 +132,7 @@ function ChatHistory() {
           <div className="messageDivider"></div>
 
           <div className="userMessage">
-            <h1 className="userLabel">You</h1>
+            <h1 className="userLabel">{config.user_name}</h1>
             <h2 className="userText">{entry.user}</h2>
           </div>
 

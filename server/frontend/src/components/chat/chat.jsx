@@ -9,14 +9,38 @@ function Chat({
   setChatRole,
   setChatmsg,
   setInputLocked,
+  stealthMode,
+  userName = "You",
+  aiName = "AI",
 }) {
   const isfirstrender = useRef(true);
   const [airesponse, setAiResponse] = useState("");
   const [aiResponseLoading, setAiResponseLoading] = useState(false);
+  const [messages, setMessages] = useState([]);
   const streamQueue = useRef("");
   const displayInterval = useRef(null);
+  const scrollRef = useRef(null);
 
   const displayText = chatRole === "ai" ? airesponse : chatmsg;
+
+  useEffect(() => {
+    if (stealthMode) {
+      fetch("/api/history")
+        .then((res) => res.json())
+        .then((data) => {
+          setMessages(data.map(m => ([
+            { role: "user", text: m.user },
+            { role: "ai", text: m.ai }
+          ])).flat());
+        });
+    }
+  }, [stealthMode]);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages, airesponse, chatmsg]);
 
   async function fetchAiResponse(input) {
     setAiResponseLoading(true);
@@ -102,6 +126,14 @@ function Chat({
   }
 
   function finishChat() {
+    if (stealthMode) {
+      // In stealth mode, we don't fade out, we just add the message to history list
+      setMessages(prev => [...prev, { role: "ai", text: streamQueue.current || airesponse }]);
+      setAiResponse("");
+      setChatmsg("");
+      setInputLocked(false);
+      return;
+    }
     setTimeout(() => {
       setChathidden(true);
       setInputLocked(false);
@@ -121,8 +153,12 @@ function Chat({
     if (displayInterval.current) clearInterval(displayInterval.current);
     setChathidden(false);
 
+    if (stealthMode) {
+      setMessages(prev => [...prev, { role: "user", text: message }]);
+    }
+
     const fadeOutUser = setTimeout(() => {
-      setChathidden(true);
+      if (!stealthMode) setChathidden(true);
     }, 1500);
 
     const switchToAI = setTimeout(() => {
@@ -130,7 +166,7 @@ function Chat({
       setChathidden(false);
 
       fetchAiResponse(message);
-    }, 2000);
+    }, stealthMode ? 500 : 2000);
 
     return () => {
       clearTimeout(fadeOutUser);
@@ -138,6 +174,31 @@ function Chat({
       if (displayInterval.current) clearInterval(displayInterval.current);
     };
   }, [chatmsg]);
+
+  if (stealthMode) {
+    return (
+      <div className="chat-wrapper stealth" ref={scrollRef}>
+        {messages.map((m, i) => (
+          <div key={i} className={`stealth-message ${m.role}`}>
+            <span className="role">{m.role === "user" ? userName : aiName}</span>
+            <p className="text">{m.text}</p>
+          </div>
+        ))}
+        {chatRole === "user" && chatmsg && (
+           <div className="stealth-message user current">
+            <span className="role">{userName}</span>
+            <p className="text">{chatmsg}</p>
+          </div>
+        )}
+        {chatRole === "ai" && (
+           <div className="stealth-message ai current">
+            <span className="role">{aiName}</span>
+            <p className={`text ${aiResponseLoading ? "loading" : ""}`}>{airesponse}</p>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="chat-wrapper">

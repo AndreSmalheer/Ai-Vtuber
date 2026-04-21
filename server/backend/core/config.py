@@ -10,10 +10,16 @@ def load_config():
     return {
         "ollama_url": "http://localhost:11434/",
         "ollama_model": "qwen2.5-coder:1.5b-instruct",
-        "base_prompt": "Your an ai companion be nice to the user"
+        "base_prompt": "Your an ai companion be nice to the user",
+        "stealth_mode": False,
+        "user_name": "You",
+        "ai_name": "AI"
     }
 
 config = load_config()
 OLLAMA_URL = config.get("ollama_url")
 OLLAMA_MODEL = config.get("ollama_model")
 BASE_PROMPT = config.get("base_prompt")
+STEALTH_MODE = config.get("stealth_mode", False)
+USER_NAME = config.get("user_name", "You")
+AI_NAME = config.get("ai_name", "AI")

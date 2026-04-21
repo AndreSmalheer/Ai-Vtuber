@@ -20,7 +20,7 @@ def get_history():
     
     formatted_history = ""
     for entry in history:
-        formatted_history += f"User: {entry['user']}\nAI: {entry['ai']}\n"
+        formatted_history += f"{core.config.USER_NAME}: {entry['user']}\n{core.config.AI_NAME}: {entry['ai']}\n"
     return formatted_history
 
 def delete_history():

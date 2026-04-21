@@ -5,7 +5,7 @@ from core.history import get_history, add_history
 import core.config
 
 def ollama_event_generator(user_message):
-    prompt = get_history() + f"User: {user_message}\nAI:"
+    prompt = get_history() + f"{core.config.USER_NAME}: {user_message}\n{core.config.AI_NAME}:"
 
     payload = {
         "model": core.config.OLLAMA_MODEL,

@@ -41,6 +41,8 @@ async def update_config(request: Request):
     core.config.OLLAMA_URL = new_config.get("ollama_url")
     core.config.OLLAMA_MODEL = new_config.get("ollama_model")
     core.config.BASE_PROMPT = new_config.get("base_prompt")
+    core.config.USER_NAME = new_config.get("user_name", "You")
+    core.config.AI_NAME = new_config.get("ai_name", "AI")
     
     return {"status": "success"}
 
