@@ -10,6 +10,11 @@
     <title>frontend</title>
   </head>
   <body>
+    <script>
+      if (navigator.userAgent.indexOf('Electron') !== -1 || window.electronAPI) {
+        document.documentElement.classList.add("is-electron");
+      }
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

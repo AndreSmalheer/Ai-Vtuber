@@ -17,7 +17,11 @@ function Header({ backBtn, settingsBtn, fixed }) {
 
   return (
     <>
-      <div className={`header ${fixed ? "header--fixed" : ""}`}>
+      <div
+        className={`header ${fixed ? "header--fixed" : ""} ${
+          window.electronAPI?.isElectron ? "header--draggable" : ""
+        }`}
+      >
         {backBtn && (
           <button className="back-button" onClick={handleBackClick}></button>
         )}

@@ -34,6 +34,14 @@
   padding: 20px 40px;
 }
 
+.is-electron .general-settings__section {
+  background-color: var(--overlay-2-background);
+  border: none;
+}
+
+.is-electron .general-settings__section {
+}
+
 #ollama-url-group {
   width: 100%;
   background-color: var(--overlay-2-background);
@@ -282,6 +290,18 @@ textarea.general-settings__input {
   gap: 10px;
 }
 
+#response-speed-container {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+#response-speed-container .general-settings__input {
+  margin-left: 0 auto;
+  max-width: 50px;
+  max-height: 26px;
+}
+
 .general-settings__slider {
   -webkit-appearance: none;
   width: 100%;
@@ -313,15 +333,21 @@ textarea.general-settings__input {
   border: 2px solid var(--overlay-background);
 }
 
-#dark-mode-container{
-    flex-direction: row;
-    justify-content: space-between;
+#dark-mode-container {
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+#stealth-mode-container {
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
 }
 
 /* ── Mobile responsive additions ── */
 @media (max-width: 600px) {
   .general-settings {
-    padding: 40px 4vw 100px;
+    padding: 60px 4vw 100px;
   }
 
   .general-settings__section {
@@ -344,11 +370,15 @@ textarea.general-settings__input {
   }
 
   textarea.general-settings__input {
-    width: 100%;
+    width: 95%;
   }
 
   .save-btn {
     width: calc(100% - 32px);
     left: 16px;
+  }
+
+  .general-settings__input{
+    width: 95%;
   }
 }

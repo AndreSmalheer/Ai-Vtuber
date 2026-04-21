@@ -38,6 +38,30 @@ body.dark {
   --theme-active: #a9c1ff;
 }
 
+html.is-electron,
+html.is-electron body,
+html.is-electron #root,
+html.is-electron .main-content {
+  --main-background: transparent;
+  --overlay-background: #ffffff;
+  --overlay-2-background: #181a20;
+  --overlay-border: #dddddd;
+
+  --nav-btn: #7da2ff;
+  --sub-btn: #6b8cff;
+
+  --divador-color: rgba(255, 255, 255, 0.08);
+
+  --h1-color: #ffffff;
+  --h2-color: #dcdcdc;
+  --h3-color: #aaaaaa;
+
+  --theme-active: #8aa8ff;
+
+  background-color: var(--main-background) !important;
+  background-image: none !important;
+}
+
 body,
 html {
   width: 100vw;

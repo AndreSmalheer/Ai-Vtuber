@@ -7,7 +7,11 @@ function GeneralSettings() {
     ollama_model: "",
     base_prompt: "",
     response_speed: 50,
+    stealth_mode: false,
+    user_name: "You",
+    ai_name: "AI",
   });
+  const [saveMessage, setSaveMessage] = useState(""); // Added this line
   const [models, setModels] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -67,7 +71,8 @@ function GeneralSettings() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(config),
       });
-      alert("Settings saved!");
+      setSaveMessage("Settings saved!");
+      setTimeout(() => setSaveMessage(""), 3000); // Clear message after 3 seconds
     } catch (err) {
       console.error("Error saving config:", err);
     }
@@ -81,6 +86,7 @@ function GeneralSettings() {
   return (
     <div className="general-settings">
       <form className="general-settings__form" onSubmit={handleSave}>
+        {saveMessage && <div className="save-message">{saveMessage}</div>}
         <div className="general-settings__section">
           <h1 className="general-settings__title">Ollama</h1>
 
@@ -178,6 +184,35 @@ function GeneralSettings() {
           className="general-settings__section"
           style={{ marginTop: "20px" }}
         >
+          <h1 className="general-settings__title">Identity</h1>
+          <div className="general-settings__field">
+            <label className="general-settings__label">User Name</label>
+            <input
+              type="text"
+              className="general-settings__input"
+              name="user_name"
+              value={config.user_name}
+              onChange={handleChange}
+              placeholder="You"
+            />
+          </div>
+          <div className="general-settings__field">
+            <label className="general-settings__label">AI Name</label>
+            <input
+              type="text"
+              className="general-settings__input"
+              name="ai_name"
+              value={config.ai_name}
+              onChange={handleChange}
+              placeholder="AI"
+            />
+          </div>
+        </div>
+
+        <div
+          className="general-settings__section"
+          style={{ marginTop: "20px" }}
+        >
           <h1 className="general-settings__title">Appearance</h1>
           <div className="general-settings__field" id="dark-mode-container">
             <label className="general-settings__label">Dark Mode</label>
@@ -190,7 +225,18 @@ function GeneralSettings() {
             </div>
           </div>
 
-          <div className="general-settings__field">
+          <div className="general-settings__field" id="stealth-mode-container">
+            <label className="general-settings__label">Stealth Mode</label>
+            <div
+              className={`theme-toggle ${config.stealth_mode ? "active" : ""}`}
+              onClick={() => setConfig(prev => ({ ...prev, stealth_mode: !prev.stealth_mode }))}
+              style={{ marginLeft: "10px" }}
+            >
+              <div className="theme-toggle__circle"></div>
+            </div>
+          </div>
+
+          <div className="general-settings__field" id="response-speed-container">
             <label className="general-settings__label">
               Response Speed (ms)
             </label>

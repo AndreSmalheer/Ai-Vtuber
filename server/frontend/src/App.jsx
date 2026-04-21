@@ -8,6 +8,7 @@ import Header from "./components/header/header";
 function App() {
   return (
     <div className="main-content">
+
       <Routes>
         <Route path="/" element={<Home />} />
         {/* This route acts as the settings navigation menu */}
