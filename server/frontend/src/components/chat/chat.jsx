@@ -18,10 +18,38 @@ function Chat({
   const [aiResponseLoading, setAiResponseLoading] = useState(false);
   const [messages, setMessages] = useState([]);
   const streamQueue = useRef("");
+  const accumulatedResponseRef = useRef("");
+  const audioQueue = useRef([]);
+  const isAudioPlaying = useRef(false);
   const displayInterval = useRef(null);
   const scrollRef = useRef(null);
 
   const displayText = chatRole === "ai" ? airesponse : chatmsg;
+
+  const playNextAudio = () => {
+    if (audioQueue.current.length === 0) {
+      isAudioPlaying.current = false;
+      return;
+    }
+
+    isAudioPlaying.current = true;
+    const base64Audio = audioQueue.current.shift();
+    const audio = new Audio(`data:audio/wav;base64,${base64Audio}`);
+    
+    audio.onended = () => {
+      playNextAudio();
+    };
+
+    audio.onerror = (e) => {
+      console.error("Audio playback error:", e);
+      playNextAudio();
+    };
+
+    audio.play().catch(e => {
+      console.error("Audio play failed:", e);
+      playNextAudio();
+    });
+  };
 
   useEffect(() => {
     if (stealthMode) {
@@ -98,10 +126,17 @@ function Chat({
             const json = JSON.parse(jsonStr);
             if (json.text) {
               setAiResponseLoading(false);
+              accumulatedResponseRef.current += json.text;
               if (speed > 0) {
                 streamQueue.current += json.text;
               } else {
                 setAiResponse((prev) => prev + json.text);
+              }
+            }
+            if (json.audio) {
+              audioQueue.current.push(json.audio);
+              if (!isAudioPlaying.current) {
+                playNextAudio();
               }
             }
           } catch (e) {
@@ -128,15 +163,20 @@ function Chat({
   function finishChat() {
     if (stealthMode) {
       // In stealth mode, we don't fade out, we just add the message to history list
-      setMessages(prev => [...prev, { role: "ai", text: streamQueue.current || airesponse }]);
+      const finalAiText = accumulatedResponseRef.current;
+      if (finalAiText && finalAiText.trim()) {
+        setMessages(prev => [...prev, { role: "ai", text: finalAiText }]);
+      }
       setAiResponse("");
       setChatmsg("");
+      setChatRole(""); // Hide current message divs
       setInputLocked(false);
       return;
     }
     setTimeout(() => {
       setChathidden(true);
       setInputLocked(false);
+      setChatRole("");
     }, 1500);
   }
 
@@ -150,6 +190,7 @@ function Chat({
     setChatRole("user");
     setAiResponse("");
     streamQueue.current = "";
+    accumulatedResponseRef.current = "";
     if (displayInterval.current) clearInterval(displayInterval.current);
     setChathidden(false);
 
@@ -184,12 +225,6 @@ function Chat({
             <p className="text">{m.text}</p>
           </div>
         ))}
-        {chatRole === "user" && chatmsg && (
-           <div className="stealth-message user current">
-            <span className="role">{userName}</span>
-            <p className="text">{chatmsg}</p>
-          </div>
-        )}
         {chatRole === "ai" && (
            <div className="stealth-message ai current">
             <span className="role">{aiName}</span>

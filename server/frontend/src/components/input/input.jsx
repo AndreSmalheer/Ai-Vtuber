@@ -4,7 +4,7 @@ function Input({ inputmsg, setInputmsg, setChatmsg, chatRole, setChatRole, input
   function handleInput() {
     setChatmsg(inputmsg);
     setInputmsg("");
-    setChatRole("User");
+    setChatRole("user");
   }
 
   return (

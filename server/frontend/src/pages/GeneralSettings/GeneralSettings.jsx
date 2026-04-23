@@ -254,6 +254,35 @@ function GeneralSettings() {
           </div>
         </div>
 
+        <div
+          className="general-settings__section"
+          style={{ marginTop: "20px" }}
+        >
+          <h1 className="general-settings__title">Piper TTS</h1>
+          <div className="general-settings__field" id="tts-mode-container">
+            <label className="general-settings__label">Enable TTS</label>
+            <div
+              className={`theme-toggle ${config.tts_enabled ? "active" : ""}`}
+              onClick={() => setConfig(prev => ({ ...prev, tts_enabled: !prev.tts_enabled }))}
+              style={{ marginLeft: "10px" }}
+            >
+              <div className="theme-toggle__circle"></div>
+            </div>
+          </div>
+
+          <div className="general-settings__field">
+            <label className="general-settings__label">Piper URL</label>
+            <input
+              type="text"
+              className="general-settings__input"
+              name="piper_url"
+              value={config.piper_url || "http://localhost:10200"}
+              onChange={handleChange}
+              placeholder="http://localhost:10200"
+            />
+          </div>
+        </div>
+
         <button type="submit" className="save-btn">
           Save
         </button>

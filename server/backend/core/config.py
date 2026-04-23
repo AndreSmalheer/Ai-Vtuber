@@ -13,7 +13,9 @@ def load_config():
         "base_prompt": "Your an ai companion be nice to the user",
         "stealth_mode": False,
         "user_name": "You",
-        "ai_name": "AI"
+        "ai_name": "AI",
+        "tts_enabled": False,
+        "piper_url": "http://localhost:10200"
     }
 
 config = load_config()
@@ -23,3 +25,5 @@ BASE_PROMPT = config.get("base_prompt")
 STEALTH_MODE = config.get("stealth_mode", False)
 USER_NAME = config.get("user_name", "You")
 AI_NAME = config.get("ai_name", "AI")
+TTS_ENABLED = config.get("tts_enabled", False)
+PIPER_URL = config.get("piper_url", "http://localhost:10200")

@@ -52,6 +52,11 @@
   padding-right: 10px;
 }
 
+#tts-mode-container{
+    flex-direction: row;
+    justify-content: space-between;
+}
+
 #ollama-url-group .general-settings__input {
   margin-left: 0;
   border: none;
@@ -378,7 +383,7 @@ textarea.general-settings__input {
     left: 16px;
   }
 
-  .general-settings__input{
+  .general-settings__input {
     width: 95%;
   }
 }

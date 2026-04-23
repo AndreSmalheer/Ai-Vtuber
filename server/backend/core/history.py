@@ -1,7 +1,7 @@
 import os
 import json
-
 from datetime import datetime
+import core.config
 
 HISTORY_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "history.json")
 

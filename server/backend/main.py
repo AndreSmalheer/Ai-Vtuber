@@ -43,6 +43,8 @@ async def update_config(request: Request):
     core.config.BASE_PROMPT = new_config.get("base_prompt")
     core.config.USER_NAME = new_config.get("user_name", "You")
     core.config.AI_NAME = new_config.get("ai_name", "AI")
+    core.config.TTS_ENABLED = new_config.get("tts_enabled", False)
+    core.config.PIPER_URL = new_config.get("piper_url", "http://localhost:10200")
     
     return {"status": "success"}
 

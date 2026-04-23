@@ -3,7 +3,9 @@
     "ollama_model": "qwen2.5-coder:1.5b-instruct",
     "base_prompt": "Your an ai companion be nice to the user",
     "response_speed": 50,
-    "stealth_mode": true,
+    "stealth_mode": false,
     "user_name": "User",
-    "ai_name": "Ai"
+    "ai_name": "Ai",
+    "piper_url": "http://127.0.0.1:8080/",
+    "tts_enabled": false
 }
