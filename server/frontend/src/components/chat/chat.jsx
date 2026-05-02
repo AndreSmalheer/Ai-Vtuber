@@ -35,7 +35,7 @@ function Chat({
     isAudioPlaying.current = true;
     const base64Audio = audioQueue.current.shift();
     const audio = new Audio(`data:audio/wav;base64,${base64Audio}`);
-    
+
     audio.onended = () => {
       playNextAudio();
     };
@@ -98,7 +98,7 @@ function Chat({
 
     // Start display interval
     if (displayInterval.current) clearInterval(displayInterval.current);
-    
+
     if (speed > 0) {
       displayInterval.current = setInterval(() => {
         if (streamQueue.current.length > 0) {

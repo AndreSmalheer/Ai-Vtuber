@@ -1,4 +1,5 @@
 import { Routes, Route } from "react-router-dom";
+import { useEffect } from "react";
 import Home from "./pages/Home/Home";
 import Settings from "./pages/Settings/Settings"; // This is now the menu component
 import GeneralSettings from "./pages/GeneralSettings/GeneralSettings"; // New settings page
@@ -6,6 +7,15 @@ import ChatHistory from "./pages/ChatHistory/ChatHistory"; // New chat history p
 import Header from "./components/header/header";
 
 function App() {
+  useEffect(() => {
+    const theme = localStorage.getItem("theme");
+    if (theme === "dark") {
+      document.body.classList.add("dark");
+    } else {
+      document.body.classList.remove("dark");
+    }
+  }, []);
+
   return (
     <div className="main-content">
 
