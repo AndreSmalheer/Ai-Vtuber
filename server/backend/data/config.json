@@ -7,5 +7,6 @@
     "user_name": "User",
     "ai_name": "Ai",
     "piper_url": "http://127.0.0.1:8080/",
-    "tts_enabled": false
+    "tts_enabled": true,
+    "avatar_model": "Mia-clothed.vrm"
 }

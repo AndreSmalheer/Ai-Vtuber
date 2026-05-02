@@ -1,8 +1,9 @@
 import sys
 import os
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, UploadFile, File
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
+import shutil
 
 # Ensure the current directory is in sys.path for local package imports
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -14,6 +15,8 @@ import json
 import requests
 
 app = FastAPI()
+
+VRM_MODELS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "frontend", "public", "3d-assests", "vrm-models")
 
 app.add_middleware(
     CORSMiddleware,
@@ -43,10 +46,35 @@ async def update_config(request: Request):
     core.config.BASE_PROMPT = new_config.get("base_prompt")
     core.config.USER_NAME = new_config.get("user_name", "You")
     core.config.AI_NAME = new_config.get("ai_name", "AI")
+    core.config.AVATAR_MODEL = new_config.get("avatar_model", "Mia-clothed.vrm")
     core.config.TTS_ENABLED = new_config.get("tts_enabled", False)
     core.config.PIPER_URL = new_config.get("piper_url", "http://localhost:10200")
     
     return {"status": "success"}
+
+@app.get("/api/vrm-models")
+async def list_vrm_models():
+    try:
+        if not os.path.exists(VRM_MODELS_DIR):
+            return []
+        files = [f for f in os.listdir(VRM_MODELS_DIR) if f.endswith(".vrm")]
+        return files
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.post("/api/vrm-models/upload")
+async def upload_vrm_model(file: UploadFile = File(...)):
+    try:
+        if not os.path.exists(VRM_MODELS_DIR):
+            os.makedirs(VRM_MODELS_DIR)
+        
+        file_path = os.path.join(VRM_MODELS_DIR, file.filename)
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        
+        return {"status": "success", "filename": file.filename}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
 @app.get("/api/models")
 async def get_models(url: str):

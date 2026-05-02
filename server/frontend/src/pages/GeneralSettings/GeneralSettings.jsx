@@ -16,6 +16,8 @@ function GeneralSettings() {
   const [isOpen, setIsOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState(null);
+  const [vrmModels, setVrmModels] = useState([]);
+  const [isVrmOpen, setIsVrmOpen] = useState(false);
   const [isDark, setIsDark] = useState(() => {
     return localStorage.getItem("theme") === "dark";
   });
@@ -35,7 +37,43 @@ function GeneralSettings() {
       .then((res) => res.json())
       .then((data) => setConfig(data))
       .catch((err) => console.error("Error fetching config:", err));
+    
+    fetchVrmModels();
   }, []);
+
+  const fetchVrmModels = async () => {
+    try {
+      const response = await fetch("/api/vrm-models");
+      const data = await response.json();
+      if (Array.isArray(data)) {
+        setVrmModels(data);
+      }
+    } catch (err) {
+      console.error("Error fetching VRM models:", err);
+    }
+  };
+
+  const handleVrmUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const response = await fetch("/api/vrm-models/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await response.json();
+      if (data.status === "success") {
+        await fetchVrmModels();
+        setConfig(prev => ({ ...prev, avatar_model: data.filename }));
+      }
+    } catch (err) {
+      console.error("Error uploading VRM model:", err);
+    }
+  };
 
   const fetchModels = async () => {
     if (!config.ollama_url) return;
@@ -206,6 +244,53 @@ function GeneralSettings() {
               onChange={handleChange}
               placeholder="AI"
             />
+          </div>
+          <div className="general-settings__field">
+            <label className="general-settings__label">Avatar Model</label>
+            <div className="custom-select">
+              <div
+                className="open-icon"
+                onClick={() => setIsVrmOpen(!isVrmOpen)}
+              ></div>
+              <div
+                className="custom-select__selected"
+                onClick={() => setIsVrmOpen(!isVrmOpen)}
+              >
+                {config.avatar_model || "Select a model"}
+              </div>
+
+              {isVrmOpen && (
+                <ul className="custom-select__dropdown">
+                  {vrmModels.map((m) => (
+                    <li
+                      key={m}
+                      className="custom-select__option"
+                      onClick={() => {
+                        setConfig((prev) => ({
+                          ...prev,
+                          avatar_model: m,
+                        }));
+                        setIsVrmOpen(false);
+                      }}
+                    >
+                      {m}
+                    </li>
+                  ))}
+                  <li className="custom-select__option add-model-option">
+                    <label htmlFor="vrm-upload" className="add-model-label">
+                      <span className="plus-icon">+</span> Add VRM Model
+                    </label>
+                    <input
+                      type="file"
+                      id="vrm-upload"
+                      accept=".vrm"
+                      onChange={handleVrmUpload}
+                      style={{ display: "none" }}
+                    />
+                  </li>
+                </ul>
+              )}
+            </div>
           </div>
         </div>
 

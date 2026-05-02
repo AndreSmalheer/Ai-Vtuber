@@ -4,7 +4,33 @@
     left: 0;
     width: 100%;
     height: 100vh;
-    background-color: transparent;
+    background-color: var(--bg-color, #111111);
+    transition: background-color 0.4s ease;
+}
+
+body.dark .three-js-container {
+    background-color: #111111;
+}
+
+body:not(.dark) .three-js-container {
+    background-color: #fafafa;
+}
+
+.three-js-container::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle, transparent 40%, var(--vignette-color, rgba(0, 0, 0, 0.2)) 100%);
+    pointer-events: none;
+    z-index: 1;
+}
+
+body.dark .three-js-container::after {
+    --vignette-color: rgba(0, 0, 0, 0.5);
+}
+
+body:not(.dark) .three-js-container::after {
+    --vignette-color: rgba(0, 0, 0, 0.05);
 }
 
 .three-js-container canvas {

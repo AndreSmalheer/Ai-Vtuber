@@ -14,6 +14,7 @@ def load_config():
         "stealth_mode": False,
         "user_name": "You",
         "ai_name": "AI",
+        "avatar_model": "Mia-clothed.vrm",
         "tts_enabled": False,
         "piper_url": "http://localhost:10200"
     }
@@ -25,5 +26,6 @@ BASE_PROMPT = config.get("base_prompt")
 STEALTH_MODE = config.get("stealth_mode", False)
 USER_NAME = config.get("user_name", "You")
 AI_NAME = config.get("ai_name", "AI")
+AVATAR_MODEL = config.get("avatar_model", "Mia-clothed.vrm")
 TTS_ENABLED = config.get("tts_enabled", False)
 PIPER_URL = config.get("piper_url", "http://localhost:10200")
