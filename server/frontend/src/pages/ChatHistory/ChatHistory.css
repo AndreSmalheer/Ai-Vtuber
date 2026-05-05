@@ -1,18 +1,18 @@
 .chatHistory {
   box-sizing: border-box;
   width: 100%;
-  height: auto;
-  padding: 40px 4vw 100px;
-  padding-top: 60px;
+  padding: 60px 4vw 100px;
+  position: relative;
+  z-index: 900;
 }
 
 .historyHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
   flex-wrap: wrap;
   gap: 15px;
+  margin-bottom: 20px;
 }
 
 .dateFilters {
@@ -22,46 +22,98 @@
 }
 
 .dateTag {
-  padding: 6px 15px;
-  border-radius: 20px;
-  background-color: var(--overlay-2-background);
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--overlay-background);
   border: 1px solid var(--overlay-border);
   color: var(--h1-color);
-  cursor: pointer;
   font-size: 14px;
-  transition: all 0.2s ease;
+  cursor: pointer;
+  transition: 0.2s ease;
 }
 
 .dateTag:hover {
   border-color: var(--theme-active);
+  transform: translateY(-1px);
 }
 
 .dateTag.active {
-  background-color: var(--theme-active);
-  color: white;
+  background: var(--theme-active);
+  color: var(--divador-color);
   border-color: var(--theme-active);
 }
 
 .clearAllBtn {
-  padding: 8px 18px;
-  border-radius: 8px;
-  background-color: #ff4d4d;
-  color: white;
+  padding: 8px 16px;
+  border-radius: 10px;
+  background: #ff4d4d;
+  color: #fff;
   border: none;
-  cursor: pointer;
   font-weight: 600;
-  transition: opacity 0.2s;
+  cursor: pointer;
+  transition: 0.2s ease;
 }
 
 .clearAllBtn:hover {
-  opacity: 0.8;
+  opacity: 0.85;
+  transform: translateY(-1px);
 }
 
+/* chat entry card (now matches chat container style) */
+.chatEntry {
+  position: relative;
+  border-radius: 16px;
+  background: var(--overlay-background);
+  border: 1px solid var(--overlay-border);
+  padding: 20px;
+  margin-bottom: 12px;
+  transition: 0.2s ease;
+  overflow: hidden;
+}
+
+/* subtle top shine like your input/chat */
+.chatEntry::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--overlay-border), transparent);
+}
+
+.chatEntry:hover {
+  transform: translateY(-2px);
+  /* border-color: var(--theme-active); */
+}
+
+/* delete button */
+.deleteMessageBtn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: var(--nav-btn);
+  cursor: pointer;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg width='15' height='15' viewBox='0 0 15 15' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M8.6 5.45751V10.7775M5.56 5.45751V10.7775M11.64 2.41751V10.1695C11.64 11.4465 11.64 12.0849 11.3915 12.5726C11.1729 13.0017 10.8241 13.3504 10.3951 13.569C9.90735 13.8175 9.26895 13.8175 7.992 13.8175H6.168C4.89108 13.8175 4.25262 13.8175 3.7649 13.569C3.33589 13.3504 2.9871 13.0017 2.7685 12.5726C2.52 12.0849 2.52 11.4465 2.52 10.1695V2.41751M1 2.41751H13.16M10.12 2.41751L9.91434 1.80045C9.715 1.20246 9.61528 0.903471 9.43045 0.682417C9.2672 0.487211 9.0576 0.336116 8.82078 0.242985C8.55258 0.137512 8.23748 0.137512 7.60714 0.137512H6.55289C5.92256 0.137512 5.60739 0.137512 5.33923 0.242985C5.10242 0.336116 4.89278 0.487211 4.72954 0.682417C4.54468 0.903471 4.44502 1.20246 4.24569 1.80045L4.04 2.41751' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  -webkit-mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  transition: background-color 0.2s;
+}
+
+.deleteMessageBtn:hover {
+  background: #ff4d4d;
+}
+
+/* message styling */
 .messageHeader {
   display: flex;
   align-items: baseline;
-  gap: 12px;
-  margin-bottom: 5px;
+  gap: 10px;
+  margin-bottom: 6px;
 }
 
 .messageTimestamp {
@@ -69,111 +121,50 @@
   color: var(--h3-color);
 }
 
-.chatEntry {
-  position: relative;
-  cursor: default;
-  box-sizing: border-box;
-  border-radius: 6px;
-  background-color: var(--overlay-background);
-  border: 1px solid var(--overlay-border);
-  padding: 20px;
-  margin-bottom: 12px;
-  transition:
-    transform 0.15s ease,
-    box-shadow 0.15s ease,
-    border-color 0.15s ease;
-}
-
-.chatEntry:hover {
-  transform: translateY(-2px);
-}
-
-.deleteMessageBtn {
-  position: absolute;
-  top: 15px;
-  right: 15px;
-  width: 20px;
-  height: 20px;
-  display: block;
-  background-color: var(--nav-btn);
-  border: none;
-  cursor: pointer;
-  z-index: 2;
-
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg width='15' height='15' viewBox='0 0 15 15' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M8.6 5.45751V10.7775M5.56 5.45751V10.7775M11.64 2.41751V10.1695C11.64 11.4465 11.64 12.0849 11.3915 12.5726C11.1729 13.0017 10.8241 13.3504 10.3951 13.569C9.90735 13.8175 9.26895 13.8175 7.992 13.8175H6.168C4.89108 13.8175 4.25262 13.8175 3.7649 13.569C3.33589 13.3504 2.9871 13.0017 2.7685 12.5726C2.52 12.0849 2.52 11.4465 2.52 10.1695V2.41751M1 2.41751H13.16M10.12 2.41751L9.91434 1.80045C9.715 1.20246 9.61528 0.903471 9.43045 0.682417C9.2672 0.487211 9.0576 0.336116 8.82078 0.242985C8.55258 0.137512 8.23748 0.137512 7.60714 0.137512H6.55289C5.92256 0.137512 5.60739 0.137512 5.33923 0.242985C5.10242 0.336116 4.89278 0.487211 4.72954 0.682417C4.54468 0.903471 4.44502 1.20246 4.24569 1.80045L4.04 2.41751' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-  mask-repeat: no-repeat;
-  mask-position: center;
-  mask-size: contain;
-  -webkit-mask-repeat: no-repeat;
-  -webkit-mask-position: center;
-  -webkit-mask-size: contain;
-
-  transition: background-color 0.2s;
-}
-
-.deleteMessageBtn:hover {
-  background-color: #ff4d4d;
-}
-
-.messageDivider {
-  width: 100%;
-  height: 2px;
-  background-color: var(--divador-color);
-  margin: 12px 0;
-}
-
-.aiMessage {
-  margin-bottom: 10px;
+.aiLabel,
+.userLabel {
+  font-size: 20px;
+  margin: 0;
+  font-weight: 600;
 }
 
 .aiLabel {
   color: var(--h1-color);
-  font-size: 24px;
-  margin: 0;
-}
-
-.aiText {
-  color: var(--h2-color);
-  margin: 0;
-  margin-left: 6px;
-  margin-bottom: 10px;
-  font-weight: 500;
-  font-size: 18px;
-}
-
-.userMessage {
-  margin-bottom: 10px;
 }
 
 .userLabel {
   color: var(--h1-user-color);
-  font-size: 24px;
-  margin: 0;
 }
 
+.aiText,
 .userText {
-  color: var(--h2-color);
-  margin: 0;
-  margin-left: 6px;
-  margin-bottom: 10px;
+  margin: 0 0 10px 6px;
+  font-size: 16px;
   font-weight: 500;
-  font-size: 18px;
+  color: var(--h2-color);
 }
 
+/* divider */
+.messageDivider {
+  height: 1px;
+  margin: 12px 0;
+  background: var(--overlay-border);
+  opacity: 0.6;
+}
+
+/* empty state */
 .noHistory {
   text-align: center;
   color: var(--h3-color);
   margin-top: 50px;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
 }
 
+/* modal */
 .modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background-color: rgba(0, 0, 0, 0.5);
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -181,51 +172,50 @@
 }
 
 .modal-content {
-  background-color: var(--overlay-background);
-  padding: 30px;
-  border-radius: 15px;
+  width: min(400px, 90%);
+  background: var(--overlay-background);
   border: 1px solid var(--overlay-border);
-  width: 90%;
-  max-width: 400px;
+  border-radius: 16px;
+  padding: 24px;
   text-align: center;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
 .modal-title {
   color: var(--h1-color);
-  margin-top: 0;
+  margin: 0 0 10px 0;
 }
 
 .modal-text {
   color: var(--h3-color);
-  margin-bottom: 25px;
+  margin-bottom: 20px;
 }
 
 .modal-actions {
   display: flex;
-  gap: 15px;
+  gap: 12px;
   justify-content: center;
 }
 
 .modal-btn {
-  padding: 10px 25px;
-  border-radius: 8px;
+  padding: 10px 20px;
+  border-radius: 10px;
   border: none;
   font-weight: 600;
   cursor: pointer;
-  transition: opacity 0.2s;
+  transition: 0.2s ease;
 }
 
 .modal-btn:hover {
-  opacity: 0.8;
+  transform: translateY(-1px);
 }
 
 .cancel {
-  background-color: var(--overlay-2-background);
+  background: var(--overlay-2-background);
   color: var(--h1-color);
 }
 
 .confirm {
-  background-color: #ff4d4d;
-  color: white;
+  background: #ff4d4d;
+  color: #fff;
 }

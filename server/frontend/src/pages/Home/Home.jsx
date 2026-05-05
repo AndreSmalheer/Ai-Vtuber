@@ -1,34 +1,22 @@
 import Header from "../../components/header/header";
 import Chat from "../../components/chat/chat";
 import Input from "../../components/input/input";
-import Avatar from "../../components/avatar/avatar";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
-function Home() {
+function Home({ config, onAudioStateChange }) {
   const [chatmsg, setChatmsg] = useState("");
   const [chatRole, setChatRole] = useState("");
   const [chathidden, setChathidden] = useState(true);
   const [inputmsg, setInputmsg] = useState("");
   const [inputLocked, setInputLocked] = useState(false);
-  const [config, setConfig] = useState({
-    stealth_mode: false,
-    user_name: "You",
-    ai_name: "AI"
-  });
-
-  useEffect(() => {
-    fetch("/api/config")
-      .then((res) => res.json())
-      .then((data) => {
-        setConfig(data);
-      })
-      .catch((err) => console.error("Error fetching config:", err));
-  }, []);
 
   return (
-    <div className={config.stealth_mode ? "stealth-layout" : ""}>
+    <div
+      className={
+        config.stealth_mode ? "home-layout stealth-layout" : "home-layout"
+      }
+    >
       <Header backBtn={false} settingsBtn={true} />
-      {!config.stealth_mode && <Avatar inputLocked={inputLocked}/>}
       <Chat
         chatmsg={chatmsg}
         chathidden={chathidden}
@@ -41,6 +29,7 @@ function Home() {
         stealthMode={config.stealth_mode}
         userName={config.user_name}
         aiName={config.ai_name}
+        onAudioStateChange={onAudioStateChange}
       />
       <Input
         inputmsg={inputmsg}

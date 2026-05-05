@@ -1,5 +1,64 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import "./GeneralSettings.css";
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = base64String.replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = window.atob(base64 + padding);
+  const outputArray = new Uint8Array(rawData.length);
+
+  for (let i = 0; i < rawData.length; i += 1) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+
+  return outputArray;
+}
+
+const FALLBACK_VAPID_PUBLIC_KEY =
+  "BG0sZ7qsau7n56E1kdGy3Gx5Rznw5OlOZDkSnJl2pkGCvs0lKdUbAFuBTfEktjHRGjJ9WhGhetmakYesoy2AW20";
+const isIos =
+  /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+  (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+const isStandalone =
+  window.matchMedia?.("(display-mode: standalone)").matches ||
+  window.navigator.standalone === true;
+
+function getNotificationDiagnostics() {
+  return {
+    secureContext: window.isSecureContext,
+    notificationApi: "Notification" in window,
+    serviceWorkerApi: "serviceWorker" in navigator,
+    pushManagerApi: "PushManager" in window,
+    standalone: isStandalone,
+    ios: isIos,
+    protocol: window.location.protocol,
+    host: window.location.host,
+  };
+}
+
+function getUnsupportedNotificationReason(diagnostics) {
+  if (!diagnostics.secureContext) {
+    return "This install is not running from a secure origin. iPhone push needs HTTPS.";
+  }
+
+  if (diagnostics.ios && !diagnostics.standalone) {
+    return "On iOS, open Mia from the Home Screen icon before subscribing.";
+  }
+
+  if (!diagnostics.notificationApi) {
+    return "This browser does not support notifications.";
+  }
+
+  if (!diagnostics.serviceWorkerApi) {
+    return "This browser does not support service workers.";
+  }
+
+  if (!diagnostics.pushManagerApi) {
+    return "This browser does not support Web Push here.";
+  }
+
+  return "";
+}
 
 function GeneralSettings() {
   const [config, setConfig] = useState({
@@ -8,10 +67,11 @@ function GeneralSettings() {
     base_prompt: "",
     response_speed: 50,
     stealth_mode: false,
-    user_name: "You",
-    ai_name: "AI",
+    orbit_controls_enabled: true,
+    user_name: "Andre",
+    ai_name: "Mia",
   });
-  const [saveMessage, setSaveMessage] = useState(""); // Added this line
+  const [saveMessage, setSaveMessage] = useState("");
   const [models, setModels] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -21,6 +81,18 @@ function GeneralSettings() {
   const [isDark, setIsDark] = useState(() => {
     return localStorage.getItem("theme") === "dark";
   });
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [isSubscribing, setIsSubscribing] = useState(false);
+  const [supportNotification, setSupportNotification] = useState(false);
+  const [notificationStatus, setNotificationStatus] = useState(
+    "Checking notification support...",
+  );
+  const [vapidPublicKey, setVapidPublicKey] = useState(
+    FALLBACK_VAPID_PUBLIC_KEY,
+  );
+  const [diagnostics, setDiagnostics] = useState(() =>
+    getNotificationDiagnostics(),
+  );
 
   useEffect(() => {
     if (isDark) {
@@ -32,16 +104,143 @@ function GeneralSettings() {
     }
   }, [isDark]);
 
-  useEffect(() => {
-    fetch("/api/config")
-      .then((res) => res.json())
-      .then((data) => setConfig(data))
-      .catch((err) => console.error("Error fetching config:", err));
-    
-    fetchVrmModels();
+  const refreshNotificationStatus = useCallback(async () => {
+    const nextDiagnostics = getNotificationDiagnostics();
+    const unsupportedReason = getUnsupportedNotificationReason(nextDiagnostics);
+
+    setDiagnostics(nextDiagnostics);
+
+    if (unsupportedReason) {
+      setSupportNotification(false);
+      setIsSubscribed(false);
+      setNotificationStatus(unsupportedReason);
+      return;
+    }
+
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.getSubscription();
+
+      setSupportNotification(true);
+      setIsSubscribed(Boolean(subscription));
+
+      if (subscription) {
+        setNotificationStatus("Subscribed and ready for notifications.");
+      } else if (Notification.permission === "denied") {
+        setNotificationStatus(
+          "Notification permission is blocked in browser settings.",
+        );
+      } else if (Notification.permission === "granted") {
+        setNotificationStatus(
+          "Permission granted. Subscribe to save this device.",
+        );
+      } else {
+        setNotificationStatus("Ready to request notification permission.");
+      }
+    } catch (error) {
+      console.error("Error checking notification status:", error);
+      setSupportNotification(false);
+      setNotificationStatus("Could not initialize the service worker.");
+    }
   }, []);
 
-  const fetchVrmModels = async () => {
+  useEffect(() => {
+    refreshNotificationStatus();
+  }, [refreshNotificationStatus]);
+
+  useEffect(() => {
+    const fetchVapidPublicKey = async () => {
+      try {
+        const response = await fetch("/api/notifaction/public-key");
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data = await response.json();
+
+        if (typeof data.publicKey === "string" && data.publicKey.length > 0) {
+          setVapidPublicKey(data.publicKey);
+        }
+      } catch {}
+    };
+
+    fetchVapidPublicKey();
+  }, []);
+
+  const handleSubscribeNotifications = useCallback(async () => {
+    if (!supportNotification) {
+      setNotificationStatus("Notifications are not available here.");
+      return;
+    }
+
+    setIsSubscribing(true);
+    setNotificationStatus("Requesting permission...");
+
+    try {
+      let currentPermission = Notification.permission;
+
+      if (currentPermission === "default") {
+        currentPermission = await Notification.requestPermission();
+      }
+
+      if (currentPermission !== "granted") {
+        setNotificationStatus("Notification permission was not granted.");
+        return;
+      }
+
+      const registration = await navigator.serviceWorker.ready;
+      let subscription = await registration.pushManager.getSubscription();
+
+      if (!subscription) {
+        setNotificationStatus("Subscribing this device...");
+        subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+        });
+      }
+
+      const response = await fetch("/api/subscribe-notifaction", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(subscription.toJSON()),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || "Backend subscription failed");
+      }
+
+      setIsSubscribed(true);
+      setNotificationStatus("Subscribed and ready for notifications.");
+    } catch (error) {
+      console.error("Error during notification setup:", error);
+      setNotificationStatus(
+        "Subscription failed. Check the console/server logs.",
+      );
+    } finally {
+      setIsSubscribing(false);
+    }
+  }, [supportNotification, vapidPublicKey]);
+
+  const notifyConfigUpdated = (nextConfig) => {
+    window.dispatchEvent(
+      new CustomEvent("app-config-updated", { detail: nextConfig }),
+    );
+  };
+
+  const saveConfig = async (nextConfig) => {
+    await fetch("/api/config", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(nextConfig),
+    });
+    notifyConfigUpdated(nextConfig);
+  };
+
+  async function fetchVrmModels() {
     try {
       const response = await fetch("/api/vrm-models");
       const data = await response.json();
@@ -51,7 +250,16 @@ function GeneralSettings() {
     } catch (err) {
       console.error("Error fetching VRM models:", err);
     }
-  };
+  }
+
+  useEffect(() => {
+    fetch("/api/config")
+      .then((res) => res.json())
+      .then((data) => setConfig(data))
+      .catch((err) => console.error("Error fetching config:", err));
+
+    Promise.resolve().then(fetchVrmModels);
+  }, []);
 
   const handleVrmUpload = async (e) => {
     const file = e.target.files[0];
@@ -68,10 +276,28 @@ function GeneralSettings() {
       const data = await response.json();
       if (data.status === "success") {
         await fetchVrmModels();
-        setConfig(prev => ({ ...prev, avatar_model: data.filename }));
+        const nextConfig = { ...config, avatar_model: data.filename };
+        setConfig(nextConfig);
+        await saveConfig(nextConfig);
+        setSaveMessage("Avatar model applied!");
+        setTimeout(() => setSaveMessage(""), 3000);
       }
     } catch (err) {
       console.error("Error uploading VRM model:", err);
+    }
+  };
+
+  const handleAvatarModelSelect = async (modelName) => {
+    const nextConfig = { ...config, avatar_model: modelName };
+    setConfig(nextConfig);
+    setIsVrmOpen(false);
+
+    try {
+      await saveConfig(nextConfig);
+      setSaveMessage("Avatar model applied!");
+      setTimeout(() => setSaveMessage(""), 3000);
+    } catch (err) {
+      console.error("Error saving avatar model:", err);
     }
   };
 
@@ -104,13 +330,9 @@ function GeneralSettings() {
   const handleSave = async (e) => {
     e.preventDefault();
     try {
-      await fetch("/api/config", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(config),
-      });
+      await saveConfig(config);
       setSaveMessage("Settings saved!");
-      setTimeout(() => setSaveMessage(""), 3000); // Clear message after 3 seconds
+      setTimeout(() => setSaveMessage(""), 3000);
     } catch (err) {
       console.error("Error saving config:", err);
     }
@@ -224,28 +446,6 @@ function GeneralSettings() {
         >
           <h1 className="general-settings__title">Identity</h1>
           <div className="general-settings__field">
-            <label className="general-settings__label">User Name</label>
-            <input
-              type="text"
-              className="general-settings__input"
-              name="user_name"
-              value={config.user_name}
-              onChange={handleChange}
-              placeholder="You"
-            />
-          </div>
-          <div className="general-settings__field">
-            <label className="general-settings__label">AI Name</label>
-            <input
-              type="text"
-              className="general-settings__input"
-              name="ai_name"
-              value={config.ai_name}
-              onChange={handleChange}
-              placeholder="AI"
-            />
-          </div>
-          <div className="general-settings__field">
             <label className="general-settings__label">Avatar Model</label>
             <div className="custom-select">
               <div
@@ -265,13 +465,7 @@ function GeneralSettings() {
                     <li
                       key={m}
                       className="custom-select__option"
-                      onClick={() => {
-                        setConfig((prev) => ({
-                          ...prev,
-                          avatar_model: m,
-                        }));
-                        setIsVrmOpen(false);
-                      }}
+                      onClick={() => handleAvatarModelSelect(m)}
                     >
                       {m}
                     </li>
@@ -314,14 +508,63 @@ function GeneralSettings() {
             <label className="general-settings__label">Stealth Mode</label>
             <div
               className={`theme-toggle ${config.stealth_mode ? "active" : ""}`}
-              onClick={() => setConfig(prev => ({ ...prev, stealth_mode: !prev.stealth_mode }))}
+              onClick={() =>
+                setConfig((prev) => ({
+                  ...prev,
+                  stealth_mode: !prev.stealth_mode,
+                }))
+              }
               style={{ marginLeft: "10px" }}
             >
               <div className="theme-toggle__circle"></div>
             </div>
           </div>
 
-          <div className="general-settings__field" id="response-speed-container">
+          <div
+            className="general-settings__field"
+            id="orbit-controls-container"
+          >
+            <label className="general-settings__label">Orbit Controls</label>
+            <div
+              className={`theme-toggle ${config.orbit_controls_enabled !== false ? "active" : ""}`}
+              onClick={() =>
+                setConfig((prev) => ({
+                  ...prev,
+                  orbit_controls_enabled: !(
+                    prev.orbit_controls_enabled !== false
+                  ),
+                }))
+              }
+              style={{ marginLeft: "10px" }}
+            >
+              <div className="theme-toggle__circle"></div>
+            </div>
+          </div>
+
+          <div
+            className="general-settings__field"
+            id="effects-controls-container"
+          >
+            <label className="general-settings__label">Effects</label>
+
+            <div
+              className={`theme-toggle ${config.enable_effects !== false ? "active" : ""}`}
+              onClick={() =>
+                setConfig((prev) => ({
+                  ...prev,
+                  enable_effects: !(prev.enable_effects !== false),
+                }))
+              }
+              style={{ marginLeft: "10px" }}
+            >
+              <div className="theme-toggle__circle"></div>
+            </div>
+          </div>
+
+          <div
+            className="general-settings__field"
+            id="response-speed-container"
+          >
             <label className="general-settings__label">
               Response Speed (ms)
             </label>
@@ -343,12 +586,73 @@ function GeneralSettings() {
           className="general-settings__section"
           style={{ marginTop: "20px" }}
         >
+          <h1 className="general-settings__title">Notifications</h1>
+          <div className="general-settings__field notification-settings-field">
+            <div>
+              <label className="general-settings__label">
+                Push Notifications
+              </label>
+            </div>
+            <button
+              type="button"
+              className={`theme-toggle notification-settings__toggle ${isSubscribed ? "active" : ""}`}
+              onClick={handleSubscribeNotifications}
+              disabled={
+                isSubscribing ||
+                isSubscribed ||
+                !supportNotification ||
+                ("Notification" in window &&
+                  Notification.permission === "denied")
+              }
+              aria-label="Subscribe to push notifications"
+              aria-pressed={isSubscribed}
+            >
+              <div className="theme-toggle__circle"></div>
+            </button>
+          </div>
+
+          {!supportNotification && (
+            <dl
+              className="notification-settings__diagnostics"
+              aria-label="Notification diagnostics"
+            >
+              <div>
+                <dt>Secure</dt>
+                <dd>{diagnostics.secureContext ? "yes" : "no"}</dd>
+              </div>
+              <div>
+                <dt>Installed</dt>
+                <dd>{diagnostics.standalone ? "yes" : "no"}</dd>
+              </div>
+              <div>
+                <dt>Push API</dt>
+                <dd>{diagnostics.pushManagerApi ? "yes" : "no"}</dd>
+              </div>
+              <div>
+                <dt>Origin</dt>
+                <dd>
+                  {diagnostics.protocol}//{diagnostics.host}
+                </dd>
+              </div>
+            </dl>
+          )}
+        </div>
+
+        <div
+          className="general-settings__section"
+          style={{ marginTop: "20px" }}
+        >
           <h1 className="general-settings__title">Piper TTS</h1>
           <div className="general-settings__field" id="tts-mode-container">
             <label className="general-settings__label">Enable TTS</label>
             <div
               className={`theme-toggle ${config.tts_enabled ? "active" : ""}`}
-              onClick={() => setConfig(prev => ({ ...prev, tts_enabled: !prev.tts_enabled }))}
+              onClick={() =>
+                setConfig((prev) => ({
+                  ...prev,
+                  tts_enabled: !prev.tts_enabled,
+                }))
+              }
               style={{ marginLeft: "10px" }}
             >
               <div className="theme-toggle__circle"></div>

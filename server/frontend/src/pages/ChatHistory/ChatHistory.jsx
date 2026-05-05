@@ -8,8 +8,8 @@ function ChatHistory() {
   const [indexToDelete, setIndexToDelete] = useState(null);
   const [selectedDate, setSelectedDate] = useState("All");
   const [config, setConfig] = useState({
-    user_name: "You",
-    ai_name: "AI",
+    user_name: "Andre",
+    ai_name: "Mia",
   });
 
   const fetchHistory = () => {
