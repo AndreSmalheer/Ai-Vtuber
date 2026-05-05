@@ -47,7 +47,6 @@ export default function Avatar({
     const handleVisibilityChange = () => {
       if (document.hidden) {
         setIsRendering(false);
-        // Start 60s timer to unload character
         unloadTimeoutRef.current = setTimeout(() => {
           setIsInactive(true);
         }, 60000);
