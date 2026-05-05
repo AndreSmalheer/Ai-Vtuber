@@ -232,12 +232,21 @@ function GeneralSettings() {
   };
 
   const saveConfig = async (nextConfig) => {
+    // Sanitize numeric values before saving
+    const sanitizedConfig = {
+      ...nextConfig,
+      response_speed:
+        nextConfig.response_speed === "" ? 50 : nextConfig.response_speed,
+      welcome_threshold:
+        nextConfig.welcome_threshold === "" ? 120 : nextConfig.welcome_threshold,
+    };
+
     await fetch("/api/config", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(nextConfig),
+      body: JSON.stringify(sanitizedConfig),
     });
-    notifyConfigUpdated(nextConfig);
+    notifyConfigUpdated(sanitizedConfig);
   };
 
   async function fetchVrmModels() {
@@ -339,8 +348,14 @@ function GeneralSettings() {
   };
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setConfig((prev) => ({ ...prev, [name]: value }));
+    const { name, value, type } = e.target;
+
+    let finalValue = value;
+    if (type === "number") {
+      finalValue = value === "" ? "" : parseInt(value, 10);
+    }
+
+    setConfig((prev) => ({ ...prev, [name]: finalValue }));
   };
 
   return (
@@ -574,8 +589,27 @@ function GeneralSettings() {
               name="response_speed"
               min="0"
               max="1000"
+              value={config.response_speed === "" ? "" : (config.response_speed ?? 50)}
+              onChange={handleChange}
+              style={{ marginLeft: "10px", width: "100px" }}
+            />
+          </div>
+
+          <div
+            className="general-settings__field"
+            id="welcome-threshold-container"
+          >
+            <label className="general-settings__label">
+              Welcome Threshold (s)
+            </label>
+            <input
+              type="number"
+              className="general-settings__input"
+              name="welcome_threshold"
+              min="10"
+              max="3600"
               step="10"
-              value={config.response_speed}
+              value={config.welcome_threshold === "" ? "" : (config.welcome_threshold ?? 120)}
               onChange={handleChange}
               style={{ marginLeft: "10px", width: "100px" }}
             />

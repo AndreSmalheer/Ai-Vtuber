@@ -359,7 +359,7 @@ textarea.general-settings__input {
 
 #response-speed-container .general-settings__input {
   margin-left: 0;
-  max-width: 50px;
+  max-width: 80px;
   max-height: 26px;
   flex: 0 0 auto;
 }
@@ -544,4 +544,14 @@ textarea.general-settings__input {
   gap: 10px;
 
   transition: all 0.2s ease;
+}
+
+#welcome-threshold-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+#welcome-threshold-container .general-settings__input {
+  max-width: 80px;
 }
