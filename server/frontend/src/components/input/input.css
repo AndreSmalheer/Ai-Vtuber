@@ -1,74 +1,191 @@
 .input-container {
-  position: relative;
-  z-index: 1;
-  margin: 0 auto;
-  width: 324px;
-  height: 51px;
-  border-radius: 8px;
+  position: fixed;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+  z-index: 1001;
+  margin: 0;
+  margin-bottom: 20px;
+  width: clamp(280px, 36vw, 420px);
+  height: 52px;
   display: flex;
-  align-items: flex-start;
-  background-color: var(--overlay-background);
+  align-items: center;
+  flex-shrink: 0;
+  border-radius: 16px;
+  background: var(--overlay-background);
   border: 1px solid var(--overlay-border);
-  margin-top: 26px;
+  box-shadow:
+    0 0 0 4px var(--accent-glow),
+    0 8px 32px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
   transition:
+    transform 0.24s ease-out,
     border-color 0.2s ease,
     box-shadow 0.2s ease;
+  will-change: transform;
+  transform: translateX(-50%);
+  backface-visibility: hidden;
 }
 
-.input-container:focus-within {
+.input-container::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--overlay-border),
+    transparent
+  );
+  pointer-events: none;
+}
+
+.input-container.focused,
+.input-container.recording-active {
   border-color: var(--theme-active);
+  box-shadow:
+    0 0 0 4px rgba(167, 139, 250, 0.22),
+    0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
 .input-container input {
-  width: 80%;
+  flex: 1;
   height: 100%;
+  padding: 0 14px;
+  font-size: 14px;
+  background: transparent;
   border: none;
-  padding: 0 10px;
-  font-size: 16px;
-  background-color: transparent;
   outline: none;
   color: var(--h1-color);
 }
 
-.input-container.disabled {
-  pointer-events: none;
-  cursor: not-allowed;
-  opacity: 0.6;
+.input-container input::placeholder {
+  color: var(--h3-color);
+  opacity: 0.7;
 }
 
+.input-container.disabled,
 .input-container input:disabled {
-  cursor: not-allowed;
   pointer-events: none;
-  opacity: 0.6;
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .input-container button {
-  width: 20%;
-  height: 100%;
+  width: 36px;
+  height: 36px;
+  margin-right: 8px;
   border: none;
+  border-radius: 10px;
   cursor: pointer;
-
-  background-color: var(--nav-btn);
-
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M2 21l21-9L2 3v7l15 2-15 2z'/%3E%3C/svg%3E");
-
-  -webkit-mask-repeat: no-repeat;
-  -webkit-mask-position: center;
-  -webkit-mask-size: 20px;
-  transition:
-    background-color 0.2s ease,
-    scale 0.2s ease;
+  position: relative;
+  overflow: hidden;
+  transition: 0.2s ease;
 }
 
-.input-container button:disabled {
-  background-color: var(--overlay-border);
+.send-btn {
+  background: var(--overlay-border);
+}
+
+.send-btn:disabled {
+  background: transparent;
+  opacity: 0.35;
   cursor: not-allowed;
-  opacity: 0.5;
-  scale: 1;
+  transform: none;
+  box-shadow: none;
   filter: grayscale(1);
 }
 
-.input-container button:hover {
-  background-color: var(--theme-active);
-  scale: 1.1;
+.send-btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--nav-btn);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M2 21l21-9L2 3v7l15 2-15 2z'/%3E%3C/svg%3E")
+    center/16px no-repeat;
+}
+
+.send-btn:hover {
+  background: var(--theme-active);
+  transform: scale(1.08);
+  box-shadow: 0 0 10px rgba(167, 139, 250, 0.35);
+}
+
+.send-btn:hover::after {
+  background: #fff;
+}
+
+.input-container.keyboard-visible {
+  transform: translateX(-50%) translateY(calc(-1 * var(--keyboard-offset, 0px)));
+}
+
+.mic-btn {
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--h3-color);
+  position: relative;
+  transition:
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.mic-btn svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition:
+    transform 0.2s ease,
+    color 0.2s ease;
+}
+
+.mic-btn.recording {
+  color: var(--theme-active);
+  background: rgba(167, 139, 250, 0.08);
+}
+
+.mic-btn.recording svg {
+  transform: scale(1.05);
+}
+
+/* subtle breathing dot */
+.mic-btn .recording-dot {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--theme-active);
+  opacity: 0;
+  transform: scale(0.8);
+}
+
+.mic-btn.recording .recording-dot {
+  opacity: 0.9;
+  animation: softPulse 2.4s ease-in-out infinite;
+}
+
+.mic-btn:active {
+  transform: scale(0.94);
+}
+
+@keyframes softPulse {
+  0% {
+    opacity: 0.5;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0.5;
+    transform: scale(0.85);
+  }
 }

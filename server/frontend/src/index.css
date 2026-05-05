@@ -65,18 +65,42 @@ html.is-electron .main-content {
 body,
 html {
   width: 100vw;
-  height: 100vh;
+  height: 100%;
   margin: 0;
   padding: 0;
   background-color: var(--main-background);
   color: var(--h1-color);
   font-family: "Poppins", Arial, sans-serif;
   overflow: hidden;
+  overscroll-behavior: none;
 }
 
 .main-content {
+  position: fixed;
+  inset: 0;
   width: 100vw;
-  height: 100vh;
-  overflow-y: auto;
+  height: 100lvh;
+  height: var(--app-height, 100lvh);
   overflow-x: hidden;
+}
+
+#root {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100lvh;
+  height: var(--app-height, 100lvh);
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+.main-content--locked {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+.main-content--scroll {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: auto;
 }

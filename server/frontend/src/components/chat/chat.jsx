@@ -10,10 +10,10 @@ function Chat({
   setChatmsg,
   setInputLocked,
   stealthMode,
-  userName = "You",
-  aiName = "AI",
+  userName = "Andre",
+  aiName = "Mia",
+  onAudioStateChange,
 }) {
-  const isfirstrender = useRef(true);
   const [airesponse, setAiResponse] = useState("");
   const [aiResponseLoading, setAiResponseLoading] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -21,32 +21,80 @@ function Chat({
   const accumulatedResponseRef = useRef("");
   const audioQueue = useRef([]);
   const isAudioPlaying = useRef(false);
+  const audioContextRef = useRef(null);
   const displayInterval = useRef(null);
   const scrollRef = useRef(null);
 
   const displayText = chatRole === "ai" ? airesponse : chatmsg;
 
+  const createLipSyncAnalyser = (audio) => {
+    try {
+      if (!audioContextRef.current) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) {
+          throw new Error("Web Audio API is not supported in this browser.");
+        }
+        audioContextRef.current = new AudioContextClass();
+      }
+
+      const audioContext = audioContextRef.current;
+      const source = audioContext.createMediaElementSource(audio);
+      const analyser = audioContext.createAnalyser();
+      analyser.fftSize = 1024;
+      analyser.smoothingTimeConstant = 0.68;
+
+      source.connect(analyser);
+      analyser.connect(audioContext.destination);
+
+      return {
+        analyser,
+        frequencyData: new Uint8Array(analyser.frequencyBinCount),
+        timeDomainData: new Uint8Array(analyser.fftSize),
+      };
+    } catch (err) {
+      console.warn("Audio analyser unavailable, using fallback lipsync:", err);
+      return null;
+    }
+  };
+
   const playNextAudio = () => {
     if (audioQueue.current.length === 0) {
       isAudioPlaying.current = false;
+      onAudioStateChange?.({
+        isPlaying: false,
+        analyser: null,
+        frequencyData: null,
+        timeDomainData: null,
+      });
       return;
     }
 
-    isAudioPlaying.current = true;
+    if (!isAudioPlaying.current) {
+      isAudioPlaying.current = true;
+    }
+
     const base64Audio = audioQueue.current.shift();
     const audio = new Audio(`data:audio/wav;base64,${base64Audio}`);
+    const lipSyncAnalyser = createLipSyncAnalyser(audio);
+
+    onAudioStateChange?.({
+      isPlaying: true,
+      analyser: lipSyncAnalyser?.analyser || null,
+      frequencyData: lipSyncAnalyser?.frequencyData || null,
+      timeDomainData: lipSyncAnalyser?.timeDomainData || null,
+    });
 
     audio.onended = () => {
       playNextAudio();
     };
 
-    audio.onerror = (e) => {
-      console.error("Audio playback error:", e);
+    audio.onerror = () => {
       playNextAudio();
     };
 
-    audio.play().catch(e => {
-      console.error("Audio play failed:", e);
+    audioContextRef.current?.resume?.();
+
+    audio.play().catch(() => {
       playNextAudio();
     });
   };
@@ -56,10 +104,14 @@ function Chat({
       fetch("/api/history")
         .then((res) => res.json())
         .then((data) => {
-          setMessages(data.map(m => ([
-            { role: "user", text: m.user },
-            { role: "ai", text: m.ai }
-          ])).flat());
+          setMessages(
+            data
+              .map((m) => [
+                { role: "user", text: m.user },
+                { role: "ai", text: m.ai },
+              ])
+              .flat(),
+          );
         });
     }
   }, [stealthMode]);
@@ -165,7 +217,7 @@ function Chat({
       // In stealth mode, we don't fade out, we just add the message to history list
       const finalAiText = accumulatedResponseRef.current;
       if (finalAiText && finalAiText.trim()) {
-        setMessages(prev => [...prev, { role: "ai", text: finalAiText }]);
+        setMessages((prev) => [...prev, { role: "ai", text: finalAiText }]);
       }
       setAiResponse("");
       setChatmsg("");
@@ -183,7 +235,6 @@ function Chat({
   useEffect(() => {
     if (!chatmsg) return;
 
-    isfirstrender.current = false;
     const message = chatmsg;
 
     setInputLocked(true);
@@ -195,19 +246,22 @@ function Chat({
     setChathidden(false);
 
     if (stealthMode) {
-      setMessages(prev => [...prev, { role: "user", text: message }]);
+      setMessages((prev) => [...prev, { role: "user", text: message }]);
     }
 
     const fadeOutUser = setTimeout(() => {
       if (!stealthMode) setChathidden(true);
     }, 1500);
 
-    const switchToAI = setTimeout(() => {
-      setChatRole("ai");
-      setChathidden(false);
+    const switchToAI = setTimeout(
+      () => {
+        setChatRole("ai");
+        setChathidden(false);
 
-      fetchAiResponse(message);
-    }, stealthMode ? 500 : 2000);
+        fetchAiResponse(message);
+      },
+      stealthMode ? 500 : 2000,
+    );
 
     return () => {
       clearTimeout(fadeOutUser);
@@ -221,14 +275,18 @@ function Chat({
       <div className="chat-wrapper stealth" ref={scrollRef}>
         {messages.map((m, i) => (
           <div key={i} className={`stealth-message ${m.role}`}>
-            <span className="role">{m.role === "user" ? userName : aiName}</span>
+            <span className="role">
+              {m.role === "user" ? userName : aiName}
+            </span>
             <p className="text">{m.text}</p>
           </div>
         ))}
         {chatRole === "ai" && (
-           <div className="stealth-message ai current">
+          <div className="stealth-message ai current">
             <span className="role">{aiName}</span>
-            <p className={`text ${aiResponseLoading ? "loading" : ""}`}>{airesponse}</p>
+            <p className={`text ${aiResponseLoading ? "loading" : ""}`}>
+              {airesponse}
+            </p>
           </div>
         )}
       </div>
@@ -239,7 +297,7 @@ function Chat({
     <div className="chat-wrapper">
       <div
         className={`chat-container ${
-          isfirstrender.current
+          !chatmsg && !chatRole && !airesponse
             ? "hidden"
             : chathidden
               ? "hidden-animation"
@@ -247,7 +305,7 @@ function Chat({
         }`}
       >
         <div className="message user-message">
-          <h1 className="user-name">{chatRole}</h1>
+          <h1 className="user-name">{chatRole === "user" ? userName : aiName}</h1>
           <p className={`message-text ${aiResponseLoading ? "loading" : ""}`}>
             {displayText}
           </p>
