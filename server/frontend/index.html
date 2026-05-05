@@ -2,16 +2,20 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.png" />
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-visual-viewport"
     />
-    <title>frontend</title>
+    <meta name="theme-color" content="#0f1115">
+    <title>Mia</title>
   </head>
   <body>
     <script>
-      if (navigator.userAgent.indexOf('Electron') !== -1 || window.electronAPI) {
+      if (
+        navigator.userAgent.indexOf("Electron") !== -1 ||
+        window.electronAPI
+      ) {
         document.documentElement.classList.add("is-electron");
       }
     </script>
