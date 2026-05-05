@@ -380,6 +380,36 @@ VAPID_PRIVATE_KEY_BACKEND = os.getenv(
 )
 VAPID_MAILTO_URL = os.getenv("VAPID_SUBJECT", "mailto:your-email@example.com")
 
+# Global state for cross-device activity tracking
+last_seen_timestamp = 0
+
+@app.post("/api/leave")
+async def record_leave_time():
+    global last_seen_timestamp
+    import time
+    last_seen_timestamp = time.time()
+    return {"status": "success", "timestamp": last_seen_timestamp}
+@app.get("/api/welcome-check")
+async def welcome_check():
+    global last_seen_timestamp
+    import time
+
+    current_time = time.time()
+    if last_seen_timestamp == 0:
+        return {"greet": False}
+
+    # Get threshold from config, default to 120
+    threshold = config.get("welcome_threshold", 120)
+
+    time_diff = current_time - last_seen_timestamp
+    if time_diff < threshold:
+        return {"greet": False}
+
+    # User was gone for more than threshold seconds
+    last_seen_timestamp = 0
+    return {"greet": True}
+
+
 
 
 if __name__ == "__main__":

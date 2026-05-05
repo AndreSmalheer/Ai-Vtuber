@@ -270,6 +270,26 @@ function Chat({
     };
   }, [chatmsg]);
 
+  useEffect(() => {
+    const handleTriggerWelcome = () => {
+      // Prepare UI for AI response
+      setChatRole("ai");
+      setChathidden(false);
+      setAiResponse("");
+      accumulatedResponseRef.current = "";
+      streamQueue.current = "";
+      if (displayInterval.current) clearInterval(displayInterval.current);
+
+      // Trigger standard streaming response with a welcome prompt
+      fetchAiResponse("Give a very short (1 sentence) welcome back greeting to the user who just returned.");
+    };
+
+    window.addEventListener("ai-trigger-welcome", handleTriggerWelcome);
+    return () => {
+      window.removeEventListener("ai-trigger-welcome", handleTriggerWelcome);
+    };
+  }, [stealthMode, userName, aiName]);
+
   if (stealthMode) {
     return (
       <div className="chat-wrapper stealth" ref={scrollRef}>
