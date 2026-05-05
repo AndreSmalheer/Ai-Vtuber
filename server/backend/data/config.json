@@ -1,12 +1,14 @@
 {
     "ollama_url": "http://localhost:11434/",
-    "ollama_model": "qwen2.5-coder:1.5b-instruct",
-    "base_prompt": "Your an ai companion be nice to the user",
+    "ollama_model": "tinyllama:latest",
+    "base_prompt": "please respond with max 2 sentanses you are an ai companion do not speak for the user",
     "response_speed": 50,
     "stealth_mode": false,
-    "user_name": "User",
-    "ai_name": "Ai",
+    "orbit_controls_enabled": false,
+    "user_name": "Andre",
+    "ai_name": "Mia",
     "piper_url": "http://127.0.0.1:8080/",
-    "tts_enabled": true,
-    "avatar_model": "Mia-clothed.vrm"
+    "tts_enabled": false,
+    "avatar_model": "Mia-casuel.vrm",
+    "enable_effects": true
 }

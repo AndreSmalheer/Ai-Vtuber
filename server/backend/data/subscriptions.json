@@ -1,0 +1,17 @@
+[
+    {
+        "endpoint": "https://updates.push.services.mozilla.com/wpush/v2/gAAAAABp93VBZEMe4oID1TYwHU8CkUQVKYALbH3k2iTKvgaRcPJ1FKMlY0631zJaEF4xJ3CxY4zKKCHhc3RxTvFYifSyAtT6ohDEtHjDK-3oHE96E-kVMccfw40APrH74MIxJJGp9FIkGYXf4UbsLTVOqYAyeLKRSoagcEstGTTrrth-o5-_YV4",
+        "expirationTime": null,
+        "keys": {
+            "auth": "n2skttEvX5G9VB9_YoRZGg",
+            "p256dh": "BNvkUdwju_T4nTdGT99BfbEttJp33AZQoG1XOO4dXs3RMuIh2u3oNkN0Ddfh1TyE9cDxk3TKgfN1SZpafGLwst0"
+        }
+    },
+    {
+        "endpoint": "https://web.push.apple.com/QPlA3ob-wYYP4luxp6GRzmYxkXa70RTlK1nlCUL7Em1bUUOKa5H4Q61U2L7KMivJ8rzK4DfkOrXp37n2g-YFi1KzE2pMaqlvGcYTugyjAV3fB-99FI-_jS4HBLH0z4AV-wcfrthaRl4IIPTVfsnnnifPPlWVaEtDeiWEDA8w0YA",
+        "keys": {
+            "p256dh": "BBAl7_Mw8FXOUubh1Pwxtqjb9rvM1k8gvXoUtBb_On8eyD3ZAUi88kWfjUUYcZozq5wAoWU-PDt0QuJ8ep3YSa4",
+            "auth": "A0LXiIY94O-qQ-iEX-5MSg"
+        }
+    }
+]

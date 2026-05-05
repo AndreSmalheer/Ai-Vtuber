@@ -8,7 +8,7 @@ HISTORY_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "history.js
 def get_history_list():
     if not os.path.exists(HISTORY_PATH):
         return []
-    
+
     try:
         with open(HISTORY_PATH, "r") as f:
             return json.load(f)
@@ -17,7 +17,7 @@ def get_history_list():
 
 def get_history():
     history = get_history_list()
-    
+
     formatted_history = ""
     for entry in history:
         formatted_history += f"{core.config.USER_NAME}: {entry['user']}\n{core.config.AI_NAME}: {entry['ai']}\n"
@@ -51,17 +51,16 @@ def add_history(user_message, full_response):
                 history = json.load(f)
         except json.JSONDecodeError:
             history = []
-    
+
     history.append({
-        "user": user_message, 
+        "user": user_message,
         "ai": full_response,
         "timestamp": datetime.now().isoformat()
     })
-    
-    # Optional: Keep only last 10 messages to prevent context overflow
+
     if len(history) > 10:
         history = history[-10:]
-        
+
     os.makedirs(os.path.dirname(HISTORY_PATH), exist_ok=True)
     with open(HISTORY_PATH, "w") as f:
         json.dump(history, f, indent=4)

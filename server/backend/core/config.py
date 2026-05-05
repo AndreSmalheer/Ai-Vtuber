@@ -12,9 +12,8 @@ def load_config():
         "ollama_model": "qwen2.5-coder:1.5b-instruct",
         "base_prompt": "Your an ai companion be nice to the user",
         "stealth_mode": False,
-        "user_name": "You",
-        "ai_name": "AI",
-        "avatar_model": "Mia-clothed.vrm",
+        "orbit_controls_enabled": True,
+        "avatar_model": "Mia-casuel.vrm",
         "tts_enabled": False,
         "piper_url": "http://localhost:10200"
     }
@@ -24,8 +23,9 @@ OLLAMA_URL = config.get("ollama_url")
 OLLAMA_MODEL = config.get("ollama_model")
 BASE_PROMPT = config.get("base_prompt")
 STEALTH_MODE = config.get("stealth_mode", False)
-USER_NAME = config.get("user_name", "You")
-AI_NAME = config.get("ai_name", "AI")
-AVATAR_MODEL = config.get("avatar_model", "Mia-clothed.vrm")
+ORBIT_CONTROLS_ENABLED = config.get("orbit_controls_enabled", True)
+USER_NAME = "Andre"
+AI_NAME = "Mia"
+AVATAR_MODEL = config.get("avatar_model", "Mia-casuel.vrm")
 TTS_ENABLED = config.get("tts_enabled", False)
 PIPER_URL = config.get("piper_url", "http://localhost:10200")
