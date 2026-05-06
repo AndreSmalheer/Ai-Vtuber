@@ -1,1 +1,7 @@
-[]
+[
+    {
+        "user": "Give a very short (1 sentence) welcome back greeting to the user who just returned.",
+        "ai": "Hola, nuevo usuario! Estoy feliz de recibirte por primera vez.",
+        "timestamp": "2026-05-06T18:31:30.283999"
+    }
+]
