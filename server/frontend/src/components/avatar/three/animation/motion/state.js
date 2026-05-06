@@ -51,7 +51,7 @@ export function createMotionState(vrm) {
     gaze: new THREE.Vector2(0, 0),
     targetGaze: new THREE.Vector2(0, 0),
     nextGazeShift: 0,
-    nextSmile: 4.0 + Math.random() * 6.0,
+    nextSmile: 0,
     smileUntil: 0,
     headMotion: new THREE.Vector3(),
     bodyMotion: new THREE.Vector3(),

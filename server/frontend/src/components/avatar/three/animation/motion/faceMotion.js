@@ -50,11 +50,20 @@ export function updateFaceMotion(
   }
 
   if (time >= state.nextSmile && !speaking) {
-    state.smileUntil = time + 0.7 + Math.random() * 1.2;
-    state.nextSmile = state.smileUntil + 8.0 + Math.random() * 12.0;
+    const now = Math.max(time, 0);
+    if (state.nextSmile === 0) {
+      state.nextSmile = now + 5.0 + Math.random() * 5.0;
+    } else {
+      state.smileUntil = now + 0.7 + Math.random() * 1.2;
+      state.nextSmile = state.smileUntil + 8.0 + Math.random() * 12.0;
+    }
   }
 
   if (speaking && time < state.smileUntil) {
+    state.smileUntil = time;
+  }
+
+  if (state.smileUntil > time + 5.0) {
     state.smileUntil = time;
   }
 
