@@ -75,29 +75,62 @@ function Chat({
 
     const base64Audio = audioQueue.current.shift();
     const audio = new Audio(`data:audio/wav;base64,${base64Audio}`);
-    const lipSyncAnalyser = createLipSyncAnalyser(audio);
+    
+    // Resume context BEFORE creating analyser/source
+    const resumeAndPlay = async () => {
+      if (audioContextRef.current?.state === "suspended") {
+        await audioContextRef.current.resume();
+      }
 
-    onAudioStateChange?.({
-      isPlaying: true,
-      analyser: lipSyncAnalyser?.analyser || null,
-      frequencyData: lipSyncAnalyser?.frequencyData || null,
-      timeDomainData: lipSyncAnalyser?.timeDomainData || null,
-    });
+      const lipSyncAnalyser = createLipSyncAnalyser(audio);
+
+      onAudioStateChange?.({
+        isPlaying: true,
+        analyser: lipSyncAnalyser?.analyser || null,
+        frequencyData: lipSyncAnalyser?.frequencyData || null,
+        timeDomainData: lipSyncAnalyser?.timeDomainData || null,
+      });
+
+      audio.play().catch((err) => {
+        console.warn("Audio play blocked or failed:", err);
+        playNextAudio();
+      });
+    };
 
     audio.onended = () => {
       playNextAudio();
     };
 
-    audio.onerror = () => {
+    audio.onerror = (e) => {
+      console.error("Audio playback error:", e);
       playNextAudio();
     };
 
-    audioContextRef.current?.resume?.();
-
-    audio.play().catch(() => {
-      playNextAudio();
-    });
+    resumeAndPlay();
   };
+
+  useEffect(() => {
+    // Pre-initialize AudioContext on first user interaction if possible
+    const initAudioContext = () => {
+      if (!audioContextRef.current) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) {
+          audioContextRef.current = new AudioContextClass();
+        }
+      }
+      if (audioContextRef.current?.state === "suspended") {
+        audioContextRef.current.resume();
+      }
+    };
+
+    window.addEventListener("click", initAudioContext, { once: true });
+    window.addEventListener("keydown", initAudioContext, { once: true });
+
+    return () => {
+      window.removeEventListener("click", initAudioContext);
+      window.removeEventListener("keydown", initAudioContext);
+    };
+  }, []);
 
   useEffect(() => {
     if (stealthMode) {

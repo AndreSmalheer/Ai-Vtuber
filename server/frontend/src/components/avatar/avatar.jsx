@@ -44,11 +44,15 @@ export default function Avatar({
 
   const { state, setState } = useAvatarStateMachine();
 
-  // Keep track of latest props for the animation loop getter
   const enableEffectsRef = useRef(enableEffects);
   useEffect(() => {
     enableEffectsRef.current = enableEffects;
   }, [enableEffects]);
+
+  const lipSyncStateRef = useRef(lipSyncState);
+  useEffect(() => {
+    lipSyncStateRef.current = lipSyncState;
+  }, [lipSyncState]);
 
   // Update controls when prop changes
   useEffect(() => {
@@ -160,9 +164,8 @@ export default function Avatar({
       composer,
       () => vrmRef.current,
       () => lightsRef.current,
-      () => lipSyncState,
-      () => enableEffectsRef.current,
-      () => state
+      () => lipSyncStateRef.current,
+      () => enableEffectsRef.current
     );
 
     return () => stop?.();
