@@ -54,6 +54,18 @@ except ImportError:
             AVATAR_MODEL = data.get("avatar_model", AVATAR_MODEL)
             TTS_ENABLED = data.get("tts_enabled", TTS_ENABLED)
             PIPER_URL = data.get("piper_url", PIPER_URL)
+    else:
+        os.makedirs(os.path.dirname(CONFIG_PATH), exist_ok=True)
+
+        with open(CONFIG_PATH, "w") as f:
+            json.dump({
+                "ollama_url": OLLAMA_URL,
+                "ollama_model": OLLAMA_MODEL,
+                "base_prompt": BASE_PROMPT,
+                "avatar_model": AVATAR_MODEL,
+                "tts_enabled": TTS_ENABLED,
+                "piper_url": PIPER_URL,
+            }, f, indent=4)
 
     config = {
         "ollama_url": OLLAMA_URL,
