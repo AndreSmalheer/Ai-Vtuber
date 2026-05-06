@@ -16,14 +16,29 @@ function App() {
   });
   const location = useLocation();
   const [config, setConfig] = useState({});
+  const [isDark, setIsDark] = useState(
+    () => localStorage.getItem("theme") === "dark",
+  );
 
   useEffect(() => {
-    const theme = localStorage.getItem("theme");
-    if (theme === "dark") {
+    if (isDark) {
       document.body.classList.add("dark");
     } else {
       document.body.classList.remove("dark");
     }
+  }, [isDark]);
+
+  useEffect(() => {
+    const handleThemeUpdate = (event) => {
+      if (event.detail !== undefined) {
+        setIsDark(event.detail);
+      }
+    };
+
+    window.addEventListener("theme-updated", handleThemeUpdate);
+    return () => {
+      window.removeEventListener("theme-updated", handleThemeUpdate);
+    };
   }, []);
 
   useEffect(() => {
@@ -94,6 +109,7 @@ function App() {
         lipSyncState={lipSyncState}
         orbitControlsEnabled={config.orbit_controls_enabled !== false}
         enableEffects={config.enable_effects}
+        isDark={isDark}
       />
 
       <Routes>

@@ -27,6 +27,7 @@ export default function Avatar({
   lipSyncState,
   orbitControlsEnabled = true,
   enableEffects = true,
+  isDark = false,
 }) {
   const mountRef = useRef(null);
 
@@ -42,6 +43,31 @@ export default function Avatar({
   const [loading, setLoading] = useState(true);
 
   const { state, setState } = useAvatarStateMachine();
+
+  // Keep track of latest props for the animation loop getter
+  const enableEffectsRef = useRef(enableEffects);
+  useEffect(() => {
+    enableEffectsRef.current = enableEffects;
+  }, [enableEffects]);
+
+  // Update controls when prop changes
+  useEffect(() => {
+    if (controlsRef.current) {
+      controlsRef.current.enabled = orbitControlsEnabled;
+    }
+  }, [orbitControlsEnabled]);
+
+  // Update visuals when effects or theme changes
+  useEffect(() => {
+    if (rendererRef.current && sceneRef.current) {
+      lightsRef.current = updateThemeVisuals(
+        rendererRef.current,
+        sceneRef.current,
+        isDark,
+        enableEffects
+      );
+    }
+  }, [enableEffects, isDark]);
 
   // ----------------------------
   // INIT THREE SCENE (RUN ONCE)
@@ -79,7 +105,7 @@ export default function Avatar({
     lightsRef.current = updateThemeVisuals(
       renderer,
       scene,
-      document.body.classList.contains("dark"),
+      isDark,
       enableEffects
     );
 
@@ -135,7 +161,7 @@ export default function Avatar({
       () => vrmRef.current,
       () => lightsRef.current,
       () => lipSyncState,
-      () => enableEffects,
+      () => enableEffectsRef.current,
       () => state
     );
 

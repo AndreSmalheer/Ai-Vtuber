@@ -68,6 +68,7 @@ function GeneralSettings() {
     response_speed: 50,
     stealth_mode: false,
     orbit_controls_enabled: true,
+    enable_effects: true,
     user_name: "Andre",
     ai_name: "Mia",
   });
@@ -102,6 +103,7 @@ function GeneralSettings() {
       document.body.classList.remove("dark");
       localStorage.setItem("theme", "light");
     }
+    window.dispatchEvent(new CustomEvent("theme-updated", { detail: isDark }));
   }, [isDark]);
 
   const refreshNotificationStatus = useCallback(async () => {
@@ -525,12 +527,14 @@ function GeneralSettings() {
             <label className="general-settings__label">Stealth Mode</label>
             <div
               className={`theme-toggle ${config.stealth_mode ? "active" : ""}`}
-              onClick={() =>
-                setConfig((prev) => ({
-                  ...prev,
-                  stealth_mode: !prev.stealth_mode,
-                }))
-              }
+              onClick={() => {
+                const nextConfig = {
+                  ...config,
+                  stealth_mode: !config.stealth_mode,
+                };
+                setConfig(nextConfig);
+                saveConfig(nextConfig);
+              }}
               style={{ marginLeft: "10px" }}
             >
               <div className="theme-toggle__circle" />
@@ -544,12 +548,14 @@ function GeneralSettings() {
             <label className="general-settings__label">Effects</label>
             <div
               className={`theme-toggle ${config.enable_effects !== false ? "active" : ""}`}
-              onClick={() =>
-                setConfig((prev) => ({
-                  ...prev,
-                  enable_effects: !(prev.enable_effects !== false),
-                }))
-              }
+              onClick={() => {
+                const nextConfig = {
+                  ...config,
+                  enable_effects: !(config.enable_effects !== false),
+                };
+                setConfig(nextConfig);
+                saveConfig(nextConfig);
+              }}
               style={{ marginLeft: "10px" }}
             >
               <div className="theme-toggle__circle" />
@@ -567,14 +573,16 @@ function GeneralSettings() {
             <label className="general-settings__label">Orbit Controls</label>
             <div
               className={`theme-toggle ${config.orbit_controls_enabled !== false ? "active" : ""}`}
-              onClick={() =>
-                setConfig((prev) => ({
-                  ...prev,
+              onClick={() => {
+                const nextConfig = {
+                  ...config,
                   orbit_controls_enabled: !(
-                    prev.orbit_controls_enabled !== false
+                    config.orbit_controls_enabled !== false
                   ),
-                }))
-              }
+                };
+                setConfig(nextConfig);
+                saveConfig(nextConfig);
+              }}
               style={{ marginLeft: "10px" }}
             >
               <div className="theme-toggle__circle" />
@@ -625,12 +633,14 @@ function GeneralSettings() {
 
             <div
               className={`theme-toggle ${config.enable_welcome_message ? "active" : ""}`}
-              onClick={() =>
-                setConfig((prev) => ({
-                  ...prev,
-                  enable_welcome_message: !prev.enable_welcome_message,
-                }))
-              }
+              onClick={() => {
+                const nextConfig = {
+                  ...config,
+                  enable_welcome_message: !config.enable_welcome_message,
+                };
+                setConfig(nextConfig);
+                saveConfig(nextConfig);
+              }}
               style={{ marginLeft: "10px" }}
             >
               <div className="theme-toggle__circle" />
@@ -726,12 +736,14 @@ function GeneralSettings() {
             <label className="general-settings__label">Enable TTS</label>
             <div
               className={`theme-toggle ${config.tts_enabled ? "active" : ""}`}
-              onClick={() =>
-                setConfig((prev) => ({
-                  ...prev,
-                  tts_enabled: !prev.tts_enabled,
-                }))
-              }
+              onClick={() => {
+                const nextConfig = {
+                  ...config,
+                  tts_enabled: !config.tts_enabled,
+                };
+                setConfig(nextConfig);
+                saveConfig(nextConfig);
+              }}
               style={{ marginLeft: "10px" }}
             >
               <div className="theme-toggle__circle"></div>
