@@ -750,41 +750,13 @@ export function startAnimation(
     pending: false,
   };
 
-  const resetSmile = (vrm) => {
-    const state = getMotionState(vrm);
-    state.smileUntil = 0;
-    state.nextSmile = Infinity;
-    expressionState.happy = 0;
-    expressionState.relaxed = 0;
-
-    const names = getExpressionNames(vrm);
-    setExpression(vrm, names, "happy", 0);
-    setExpression(vrm, names, "relaxed", 0);
-  };
-
   const triggerReturnSmile = (vrm) => {
     const state = getMotionState(vrm);
     const now = clock.getElapsedTime();
 
-    // Sets the duration for the "welcome back" smile without altering normal smile intensity/duration logic
     state.smileUntil = now + 0.35 + Math.random() * 0.25;
-    // Schedules the next random smile to resume normal behavior without altering its scheduling
     state.nextSmile = state.smileUntil + 8.0 + Math.random() * 12.0;
     returnSmileState.pending = false;
-  };
-
-  const handleVisibilityChange = () => {
-    const vrm = getVRM?.();
-
-    if (document.hidden) {
-      if (vrm) {
-        resetSmile(vrm);
-      }
-      returnSmileState.pending = true;
-      return;
-    }
-
-    returnSmileState.pending = true;
   };
 
   const readAudioShape = createAudioReader(clamp01);
@@ -840,13 +812,10 @@ export function startAnimation(
 
   animate();
 
-  document.addEventListener("visibilitychange", handleVisibilityChange);
-
   return () => {
     controls?.removeEventListener("start", startCameraInteraction);
     controls?.removeEventListener("change", markCameraInteraction);
     controls?.removeEventListener("end", endCameraInteraction);
-    document.removeEventListener("visibilitychange", handleVisibilityChange);
     cancelAnimationFrame(id);
   };
 }
