@@ -15,13 +15,7 @@ function App() {
     timeDomainData: null,
   });
   const location = useLocation();
-  const [config, setConfig] = useState({
-    stealth_mode: false,
-    user_name: "Andre",
-    ai_name: "Mia",
-    avatar_model: "",
-    orbit_controls_enabled: true,
-  });
+  const [config, setConfig] = useState({});
 
   useEffect(() => {
     const theme = localStorage.getItem("theme");
@@ -61,10 +55,8 @@ function App() {
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        // Record leave time on server
         fetch("/api/leave", { method: "POST" }).catch(() => {});
       } else {
-        // Check for welcome back greeting
         checkWelcomeBack();
       }
     };
@@ -74,21 +66,21 @@ function App() {
         .then((res) => res.json())
         .then((data) => {
           if (data.greet) {
-            // Dispatch event to be caught by Chat component
-            window.dispatchEvent(new CustomEvent("ai-trigger-welcome"));
+            if (config.enable_welcome_message ?? false) {
+              window.dispatchEvent(new CustomEvent("ai-trigger-welcome"));
+            }
           }
         })
         .catch((err) => console.error("Error checking welcome back:", err));
     };
 
-    // Initial check on load
     checkWelcomeBack();
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, []);
+  }, [config]);
 
   const showAvatar = location.pathname === "/" && !config.stealth_mode;
 

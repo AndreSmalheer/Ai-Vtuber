@@ -232,13 +232,14 @@ function GeneralSettings() {
   };
 
   const saveConfig = async (nextConfig) => {
-    // Sanitize numeric values before saving
     const sanitizedConfig = {
       ...nextConfig,
       response_speed:
         nextConfig.response_speed === "" ? 50 : nextConfig.response_speed,
       welcome_threshold:
-        nextConfig.welcome_threshold === "" ? 120 : nextConfig.welcome_threshold,
+        nextConfig.welcome_threshold === ""
+          ? 120
+          : nextConfig.welcome_threshold,
     };
 
     await fetch("/api/config", {
@@ -508,6 +509,7 @@ function GeneralSettings() {
           style={{ marginTop: "20px" }}
         >
           <h1 className="general-settings__title">Appearance</h1>
+
           <div className="general-settings__field" id="dark-mode-container">
             <label className="general-settings__label">Dark Mode</label>
             <div
@@ -515,7 +517,7 @@ function GeneralSettings() {
               onClick={() => setIsDark(!isDark)}
               style={{ marginLeft: "10px" }}
             >
-              <div className="theme-toggle__circle"></div>
+              <div className="theme-toggle__circle" />
             </div>
           </div>
 
@@ -531,9 +533,32 @@ function GeneralSettings() {
               }
               style={{ marginLeft: "10px" }}
             >
-              <div className="theme-toggle__circle"></div>
+              <div className="theme-toggle__circle" />
             </div>
           </div>
+
+          <div
+            className="general-settings__field"
+            id="effects-controls-container"
+          >
+            <label className="general-settings__label">Effects</label>
+            <div
+              className={`theme-toggle ${config.enable_effects !== false ? "active" : ""}`}
+              onClick={() =>
+                setConfig((prev) => ({
+                  ...prev,
+                  enable_effects: !(prev.enable_effects !== false),
+                }))
+              }
+              style={{ marginLeft: "10px" }}
+            >
+              <div className="theme-toggle__circle" />
+            </div>
+          </div>
+        </div>
+
+        <div className="general-settings__section">
+          <h1 className="general-settings__title">Interaction</h1>
 
           <div
             className="general-settings__field"
@@ -552,29 +577,13 @@ function GeneralSettings() {
               }
               style={{ marginLeft: "10px" }}
             >
-              <div className="theme-toggle__circle"></div>
+              <div className="theme-toggle__circle" />
             </div>
           </div>
+        </div>
 
-          <div
-            className="general-settings__field"
-            id="effects-controls-container"
-          >
-            <label className="general-settings__label">Effects</label>
-
-            <div
-              className={`theme-toggle ${config.enable_effects !== false ? "active" : ""}`}
-              onClick={() =>
-                setConfig((prev) => ({
-                  ...prev,
-                  enable_effects: !(prev.enable_effects !== false),
-                }))
-              }
-              style={{ marginLeft: "10px" }}
-            >
-              <div className="theme-toggle__circle"></div>
-            </div>
-          </div>
+        <div className="general-settings__section">
+          <h1 className="general-settings__title">System Performance</h1>
 
           <div
             className="general-settings__field"
@@ -589,10 +598,43 @@ function GeneralSettings() {
               name="response_speed"
               min="0"
               max="1000"
-              value={config.response_speed === "" ? "" : (config.response_speed ?? 50)}
+              value={
+                config.response_speed === ""
+                  ? ""
+                  : (config.response_speed ?? 50)
+              }
               onChange={handleChange}
               style={{ marginLeft: "10px", width: "100px" }}
             />
+          </div>
+        </div>
+
+        <div className="general-settings__section">
+          <h1 className="general-settings__title">Welcome Message</h1>
+          <div
+            className="general-settings__field"
+            id="welcome-threshold-toggle-container"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              flexDirection: "row",
+              justifyContent: "space-between",
+            }}
+          >
+            <label className="general-settings__label">Enable Welcome</label>
+
+            <div
+              className={`theme-toggle ${config.enable_welcome_message ? "active" : ""}`}
+              onClick={() =>
+                setConfig((prev) => ({
+                  ...prev,
+                  enable_welcome_message: !prev.enable_welcome_message,
+                }))
+              }
+              style={{ marginLeft: "10px" }}
+            >
+              <div className="theme-toggle__circle" />
+            </div>
           </div>
 
           <div
@@ -608,8 +650,11 @@ function GeneralSettings() {
               name="welcome_threshold"
               min="10"
               max="3600"
-              step="10"
-              value={config.welcome_threshold === "" ? "" : (config.welcome_threshold ?? 120)}
+              value={
+                config.welcome_threshold === ""
+                  ? ""
+                  : (config.welcome_threshold ?? 120)
+              }
               onChange={handleChange}
               style={{ marginLeft: "10px", width: "100px" }}
             />

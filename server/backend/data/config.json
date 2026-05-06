@@ -10,5 +10,7 @@
     "piper_url": "http://127.0.0.1:8080/",
     "tts_enabled": false,
     "avatar_model": "Mia-casuel.vrm",
-    "enable_effects": true
+    "enable_effects": true,
+    "enable_welcome_message": true,
+    "welcome_threshold": 120
 }
