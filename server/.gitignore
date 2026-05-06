@@ -1,0 +1,10 @@
+# Environment
+.venv/
+node_modules/
+
+# Local configuration
+backend/data/config.json
+
+# Private assets
+frontend/public/3d-assests/vrm-models/Mia-naked.vrm
+frontend/public/3d-assests/vrm-models/Mia-panties.vrm
