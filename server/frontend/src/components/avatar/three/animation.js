@@ -750,15 +750,6 @@ export function startAnimation(
     pending: false,
   };
 
-  const triggerReturnSmile = (vrm) => {
-    const state = getMotionState(vrm);
-    const now = clock.getElapsedTime();
-
-    state.smileUntil = now + 0.35 + Math.random() * 0.25;
-    state.nextSmile = state.smileUntil + 8.0 + Math.random() * 12.0;
-    returnSmileState.pending = false;
-  };
-
   const readAudioShape = createAudioReader(clamp01);
 
   const animate = () => {
@@ -780,9 +771,6 @@ export function startAnimation(
     renderer.domElement.style.pointerEvents = "auto";
 
     const vrm = getVRM();
-    if (vrm && returnSmileState.pending && !document.hidden) {
-      triggerReturnSmile(vrm);
-    }
     if (vrm) {
       const expressionNames = getExpressionNames(vrm);
 
