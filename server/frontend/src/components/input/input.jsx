@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import "./input.css";
 
+const SILENCE_THRESHOLD = 0.01;
+const SILENCE_DELAY_MS = 2000;
+
 function Input({
   inputmsg,
   setInputmsg,
@@ -17,6 +20,8 @@ function Input({
   const [micPermission, setMicPermission] = useState(null);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
+  const silenceTimerRef = useRef(null);
+  const audioContextRef = useRef(null);
 
   useEffect(() => {
     const setStableAppHeight = () => {
@@ -86,8 +91,7 @@ function Input({
     if (inputLocked) return;
 
     if (isRecording) {
-      mediaRecorderRef.current?.stop();
-      setIsRecording(false);
+      stopRecording();
       return;
     }
 
@@ -100,6 +104,49 @@ function Input({
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       setMicPermission("granted");
 
+      // --- Silence detection setup ---
+      const audioContext = new AudioContext();
+      audioContextRef.current = audioContext;
+      const source = audioContext.createMediaStreamSource(stream);
+      const analyser = audioContext.createAnalyser();
+      analyser.fftSize = 512;
+      source.connect(analyser);
+
+      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+      function checkSilence() {
+        analyser.getByteTimeDomainData(dataArray);
+
+        // Calculate RMS volume level (0.0 - 1.0)
+        const rms = Math.sqrt(
+          dataArray.reduce(
+            (sum, val) => sum + Math.pow((val - 128) / 128, 2),
+            0,
+          ) / dataArray.length,
+        );
+
+        if (rms < SILENCE_THRESHOLD) {
+          // Silence detected — start or keep the countdown
+          if (!silenceTimerRef.current) {
+            silenceTimerRef.current = setTimeout(() => {
+              stopRecording();
+            }, SILENCE_DELAY_MS);
+          }
+        } else {
+          // Sound detected — cancel the countdown
+          if (silenceTimerRef.current) {
+            clearTimeout(silenceTimerRef.current);
+            silenceTimerRef.current = null;
+          }
+        }
+
+        // Keep checking while recording
+        if (mediaRecorderRef.current?.state === "recording") {
+          requestAnimationFrame(checkSilence);
+        }
+      }
+
+      // --- MediaRecorder setup ---
       const mimeType =
         [
           "audio/webm;codecs=opus",
@@ -141,10 +188,13 @@ function Input({
         }
 
         stream.getTracks().forEach((track) => track.stop());
+        audioContextRef.current?.close();
+        audioContextRef.current = null;
       };
 
       mediaRecorder.start();
       setIsRecording(true);
+      requestAnimationFrame(checkSilence); // start the silence detection loop
     } catch (err) {
       if (
         err.name === "NotAllowedError" ||
@@ -159,6 +209,15 @@ function Input({
         alert("Could not access the microphone.");
       }
     }
+  }
+
+  function stopRecording() {
+    if (silenceTimerRef.current) {
+      clearTimeout(silenceTimerRef.current);
+      silenceTimerRef.current = null;
+    }
+    mediaRecorderRef.current?.stop();
+    setIsRecording(false);
   }
 
   function focusWithoutScroll() {
