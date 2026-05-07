@@ -14,86 +14,9 @@ function Input({
   const stableHeightRef = useRef(window.innerHeight);
   const inputRef = useRef(null);
   const [isRecording, setIsRecording] = useState(false);
-  const recognitionRef = useRef(null);
-
-  /* Speech recognition commented out as requested
-  useEffect(() => {
-    const SpeechRecognition =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
-
-    if (!SpeechRecognition) {
-      console.warn("Speech recognition not supported in this browser.");
-      return;
-    }
-
-    if (!window.isSecureContext && window.location.hostname !== "localhost") {
-      console.warn("Speech recognition requires a secure context (HTTPS).");
-    }
-
-    try {
-      recognitionRef.current = new SpeechRecognition();
-      recognitionRef.current.continuous = false;
-      recognitionRef.current.interimResults = true;
-      recognitionRef.current.lang = document.documentElement.lang || "en-US";
-
-      recognitionRef.current.onstart = () => setIsRecording(true);
-      recognitionRef.current.onend = () => setIsRecording(false);
-      recognitionRef.current.onerror = (event) => {
-        if (event.error === "not-allowed") {
-          alert("Microphone permission denied.");
-        } else {
-          console.error("Speech recognition error:", event.error);
-        }
-        setIsRecording(false);
-      };
-
-      recognitionRef.current.onresult = (event) => {
-        const transcript = Array.from(event.results)
-          .map((result) => result[0].transcript)
-          .join("");
-
-        setInputmsg(transcript);
-
-        if (event.results[0].isFinal) {
-          setTimeout(() => {
-            handleInput(transcript);
-          }, 100);
-        }
-      };
-    } catch (err) {
-      console.error("Failed to initialize speech recognition:", err);
-    }
-
-    return () => {
-      if (recognitionRef.current) {
-        recognitionRef.current.stop();
-      }
-    };
-  }, []);
-
-  const toggleRecording = () => {
-    if (!recognitionRef.current) {
-      if (!window.isSecureContext && window.location.hostname !== "localhost") {
-        alert(
-          "Speech recognition is only supported over HTTPS (Secure Context).",
-        );
-      } else {
-        alert("Speech recognition is not supported in this browser.");
-      }
-      return;
-    }
-
-    if (isRecording) {
-      recognitionRef.current.stop();
-    } else {
-      try {
-        recognitionRef.current.start();
-      } catch (err) {
-        console.error("Error starting speech recognition:", err);
-      }
-    }
-  };
-  */
+  const [micPermission, setMicPermission] = useState(null);
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
 
   useEffect(() => {
     const setStableAppHeight = () => {
@@ -159,6 +82,85 @@ function Input({
     setIsFocused(false);
   }
 
+  async function handleMicClick() {
+    if (inputLocked) return;
+
+    if (isRecording) {
+      mediaRecorderRef.current?.stop();
+      setIsRecording(false);
+      return;
+    }
+
+    if (!navigator.mediaDevices?.getUserMedia) {
+      alert("Microphone access is not supported in this browser.");
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      setMicPermission("granted");
+
+      const mimeType =
+        [
+          "audio/webm;codecs=opus",
+          "audio/webm",
+          "audio/ogg;codecs=opus",
+          "audio/mp4",
+        ].find((type) => MediaRecorder.isTypeSupported(type)) ?? "";
+
+      const mediaRecorder = new MediaRecorder(
+        stream,
+        mimeType ? { mimeType } : {},
+      );
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          audioChunksRef.current.push(e.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, {
+          type: mimeType || "audio/webm",
+        });
+
+        const formData = new FormData();
+        formData.append("audio", audioBlob, "recording.webm");
+
+        try {
+          const response = await fetch("http://localhost:8000/transcribe", {
+            method: "POST",
+            body: formData,
+          });
+          const { text } = await response.json();
+          if (text) setInputmsg(text);
+        } catch (err) {
+          console.error("Transcription failed:", err);
+        }
+
+        stream.getTracks().forEach((track) => track.stop());
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch (err) {
+      if (
+        err.name === "NotAllowedError" ||
+        err.name === "PermissionDeniedError"
+      ) {
+        setMicPermission("denied");
+        alert(
+          "Microphone permission was denied. Please allow it in your browser settings.",
+        );
+      } else {
+        console.error("Microphone error:", err);
+        alert("Could not access the microphone.");
+      }
+    }
+  }
+
   function focusWithoutScroll() {
     if (!inputRef.current || inputLocked) {
       return;
@@ -188,11 +190,6 @@ function Input({
         value={inputmsg}
         onChange={(e) => {
           setInputmsg(e.target.value);
-          /*
-          if (isRecording) {
-            recognitionRef.current?.stop();
-          }
-          */
         }}
         onKeyPress={(e) => e.key === "Enter" && handleInput()}
         onTouchStart={handleTouchStart}
@@ -204,9 +201,7 @@ function Input({
         type="button"
         className={`mic-btn ${isRecording ? "recording" : ""}`}
         disabled={inputLocked}
-        onClick={() => {
-          setIsRecording((prev) => !prev);
-        }}
+        onClick={handleMicClick}
         aria-label="Voice input"
       >
         <svg viewBox="0 0 24 24">

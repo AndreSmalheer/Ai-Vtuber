@@ -13,7 +13,13 @@ from backend.services.ollama import get_piper_audio
 from backend.services.ollama import get_ollama_response
 from pydantic import BaseModel
 from pathlib import Path
+import whisper
+import tempfile
+import os
+from fastapi import FastAPI, UploadFile, File
+from fastapi.middleware.cors import CORSMiddleware
 
+model = whisper.load_model("base")
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(SCRIPT_DIR)
@@ -421,7 +427,18 @@ async def welcome_check():
     last_seen_timestamp = 0
     return {"greet": True}
 
+@app.post("/transcribe")
+async def transcribe(audio: UploadFile = File(...)):
+    suffix = os.path.splitext(audio.filename or "audio.webm")[1] or ".webm"
+    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+        tmp.write(await audio.read())
+        tmp_path = tmp.name
 
+    try:
+        result = model.transcribe(tmp_path)
+        return { "text": result["text"].strip() }
+    finally:
+        os.remove(tmp_path)
 
 
 if __name__ == "__main__":
