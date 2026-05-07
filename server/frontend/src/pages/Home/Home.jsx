@@ -38,6 +38,7 @@ function Home({ config, onAudioStateChange }) {
         chatRole={chatRole}
         setChatRole={setChatRole}
         inputLocked={inputLocked}
+        config={config}
       />
     </div>
   );

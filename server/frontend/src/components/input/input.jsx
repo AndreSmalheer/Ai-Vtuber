@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import "./input.css";
 
 const SILENCE_THRESHOLD = 0.01;
-const SILENCE_DELAY_MS = 2000;
 
 function Input({
   inputmsg,
@@ -12,6 +11,7 @@ function Input({
   setChatRole,
   inputLocked,
   setInputLocked,
+  config = {},
 }) {
   const [isFocused, setIsFocused] = useState(false);
   const stableHeightRef = useRef(window.innerHeight);
@@ -115,6 +115,8 @@ function Input({
       const dataArray = new Uint8Array(analyser.frequencyBinCount);
 
       function checkSilence() {
+        if (config.auto_silence_detection === false) return;
+
         analyser.getByteTimeDomainData(dataArray);
 
         // Calculate RMS volume level (0.0 - 1.0)
@@ -128,9 +130,12 @@ function Input({
         if (rms < SILENCE_THRESHOLD) {
           // Silence detected — start or keep the countdown
           if (!silenceTimerRef.current) {
-            silenceTimerRef.current = setTimeout(() => {
-              stopRecording();
-            }, SILENCE_DELAY_MS);
+            silenceTimerRef.current = setTimeout(
+              () => {
+                stopRecording();
+              },
+              config.silence_delay_ms ?? 2000,
+            );
           }
         } else {
           // Sound detected — cancel the countdown

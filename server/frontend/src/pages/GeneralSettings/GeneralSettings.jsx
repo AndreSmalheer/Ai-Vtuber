@@ -71,6 +71,8 @@ function GeneralSettings() {
     enable_effects: true,
     user_name: "Andre",
     ai_name: "Mia",
+    auto_silence_detection: true,
+    silence_delay_ms: 2000,
   });
   const [saveMessage, setSaveMessage] = useState("");
   const [models, setModels] = useState([]);
@@ -446,6 +448,29 @@ function GeneralSettings() {
             {error && <div className="error-message">{error}</div>}
           </div>
 
+          <div
+            className="general-settings__field"
+            id="response-speed-container"
+          >
+            <label className="general-settings__label">
+              Response Speed (ms)
+            </label>
+            <input
+              type="number"
+              className="general-settings__input"
+              name="response_speed"
+              min="0"
+              max="1000"
+              value={
+                config.response_speed === ""
+                  ? ""
+                  : (config.response_speed ?? 50)
+              }
+              onChange={handleChange}
+              style={{ marginLeft: "10px", width: "100px" }}
+            />
+          </div>
+
           <div className="general-settings__field">
             <label className="general-settings__label">Base Prompt</label>
             <textarea
@@ -591,28 +616,73 @@ function GeneralSettings() {
         </div>
 
         <div className="general-settings__section">
-          <h1 className="general-settings__title">System Performance</h1>
+          <h1 className="general-settings__title">Microphone</h1>
 
           <div
             className="general-settings__field"
-            id="response-speed-container"
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+            id="auto-silence-toggle-container"
           >
             <label className="general-settings__label">
-              Response Speed (ms)
+              Auto Silence Detection
             </label>
+
+            <div
+              className={`theme-toggle ${
+                config.auto_silence_detection ? "active" : ""
+              }`}
+              onClick={() => {
+                const nextConfig = {
+                  ...config,
+                  auto_silence_detection: !config.auto_silence_detection,
+                };
+
+                setConfig(nextConfig);
+                saveConfig(nextConfig);
+              }}
+              style={{ marginLeft: "10px" }}
+            >
+              <div className="theme-toggle__circle" />
+            </div>
+          </div>
+
+          <div
+            className="general-settings__field"
+            id="silence-delay-container"
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <label className="general-settings__label">
+              Silence Delay (ms)
+            </label>
+
             <input
               type="number"
-              className="general-settings__input"
-              name="response_speed"
               min="0"
-              max="1000"
-              value={
-                config.response_speed === ""
-                  ? ""
-                  : (config.response_speed ?? 50)
-              }
-              onChange={handleChange}
-              style={{ marginLeft: "10px", width: "100px" }}
+              value={config.silence_delay_ms ?? 2000}
+              onChange={(e) => {
+                const nextConfig = {
+                  ...config,
+                  silence_delay_ms: Number(e.target.value),
+                };
+
+                setConfig(nextConfig);
+                saveConfig(nextConfig);
+              }}
+              className="general-settings__input"
+              style={{
+                marginLeft: "10px",
+                maxWidth: "75px",
+              }}
             />
           </div>
         </div>
