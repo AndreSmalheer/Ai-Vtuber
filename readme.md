@@ -2,6 +2,8 @@
 
 This is Mia, an AI companion.
 
+![Mia](./server/frontend/public/pwa-512x512.png)
+
 Built using Three.js with a VRM character model.
 
 The VRM file was created using VRoid Studio.
