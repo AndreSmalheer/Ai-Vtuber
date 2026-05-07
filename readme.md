@@ -2,7 +2,7 @@
 
 This is Mia, an AI companion.
 
-![Mia](./server/frontend/public/pwa-512x512.png)
+![Mia](./server/frontend/public/favicon.png)
 
 Built using Three.js with a VRM character model.
 
