@@ -1,4 +1,4 @@
-# Mai AI Companion
+# Project Mia
 
 This is Mia, an AI companion.
 
@@ -28,7 +28,7 @@ The VRM file was created using VRoid Studio.
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/AndreSmalheer/Ai-Vtuber.git
+git clone https://github.com/AndreSmalheer/Project-Mia
 ```
 
 ### 2. Navigate into the project folder
