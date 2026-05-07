@@ -119,7 +119,6 @@ function Input({
 
         analyser.getByteTimeDomainData(dataArray);
 
-        // Calculate RMS volume level (0.0 - 1.0)
         const rms = Math.sqrt(
           dataArray.reduce(
             (sum, val) => sum + Math.pow((val - 128) / 128, 2),
@@ -128,30 +127,23 @@ function Input({
         );
 
         if (rms < SILENCE_THRESHOLD) {
-          // Silence detected — start or keep the countdown
           if (!silenceTimerRef.current) {
-            silenceTimerRef.current = setTimeout(
-              () => {
-                stopRecording();
-              },
-              config.silence_delay_ms ?? 2000,
-            );
+            silenceTimerRef.current = setTimeout(() => {
+              stopRecording();
+            }, config.silence_delay_ms ?? 2000);
           }
         } else {
-          // Sound detected — cancel the countdown
           if (silenceTimerRef.current) {
             clearTimeout(silenceTimerRef.current);
             silenceTimerRef.current = null;
           }
         }
 
-        // Keep checking while recording
         if (mediaRecorderRef.current?.state === "recording") {
           requestAnimationFrame(checkSilence);
         }
       }
 
-      // --- MediaRecorder setup ---
       const mimeType =
         [
           "audio/webm;codecs=opus",
@@ -187,7 +179,13 @@ function Input({
             body: formData,
           });
           const { text } = await response.json();
-          if (text) setInputmsg(text);
+          if (text) {
+            setInputmsg(text);
+
+            if (config.auto_send_on_mic_stop === false) return;
+
+            handleInput(text);
+          }
         } catch (err) {
           console.error("Transcription failed:", err);
         }
@@ -199,7 +197,7 @@ function Input({
 
       mediaRecorder.start();
       setIsRecording(true);
-      requestAnimationFrame(checkSilence); // start the silence detection loop
+      requestAnimationFrame(checkSilence);
     } catch (err) {
       if (
         err.name === "NotAllowedError" ||

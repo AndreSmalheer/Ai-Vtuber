@@ -653,6 +653,38 @@ function GeneralSettings() {
 
           <div
             className="general-settings__field"
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <label className="general-settings__label">
+              Auto-send when mic stops
+            </label>
+
+            <div
+              className={`theme-toggle ${
+                config.auto_send_on_mic_stop ? "active" : ""
+              }`}
+              onClick={() => {
+                const nextConfig = {
+                  ...config,
+                  auto_send_on_mic_stop: !config.auto_send_on_mic_stop,
+                };
+
+                setConfig(nextConfig);
+                saveConfig(nextConfig);
+              }}
+              style={{ marginLeft: "10px" }}
+            >
+              <div className="theme-toggle__circle" />
+            </div>
+          </div>
+
+          <div
+            className="general-settings__field"
             id="silence-delay-container"
             style={{
               display: "flex",
