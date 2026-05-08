@@ -36,7 +36,7 @@ git clone https://github.com/AndreSmalheer/Project-Mia
 ### 2. Navigate into the project folder
 
 ```bash
-cd Ai-Vtuber/server
+cd Project-Mia/server
 ```
 
 ### 3. Install dependencies

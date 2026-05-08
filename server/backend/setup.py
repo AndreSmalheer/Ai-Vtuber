@@ -2,18 +2,21 @@ import os
 import subprocess
 import sys
 
-VENV_DIR = ".venv"
+VENV_DIR = "backend/.venv"
 
 if not os.path.exists(VENV_DIR):
     print("Creating virtual environment...")
     subprocess.run([sys.executable, "-m", "venv", VENV_DIR])
 
-pip_path = os.path.join(VENV_DIR, "Scripts", "pip")
-print(pip_path)
+if os.name == "nt":
+    python_path = os.path.join(VENV_DIR, "Scripts", "python.exe")
+else:
+    python_path = os.path.join(VENV_DIR, "bin", "python")
 
 print("Installing Python dependencies...")
+
 result = subprocess.run(
-    [pip_path, "install", "-r", "backend/requirements.txt"],
+    [python_path, "-m", "pip", "install", "-r", "backend/requirements.txt"],
     capture_output=True,
     text=True
 )
