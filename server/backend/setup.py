@@ -2,7 +2,7 @@ import os
 import subprocess
 import sys
 
-VENV_DIR = "backend/.venv"
+VENV_DIR = ".venv"
 
 if not os.path.exists(VENV_DIR):
     print("Creating virtual environment...")

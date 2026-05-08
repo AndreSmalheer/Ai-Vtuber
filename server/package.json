@@ -9,7 +9,7 @@
   "main": "index.js",
   "scripts": {
     "dev:frontend": "npm run dev --prefix frontend -- --host",
-    "dev:backend": "cd backend && .venv\\Scripts\\python.exe -m uvicorn main:app --reload --port 8000 --host 0.0.0.0",
+    "dev:backend": ".venv\\Scripts\\python.exe -m uvicorn backend.main:app --reload --port 8000 --host 0.0.0.0",
     "dev:overlay": "npm start --prefix ../overlay",
     "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
     "postinstall": "python ./backend/setup.py"
