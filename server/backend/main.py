@@ -440,6 +440,10 @@ async def transcribe(audio: UploadFile = File(...)):
     finally:
         os.remove(tmp_path)
 
+@app.api_route("/health", methods=["GET", "HEAD"])
+def health():
+    return {"status": "ok"}
+
 
 if __name__ == "__main__":
     import uvicorn
