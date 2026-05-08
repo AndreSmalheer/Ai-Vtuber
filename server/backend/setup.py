@@ -38,7 +38,7 @@ data = {
     "ollama_url": "http://localhost:11434",
     "ollama_model": "tinyllama:latest",
     "base_prompt": "You are a helpful AI assistant.",
-    "avatar_model": "Mia-casual.vrm",
+    "avatar_model": "Mia-casuel.vrm",
     "tts_enabled": True,
     "piper_url": "http://localhost:10200",
     "response_speed": 50,
