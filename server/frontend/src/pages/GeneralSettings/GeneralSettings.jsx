@@ -76,6 +76,8 @@ function GeneralSettings() {
     enable_leave_notifications: true,
     leave_notification_min_min: 10,
     leave_notification_max_min: 60,
+    leave_notification_prompt: "the user left, generate a message for you to send to them",
+    welcome_message_prompt: "Give a very short (1 sentence) welcome back greeting to the user who just returned.",
   });
   const [saveMessage, setSaveMessage] = useState("");
   const [models, setModels] = useState([]);
@@ -255,6 +257,14 @@ function GeneralSettings() {
         nextConfig.leave_notification_max_min === ""
           ? 60
           : nextConfig.leave_notification_max_min,
+      leave_notification_prompt:
+        nextConfig.leave_notification_prompt === ""
+          ? "the user left, generate a message for you to send to them"
+          : nextConfig.leave_notification_prompt,
+      welcome_message_prompt:
+        nextConfig.welcome_message_prompt === ""
+          ? "Give a very short (1 sentence) welcome back greeting to the user who just returned."
+          : nextConfig.welcome_message_prompt,
     };
 
     await fetch("/api/config", {
@@ -782,6 +792,17 @@ function GeneralSettings() {
               style={{ marginLeft: "10px", width: "100px" }}
             />
           </div>
+
+          <div className="general-settings__field">
+            <label className="general-settings__label">Welcome Prompt</label>
+            <textarea
+              className="general-settings__input"
+              name="welcome_message_prompt"
+              value={config.welcome_message_prompt}
+              onChange={handleChange}
+              rows={3}
+            />
+          </div>
         </div>
 
         <div
@@ -879,6 +900,17 @@ function GeneralSettings() {
               value={config.leave_notification_max_min ?? 60}
               onChange={handleChange}
               style={{ marginLeft: "10px", width: "80px", maxWidth: "75px" }}
+            />
+          </div>
+
+          <div className="general-settings__field">
+            <label className="general-settings__label">Leave Prompt</label>
+            <textarea
+              className="general-settings__input"
+              name="leave_notification_prompt"
+              value={config.leave_notification_prompt}
+              onChange={handleChange}
+              rows={3}
             />
           </div>
         </div>

@@ -311,8 +311,7 @@ function Chat({
   }, [chatmsg]);
 
   useEffect(() => {
-    const handleTriggerWelcome = () => {
-      // Prepare UI for AI response
+    const handleTriggerWelcome = async () => {
       setChatRole("ai");
       setChathidden(false);
       setAiResponse("");
@@ -320,10 +319,19 @@ function Chat({
       streamQueue.current = "";
       if (displayInterval.current) clearInterval(displayInterval.current);
 
-      // Trigger standard streaming response with a welcome prompt
-      fetchAiResponse(
-        "Give a very short (1 sentence) welcome back greeting to the user who just returned.",
-      );
+      let welcomePrompt =
+        "Give a very short (1 sentence) welcome back greeting to the user who just returned.";
+      try {
+        const res = await fetch("/api/config");
+        const data = await res.json();
+        if (data.welcome_message_prompt) {
+          welcomePrompt = data.welcome_message_prompt;
+        }
+      } catch (err) {
+        console.error("Error fetching welcome prompt:", err);
+      }
+
+      fetchAiResponse(welcomePrompt);
     };
 
     window.addEventListener("ai-trigger-welcome", handleTriggerWelcome);

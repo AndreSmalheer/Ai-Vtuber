@@ -72,6 +72,8 @@ except ImportError:
             ENABLE_LEAVE_NOTIFICATIONS = data.get("enable_leave_notifications", True)
             LEAVE_NOTIFICATION_MIN_MIN = data.get("leave_notification_min_min", 10)
             LEAVE_NOTIFICATION_MAX_MIN = data.get("leave_notification_max_min", 60)
+            LEAVE_NOTIFICATION_PROMPT = data.get("leave_notification_prompt", "the user left, generate a message for you to send to them")
+            WELCOME_MESSAGE_PROMPT = data.get("welcome_message_prompt", "Give a very short (1 sentence) welcome back greeting to the user who just returned.")
     else:
         os.makedirs(os.path.dirname(CONFIG_PATH), exist_ok=True)
 
@@ -86,6 +88,8 @@ except ImportError:
                 "enable_leave_notifications": True,
                 "leave_notification_min_min": 10,
                 "leave_notification_max_min": 60,
+                "leave_notification_prompt": "the user left, generate a message for you to send to them",
+                "welcome_message_prompt": "Give a very short (1 sentence) welcome back greeting to the user who just returned.",
             }, f, indent=4)
 
     config = {
@@ -98,6 +102,8 @@ except ImportError:
         "enable_leave_notifications": True,
         "leave_notification_min_min": 10,
         "leave_notification_max_min": 60,
+        "leave_notification_prompt": "the user left, generate a message for you to send to them",
+        "welcome_message_prompt": "Give a very short (1 sentence) welcome back greeting to the user who just returned.",
     }
 
 try:
@@ -448,7 +454,8 @@ async def record_leave_time():
     run_time = datetime.now() + timedelta(minutes=delay_minutes)
     print(f"Scheduling welcome notification in {delay_minutes} minutes will be sent at {run_time}", flush=True)
 
-    response = get_ollama_response("the user left, generate a message for you to send to them")
+    leave_prompt = config.get("leave_notification_prompt", "the user left, generate a message for you to send to them")
+    response = get_ollama_response(leave_prompt)
 
     job = scheduler_add_job(
         send_push_internal,
