@@ -69,6 +69,9 @@ except ImportError:
             AVATAR_MODEL = data.get("avatar_model", AVATAR_MODEL)
             TTS_ENABLED = data.get("tts_enabled", TTS_ENABLED)
             PIPER_URL = data.get("piper_url", PIPER_URL)
+            ENABLE_LEAVE_NOTIFICATIONS = data.get("enable_leave_notifications", True)
+            LEAVE_NOTIFICATION_MIN_MIN = data.get("leave_notification_min_min", 10)
+            LEAVE_NOTIFICATION_MAX_MIN = data.get("leave_notification_max_min", 60)
     else:
         os.makedirs(os.path.dirname(CONFIG_PATH), exist_ok=True)
 
@@ -80,6 +83,9 @@ except ImportError:
                 "avatar_model": AVATAR_MODEL,
                 "tts_enabled": TTS_ENABLED,
                 "piper_url": PIPER_URL,
+                "enable_leave_notifications": True,
+                "leave_notification_min_min": 10,
+                "leave_notification_max_min": 60,
             }, f, indent=4)
 
     config = {
@@ -89,6 +95,9 @@ except ImportError:
         "avatar_model": AVATAR_MODEL,
         "tts_enabled": TTS_ENABLED,
         "piper_url": PIPER_URL,
+        "enable_leave_notifications": True,
+        "leave_notification_min_min": 10,
+        "leave_notification_max_min": 60,
     }
 
 try:
@@ -422,7 +431,20 @@ async def record_leave_time():
         scheduler_remove_job(leave_job_id)
         leave_job_id = None
 
-    delay_minutes = random.randint(10, 60)
+    if not config.get("enable_leave_notifications", True):
+        return {
+            "status": "leave recorded",
+            "timestamp": last_seen_timestamp,
+            "notifications_disabled": True
+        }
+
+    min_min = config.get("leave_notification_min_min", 10)
+    max_min = config.get("leave_notification_max_min", 60)
+
+    if min_min > max_min:
+        min_min, max_min = max_min, min_min
+
+    delay_minutes = random.randint(min_min, max_min)
     run_time = datetime.now() + timedelta(minutes=delay_minutes)
     print(f"Scheduling welcome notification in {delay_minutes} minutes will be sent at {run_time}", flush=True)
 

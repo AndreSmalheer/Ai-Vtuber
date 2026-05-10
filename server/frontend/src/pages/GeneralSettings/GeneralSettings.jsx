@@ -73,6 +73,9 @@ function GeneralSettings() {
     ai_name: "Mia",
     auto_silence_detection: true,
     silence_delay_ms: 2000,
+    enable_leave_notifications: true,
+    leave_notification_min_min: 10,
+    leave_notification_max_min: 60,
   });
   const [saveMessage, setSaveMessage] = useState("");
   const [models, setModels] = useState([]);
@@ -244,6 +247,14 @@ function GeneralSettings() {
         nextConfig.welcome_threshold === ""
           ? 120
           : nextConfig.welcome_threshold,
+      leave_notification_min_min:
+        nextConfig.leave_notification_min_min === ""
+          ? 10
+          : nextConfig.leave_notification_min_min,
+      leave_notification_max_min:
+        nextConfig.leave_notification_max_min === ""
+          ? 60
+          : nextConfig.leave_notification_max_min,
     };
 
     await fetch("/api/config", {
@@ -780,9 +791,7 @@ function GeneralSettings() {
           <h1 className="general-settings__title">Notifications</h1>
           <div className="general-settings__field notification-settings-field">
             <div>
-              <label className="general-settings__label">
-                Push Notifications
-              </label>
+              <label className="general-settings__label">Subscribed</label>
             </div>
             <button
               type="button"
@@ -802,31 +811,76 @@ function GeneralSettings() {
             </button>
           </div>
 
-          {!supportNotification && (
-            <dl
-              className="notification-settings__diagnostics"
-              aria-label="Notification diagnostics"
+          <div
+            className="general-settings__field"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              flexDirection: "row",
+              justifyContent: "space-between",
+            }}
+          >
+            <label className="general-settings__label">
+              Enable Leave Notification
+            </label>
+            <div
+              className={`theme-toggle ${config.enable_leave_notifications ? "active" : ""}`}
+              onClick={() => {
+                const nextConfig = {
+                  ...config,
+                  enable_leave_notifications:
+                    !config.enable_leave_notifications,
+                };
+                setConfig(nextConfig);
+                saveConfig(nextConfig);
+              }}
+              style={{ marginLeft: "10px" }}
             >
-              <div>
-                <dt>Secure</dt>
-                <dd>{diagnostics.secureContext ? "yes" : "no"}</dd>
-              </div>
-              <div>
-                <dt>Installed</dt>
-                <dd>{diagnostics.standalone ? "yes" : "no"}</dd>
-              </div>
-              <div>
-                <dt>Push API</dt>
-                <dd>{diagnostics.pushManagerApi ? "yes" : "no"}</dd>
-              </div>
-              <div>
-                <dt>Origin</dt>
-                <dd>
-                  {diagnostics.protocol}//{diagnostics.host}
-                </dd>
-              </div>
-            </dl>
-          )}
+              <div className="theme-toggle__circle" />
+            </div>
+          </div>
+
+          <div
+            className="general-settings__field"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              flexDirection: "row",
+              justifyContent: "space-between",
+            }}
+          >
+            <label className="general-settings__label">Min Delay (min)</label>
+            <input
+              type="number"
+              className="general-settings__input"
+              name="leave_notification_min_min"
+              min="1"
+              value={config.leave_notification_min_min ?? 10}
+              onChange={handleChange}
+              style={{ marginLeft: "10px", width: "80px", maxWidth: "75px" }}
+            />
+          </div>
+
+          <div
+            className="general-settings__field"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              flexDirection: "row",
+              justifyContent: "space-between",
+            }}
+          >
+            <label className="general-settings__label">Max Delay (min)</label>
+            <input
+              type="number"
+              className="general-settings__input"
+              name="leave_notification_max_min"
+              min="1"
+              value={config.leave_notification_max_min ?? 60}
+              onChange={handleChange}
+              style={{ marginLeft: "10px", width: "80px", maxWidth: "75px" }}
+            />
+          </div>
         </div>
 
         <div

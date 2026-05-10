@@ -48,7 +48,10 @@ data = {
     "auto_send_on_mic_stop": False,
     "silence_delay_ms": 2000,
     "enable_welcome_message": True,
-    "welcome_threshold": 120
+    "welcome_threshold": 120,
+    "enable_leave_notifications": true,
+    "leave_notification_min_min": 10,
+    "leave_notification_max_min": 60,
 }
 
 with open(CONFIG_PATH, "w") as f:
