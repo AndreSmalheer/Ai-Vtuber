@@ -6,7 +6,6 @@ import requests
 from fastapi import FastAPI, Request, UploadFile, File, HTTPException
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
-from pywebpush import WebPushException, webpush
 from fastapi.responses import Response
 import base64
 from backend.services.ollama import get_piper_audio
@@ -18,6 +17,7 @@ import tempfile
 import os
 from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
+from backend.services.push_notifaction import send_push_internal, VAPID_PUBLIC_KEY_BACKEND
 
 model = whisper.load_model("base")
 
@@ -29,7 +29,8 @@ if parent_dir not in sys.path:
     sys.path.append(parent_dir)
 
 CONFIG_PATH = os.path.join(SCRIPT_DIR, 'data', 'config.json')
-SUBSCRIPTIONS_FILE = os.path.join(SCRIPT_DIR, 'data', 'subscriptions.json')
+
+last_seen_timestamp = 0
 
 try:
     from core.config import (
@@ -110,65 +111,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-def load_subscriptions():
-    if not os.path.exists(SUBSCRIPTIONS_FILE):
-        return []
-    try:
-        with open(SUBSCRIPTIONS_FILE, "r") as f:
-            return json.load(f)
-    except (json.JSONDecodeError, FileNotFoundError):
-        print(f"Warning: Could not load or decode {SUBSCRIPTIONS_FILE}. Returning empty list.")
-        return []
-
-def save_subscriptions(subscriptions):
-    try:
-        with open(SUBSCRIPTIONS_FILE, "w") as f:
-            json.dump(subscriptions, f, indent=4)
-    except Exception as e:
-        print(f"Error saving subscriptions: {e}")
-
-async def send_push_internal(title: str, message: str, url: str = "/"):
-    subscriptions = load_subscriptions()
-
-    if not subscriptions:
-        return
-
-    payload = json.dumps({
-        "title": title,
-        "message": message,
-        "url": url,
-        "icon": "/pwa-192x192.png",
-        "badge": "/pwa-192x192.png",
-    })
-
-    sent_count = 0
-    stale_endpoints = set()
-
-    for sub in subscriptions:
-        try:
-            webpush(
-                subscription_info=sub,
-                data=payload,
-                vapid_private_key=VAPID_PRIVATE_KEY_BACKEND,
-                vapid_claims={"sub": VAPID_MAILTO_URL},
-                ttl=60,
-            )
-            sent_count += 1
-
-        except WebPushException as e:
-            response = getattr(e, "response", None)
-
-            if getattr(response, "status_code", None) in (404, 410):
-                stale_endpoints.add(sub.get("endpoint"))
-
-    if stale_endpoints:
-        save_subscriptions([
-            sub for sub in subscriptions
-            if sub.get("endpoint") not in stale_endpoints
-        ])
-
-    return sent_count
 
 @app.get("/api/notifaction/public-key")
 async def get_push_public_key():
@@ -368,8 +310,8 @@ async def send_push_notification(request: Request):
     try:
         data = await request.json()
 
-        title = data.get("title", "Notification")
-        message = data.get("message", "You have a new message.")
+        title = data.get("title", "placholder title")
+        message = data.get("message", "placeholder message")
         url = data.get("url", "/")
 
         sent_count = await send_push_internal(
@@ -387,19 +329,6 @@ async def send_push_notification(request: Request):
         raise HTTPException(status_code=400, detail="Invalid JSON payload")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-VAPID_PUBLIC_KEY_BACKEND = os.getenv(
-    "VAPID_PUBLIC_KEY",
-    "BG0sZ7qsau7n56E1kdGy3Gx5Rznw5OlOZDkSnJl2pkGCvs0lKdUbAFuBTfEktjHRGjJ9WhGhetmakYesoy2AW20",
-)
-VAPID_PRIVATE_KEY_BACKEND = os.getenv(
-    "VAPID_PRIVATE_KEY",
-    "VyjBMBFJfzIERgh1mdZDU47kJ71bVKcOMbnxKysMzPc",
-)
-VAPID_MAILTO_URL = os.getenv("VAPID_SUBJECT", "mailto:your-email@example.com")
-
-# Global state for cross-device activity tracking
-last_seen_timestamp = 0
 
 @app.post("/api/leave")
 async def record_leave_time():
