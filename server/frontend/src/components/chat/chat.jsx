@@ -30,7 +30,8 @@ function Chat({
   const createLipSyncAnalyser = (audio) => {
     try {
       if (!audioContextRef.current) {
-        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        const AudioContextClass =
+          window.AudioContext || window.webkitAudioContext;
         if (!AudioContextClass) {
           throw new Error("Web Audio API is not supported in this browser.");
         }
@@ -75,7 +76,7 @@ function Chat({
 
     const base64Audio = audioQueue.current.shift();
     const audio = new Audio(`data:audio/wav;base64,${base64Audio}`);
-    
+
     // Resume context BEFORE creating analyser/source
     const resumeAndPlay = async () => {
       if (audioContextRef.current?.state === "suspended") {
@@ -113,7 +114,8 @@ function Chat({
     // Pre-initialize AudioContext on first user interaction if possible
     const initAudioContext = () => {
       if (!audioContextRef.current) {
-        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        const AudioContextClass =
+          window.AudioContext || window.webkitAudioContext;
         if (AudioContextClass) {
           audioContextRef.current = new AudioContextClass();
         }
@@ -158,7 +160,6 @@ function Chat({
   async function fetchAiResponse(input) {
     setAiResponseLoading(true);
 
-    // Fetch config for speed
     let speed = 50;
     try {
       const configRes = await fetch("/api/config");
@@ -181,7 +182,6 @@ function Chat({
     const decoder = new TextDecoder();
     let buffer = "";
 
-    // Start display interval
     if (displayInterval.current) clearInterval(displayInterval.current);
 
     if (speed > 0) {
@@ -194,7 +194,6 @@ function Chat({
       }, speed);
     }
 
-    //Streaming response
     while (true) {
       const { value, done } = await reader.read();
 
@@ -202,13 +201,22 @@ function Chat({
 
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split("\n\n");
-      buffer = lines.pop(); // Keep the potentially incomplete last chunk
+      buffer = lines.pop();
 
       for (const line of lines) {
         if (line.startsWith("data: ")) {
           try {
             const jsonStr = line.replace("data: ", "");
             const json = JSON.parse(jsonStr);
+            if (json.error) {
+              setAiResponseLoading(false);
+              setAiResponse(
+                "I couldn’t get a response right now. Please check your connection or try again.",
+              );
+              console.error("Backend error:", json.error);
+              finishChat();
+              return;
+            }
             if (json.text) {
               setAiResponseLoading(false);
               accumulatedResponseRef.current += json.text;
@@ -231,7 +239,6 @@ function Chat({
       }
     }
 
-    // Wait for queue to empty if using speed
     if (speed > 0) {
       const checkEmpty = setInterval(() => {
         if (streamQueue.current.length === 0) {
@@ -314,7 +321,9 @@ function Chat({
       if (displayInterval.current) clearInterval(displayInterval.current);
 
       // Trigger standard streaming response with a welcome prompt
-      fetchAiResponse("Give a very short (1 sentence) welcome back greeting to the user who just returned.");
+      fetchAiResponse(
+        "Give a very short (1 sentence) welcome back greeting to the user who just returned.",
+      );
     };
 
     window.addEventListener("ai-trigger-welcome", handleTriggerWelcome);
@@ -358,10 +367,20 @@ function Chat({
         }`}
       >
         <div className="message user-message">
-          <h1 className="user-name">{chatRole === "user" ? userName : aiName}</h1>
+          <h1 className="user-name">
+            {chatRole === "user" ? userName : aiName}
+          </h1>
           <p className={`message-text ${aiResponseLoading ? "loading" : ""}`}>
             {displayText}
           </p>
+
+          {aiResponseLoading && (
+            <span className="typing-dots">
+              <span></span>
+              <span></span>
+              <span></span>
+            </span>
+          )}
         </div>
       </div>
     </div>

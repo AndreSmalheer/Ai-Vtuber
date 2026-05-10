@@ -90,7 +90,7 @@ except ImportError:
     def delete_history(): pass
 
 try:
-    from services.ollama import ollama_event_generator
+    from backend.services.ollama import ollama_event_generator
 except ImportError:
     def ollama_event_generator(user_message):
         yield 'data: {"error": "services.ollama not available"}\n\n'
@@ -221,11 +221,11 @@ async def get_models_api(url: str):
 async def ollama_stream_api(request: Request):
     data = await request.json()
     user_message = data.get("prompt", "")
-    try:
-        return StreamingResponse(ollama_event_generator(user_message), media_type="text/event-stream")
-    except Exception as e:
-        print(f"Error streaming from Ollama: {e}")
-        return HTTPException(status_code=500, detail=f"Failed to stream from Ollama: {e}")
+
+    return StreamingResponse(
+        ollama_event_generator(user_message),
+        media_type="text/event-stream"
+    )
 
 @app.get("/api/history")
 async def get_history_api():

@@ -25,12 +25,12 @@ def get_piper_audio(text, piper_url):
         if not url.startswith("http"):
             url = f"http://{url}"
 
-        print(f"Attempting Piper TTS: {url} with text: {text[:50]}...")
+        print(f"Attempting Piper TTS: {url} with text: {text[:50]}...", flush=True)
 
         try:
             response = requests.post(url, json={"text": text}, timeout=5)
             if response.status_code == 200:
-                print("Piper TTS success (POST JSON)")
+                print("Piper TTS success (POST JSON)", flush=True)
                 return base64.b64encode(response.content).decode("utf-8"), None
             else:
                 errors.append(f"POST {response.status_code}")
@@ -40,7 +40,7 @@ def get_piper_audio(text, piper_url):
         try:
             response = requests.get(url, params={"text": text}, timeout=5)
             if response.status_code == 200:
-                print("Piper TTS success (GET)")
+                print("Piper TTS success (GET)", flush=True)
                 return base64.b64encode(response.content).decode("utf-8"), None
             else:
                 errors.append(f"GET {response.status_code}")
@@ -48,11 +48,11 @@ def get_piper_audio(text, piper_url):
             errors.append(f"GET error: {str(e)}")
 
         err_msg = f"Piper TTS failed for {url}. Details: {', '.join(errors)}"
-        print(err_msg)
+        print(err_msg, flush=True)
         return None, err_msg
     except Exception as e:
         err_msg = f"Piper TTS critical error: {str(e)}"
-        print(err_msg)
+        print(err_msg, flush=True)
         return None, err_msg
 
 def ollama_event_generator(user_message):
@@ -67,10 +67,9 @@ def ollama_event_generator(user_message):
     user_name = config.get("user_name", "You")
     ai_name = config.get("ai_name", "AI")
 
-    # Only allow TTS if explicitly enabled AND not in stealth mode
     can_speak = tts_enabled and not stealth_mode
 
-    print(f"Streaming request: tts_enabled={tts_enabled}, stealth_mode={stealth_mode}, can_speak={can_speak}")
+    print(f"Streaming request: tts_enabled={tts_enabled}, stealth_mode={stealth_mode}, can_speak={can_speak}", flush=True)
 
     from core.history import get_history, add_history
     prompt_context = get_history() + f"{user_name}: {user_message}\n{ai_name}:"
@@ -84,7 +83,8 @@ def ollama_event_generator(user_message):
     try:
         response = requests.post(f"{ollama_url}/api/generate", json=payload, stream=True)
     except Exception as e:
-        yield f"data: {json.dumps({'error': str(e)})}\n\n"
+        print(f"Error connecting to Ollama: {e}", flush=True)
+        yield f"data: {json.dumps({'error': str(e), 'finish_reason': 'error'})}\n\n"
         return
 
     full_response = ""
