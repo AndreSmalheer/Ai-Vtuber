@@ -19,6 +19,7 @@ The VRM file was created using VRoid Studio.
 - Configurable response delay speed
 - Configurable “welcome back” message
 - Subscribable push notifications
+- Automatic notification between 10 and 60 mn after exseting the site
 
 ## Planned Features
 

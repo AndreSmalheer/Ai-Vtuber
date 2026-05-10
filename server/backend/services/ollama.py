@@ -6,6 +6,25 @@ import os
 
 CONFIG_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "config.json")
 
+def generate_prompt(user_message):
+    from core.history import get_history, add_history
+
+    config = load_runtime_config() or {}
+    base_prompt = config.get("base_prompt", "")
+    user_name = config.get("user_name", "You")
+    ai_name = config.get("ai_name", "AI")
+
+    prompt_context = get_history() or ""
+
+    if base_prompt:
+        result = base_prompt + prompt_context + f"{user_name}: {user_message}\n{ai_name}:"
+        print("[DEBUG] Using base_prompt | Final prompt:", result, flush=True)
+        return result
+    else:
+        result = prompt_context + f"{user_name}: {user_message}\n{ai_name}:"
+        print("[DEBUG] No base_prompt | Final prompt:", result, flush=True)
+        return result
+
 def load_runtime_config():
     try:
         if os.path.exists(CONFIG_PATH):
@@ -56,6 +75,7 @@ def get_piper_audio(text, piper_url):
         return None, err_msg
 
 def ollama_event_generator(user_message):
+    from core.history import get_history, add_history
     config = load_runtime_config()
 
     ollama_url = config.get("ollama_url", "http://localhost:11434").rstrip("/")
@@ -71,12 +91,11 @@ def ollama_event_generator(user_message):
 
     print(f"Streaming request: tts_enabled={tts_enabled}, stealth_mode={stealth_mode}, can_speak={can_speak}", flush=True)
 
-    from core.history import get_history, add_history
-    prompt_context = get_history() + f"{user_name}: {user_message}\n{ai_name}:"
+    prompt = generate_prompt(user_message)
 
     payload = {
         "model": ollama_model,
-        "prompt": (base_prompt + prompt_context) if base_prompt else prompt_context,
+        "prompt": prompt,
         "stream": True
     }
 
@@ -139,14 +158,14 @@ def get_ollama_response(text: str):
 
     ollama_url = config.get("ollama_url", "http://localhost:11434").rstrip("/")
     ollama_model = config.get("ollama_model", "qwen2.5-coder:1.5b-instruct")
-    base_prompt = config.get("base_prompt", "")
+    prompt = generate_prompt(text)
 
     try:
         response = requests.post(
             f"{ollama_url}/api/generate",
             json={
                 "model": ollama_model,
-                "prompt": f"{base_prompt}\n\nUser: {text}\nAssistant:",
+                "prompt": prompt,
                 "stream": False
             },
             timeout=60

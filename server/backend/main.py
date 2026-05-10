@@ -1,7 +1,12 @@
+import time
+from datetime import datetime, timedelta
+import random
+from email import message
 import sys
 import os
 import json
 import shutil
+from pymupdf import message
 import requests
 from fastapi import FastAPI, Request, UploadFile, File, HTTPException
 from fastapi.responses import StreamingResponse
@@ -18,6 +23,7 @@ import os
 from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from backend.services.push_notifaction import send_push_internal, VAPID_PUBLIC_KEY_BACKEND, load_subscriptions, save_subscriptions
+from backend.services.scheduler import scheduler_add_job, scheduler_get_jobs, scheduler_get_job, scheduler_remove_job
 
 model = whisper.load_model("base")
 
@@ -31,6 +37,8 @@ if parent_dir not in sys.path:
 CONFIG_PATH = os.path.join(SCRIPT_DIR, 'data', 'config.json')
 
 last_seen_timestamp = 0
+last_seen_timestamp = 0
+leave_job_id = None
 
 try:
     from core.config import (
@@ -305,6 +313,80 @@ async def chat_notify(req: ChatRequest):
         "status": "notification_sent"
     }
 
+@app.post("/schedule-notification")
+async def schedule_notification(request: Request):
+    """
+    send_time format: "2026-05-10 18:30:00"
+    """
+    data = await request.json()
+
+    title = data.get("title")
+    message = data.get("message")
+    url = data.get("url", "/")
+    send_time = data.get("send_time")
+
+    if not title:
+        raise HTTPException(status_code=400, detail="Title is required")
+    if not message:
+        raise HTTPException(status_code=400, detail="Message is required")
+    if not send_time:
+        raise HTTPException(status_code=400, detail="Send time is required")
+
+
+    job = scheduler_add_job(
+        send_push_internal,
+        trigger="date",
+        run_date=send_time,
+        kwargs={
+            "title": title,
+            "message": message,
+            "url": url
+        }
+    )
+
+    return {"message": "Notification scheduled", "time": send_time, "job_id": job.id}
+
+@app.put("/jobs/{job_id}")
+async def edit_job(job_id: str, request: Request):
+    data = await request.json()
+
+    existing_job = scheduler_get_job(job_id)
+
+    if not existing_job or isinstance(existing_job, str):
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    func = send_push_internal
+    trigger = data.get("trigger", "date")
+    run_date = data.get("send_time", existing_job["run_date"])
+    kwargs = data.get("kwargs", existing_job["kwargs"])
+
+    scheduler_remove_job(job_id)
+
+    new_job = scheduler_add_job(
+        func,
+        trigger=trigger,
+        run_date=run_date,
+        kwargs=kwargs
+    )
+
+    return {
+        "message": "Job updated",
+        "job_id": new_job.id
+    }
+
+@app.get("/jobs")
+def get_jobs():
+    return scheduler_get_jobs()
+
+@app.get("/jobs/{job_id}")
+def get_job(job_id: str):
+    job = scheduler_get_job(job_id)
+
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    return job
+
 @app.post("/api/notifaction")
 async def send_push_notification(request: Request):
     try:
@@ -332,27 +414,58 @@ async def send_push_notification(request: Request):
 
 @app.post("/api/leave")
 async def record_leave_time():
-    global last_seen_timestamp
-    import time
+    global last_seen_timestamp, leave_job_id
+
     last_seen_timestamp = time.time()
-    return {"status": "success", "timestamp": last_seen_timestamp}
+
+    if leave_job_id:
+        scheduler_remove_job(leave_job_id)
+        leave_job_id = None
+
+    delay_minutes = random.randint(10, 60)
+    run_time = datetime.now() + timedelta(minutes=delay_minutes)
+    print(f"Scheduling welcome notification in {delay_minutes} minutes will be sent at {run_time}", flush=True)
+
+    response = get_ollama_response("the user left, generate a message for you to send to them")
+
+    job = scheduler_add_job(
+        send_push_internal,
+        trigger="date",
+        run_date=run_time,
+        kwargs={
+            "title": "Mia",
+            "message": response,
+            "url": "/"
+        }
+    )
+
+    leave_job_id = job.id
+
+    return {
+        "status": "leave recorded",
+        "timestamp": last_seen_timestamp,
+        "scheduled_in_minutes": delay_minutes,
+        "job_id": job.id
+    }
 @app.get("/api/welcome-check")
 async def welcome_check():
-    global last_seen_timestamp
-    import time
+    global last_seen_timestamp, leave_job_id
 
     current_time = time.time()
     if last_seen_timestamp == 0:
         return {"greet": False}
 
-    # Get threshold from config, default to 120
     threshold = config.get("welcome_threshold", 120)
+
+    if leave_job_id:
+        # print(f"Canceling scheduled welcome notification with job ID: {leave_job_id}", flush=True)
+        scheduler_remove_job(leave_job_id)
+        leave_job_id = None
 
     time_diff = current_time - last_seen_timestamp
     if time_diff < threshold:
         return {"greet": False}
 
-    # User was gone for more than threshold seconds
     last_seen_timestamp = 0
     return {"greet": True}
 
