@@ -35,6 +35,18 @@ if parent_dir not in sys.path:
     sys.path.append(parent_dir)
 
 CONFIG_PATH = os.path.join(SCRIPT_DIR, 'data', 'config.json')
+USER_STATE_PATH = os.path.join(SCRIPT_DIR, 'data', 'user_state.json')
+
+def load_user_state():
+    if os.path.exists(USER_STATE_PATH):
+        with open(USER_STATE_PATH, "r") as f:
+            return json.load(f)
+    return {"onboarding_completed": False}
+
+def save_user_state(state):
+    os.makedirs(os.path.dirname(USER_STATE_PATH), exist_ok=True)
+    with open(USER_STATE_PATH, "w") as f:
+        json.dump(state, f, indent=4)
 
 last_seen_timestamp = 0
 last_seen_timestamp = 0
@@ -510,6 +522,18 @@ async def transcribe(audio: UploadFile = File(...)):
         return { "text": result["text"].strip() }
     finally:
         os.remove(tmp_path)
+
+@app.get("/api/onboarding/status")
+async def get_onboarding_status():
+    state = load_user_state()
+    return {"completed": state.get("onboarding_completed", False)}
+
+@app.post("/api/onboarding/complete")
+async def complete_onboarding():
+    state = load_user_state()
+    state["onboarding_completed"] = True
+    save_user_state(state)
+    return {"status": "success"}
 
 @app.api_route("/health", methods=["GET", "HEAD"])
 def health():

@@ -1,9 +1,9 @@
 import { Routes, Route, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import Home from "./pages/Home/Home";
-import Settings from "./pages/Settings/Settings"; // This is now the menu component
-import GeneralSettings from "./pages/GeneralSettings/GeneralSettings"; // New settings page
-import ChatHistory from "./pages/ChatHistory/ChatHistory"; // New chat history page
+import Settings from "./pages/Settings/Settings";
+import GeneralSettings from "./pages/GeneralSettings/GeneralSettings";
+import ChatHistory from "./pages/ChatHistory/ChatHistory";
 import Header from "./components/header/header";
 import Avatar from "./components/avatar/avatar";
 
