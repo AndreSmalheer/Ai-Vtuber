@@ -132,7 +132,7 @@ function Features({ setCurrentStep, setIsFirstVisit }) {
           <div class="onboarding-img-wrapper">
             <img
               class="onboarding-img-small"
-              src="/onboarding/welcome-onboarding-img.png"
+              src="/onboarding/features-onboarding-img.png"
             />
           </div>
 
