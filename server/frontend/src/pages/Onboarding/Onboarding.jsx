@@ -1,5 +1,5 @@
 import "./Onboarding.css";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 const ArrowIcon = ({ size = 47 }) => {
   return (
@@ -62,6 +62,43 @@ const Ollama = ({ size = 33 }) => {
   );
 };
 
+const Piper = ({ size = 33 }) => {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 733 733"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M439.51 248.968C479.682 252.393 511.438 263.856 534.776 283.356C563.274 306.824 577.523 340.352 577.523 383.937C577.523 427.709 563.274 461.422 534.776 485.077C506.464 508.546 465.766 520.281 412.681 520.281H341.715V665.007H234.149V372.238C301.156 325.005 369.206 282.199 439.51 248.968ZM341.715 325.823V442.33H401.226C422.088 442.33 438.199 437.301 449.561 427.243C460.923 416.998 466.604 402.563 466.604 383.937C466.604 365.311 460.923 350.969 449.561 340.91C438.199 330.852 422.088 325.823 401.226 325.823H341.715Z"
+        fill="currentColor"
+      />
+
+      <path
+        d="M410.845 237.833C353.467 167.006 363.997 117.968 397.987 77.3865C360.314 77.1448 316.068 75.2653 285.574 159.896C212.621 161.313 207.277 104.849 206.37 50.4277C173.564 102.772 155.569 139.171 179.972 215.357C93.1197 190.913 81.7403 257.973 45.8271 291.652C115.671 255.368 202.134 241.39 231.83 346.226C281.244 310.442 334.72 274.639 411.257 238.725C411.563 238.584 411.058 238.094 410.845 237.833Z"
+        fill="currentColor"
+      />
+
+      <path
+        d="M50.7704 305.788C59.319 305.788 66.2489 298.858 66.2489 290.31C66.2489 281.761 59.319 274.831 50.7704 274.831C42.2219 274.831 35.292 281.761 35.292 290.31C35.292 298.858 42.2219 305.788 50.7704 305.788Z"
+        fill="currentColor"
+      />
+
+      <path
+        d="M204.847 66.2485C213.395 66.2485 220.325 59.3186 220.325 50.7701C220.325 42.2216 213.395 35.2916 204.847 35.2916C196.298 35.2916 189.368 42.2216 189.368 50.7701C189.368 59.3186 196.298 66.2485 204.847 66.2485Z"
+        fill="currentColor"
+      />
+
+      <path
+        d="M389.714 94.4317C398.262 94.4317 405.192 87.5017 405.192 78.9532C405.192 70.4047 398.262 63.4747 389.714 63.4747C381.165 63.4747 374.235 70.4047 374.235 78.9532C374.235 87.5017 381.165 94.4317 389.714 94.4317Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+};
+
 const SpeakerIcon = ({ size = 33 }) => {
   return (
     <svg
@@ -102,6 +139,7 @@ function Welcome({ currentStep, setCurrentStep, setIsFirstVisit }) {
           <div className="bottom-container">
             <div class="onboarding-dots-container">
               <div class="onboarding-dot active"></div>
+              <div class="onboarding-dot"></div>
               <div class="onboarding-dot"></div>
             </div>
 
@@ -181,6 +219,7 @@ function Features({ setCurrentStep, setIsFirstVisit }) {
             <div class="onboarding-dots-container">
               <div class="onboarding-dot"></div>
               <div class="onboarding-dot active"></div>
+              <div class="onboarding-dot"></div>
             </div>
 
             <div className="onboarding-nav-buttons">
@@ -193,7 +232,255 @@ function Features({ setCurrentStep, setIsFirstVisit }) {
 
               <button
                 className="next-btn"
-                onClick={() => setIsFirstVisit(false)}
+                onClick={() => setCurrentStep((prev) => prev + 1)}
+              >
+                next
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function Customize({ currentStep, setCurrentStep, setIsFirstVisit }) {
+  const [isRefreshingOllama, setIsRefreshingOllama] = useState(false);
+  const [isRefreshingPiper, setIsRefreshingPiper] = useState(false);
+  const [isOllamaConnected, setIsOllamaConnected] = useState(false);
+  const [isPiperConnected, setIsPiperConnected] = useState(false);
+  const [ollamaUrl, setOllamaUrl] = useState("");
+  const [piperUrl, setPiperUrl] = useState("");
+  const [canFinishOnboarding, setCanFinishOnboarding] = useState(false);
+  const [ollamaStatus, setOllamaStatus] = useState(null);
+  const [piperStatus, setPiperStatus] = useState(null);
+
+  const loadedRef = useRef(false);
+
+  const [config, setConfig] = useState();
+
+  const [darkMode, setDarkMode] = useState(
+    document.body.classList.contains("dark"),
+  );
+
+  useEffect(() => {
+    async function loadConfig() {
+      if (loadedRef.current) return;
+      loadedRef.current = true;
+
+      const res = await fetch("http://localhost:8000/api/config");
+      const data = await res.json();
+
+      setConfig(data);
+    }
+
+    loadConfig();
+  }, []);
+
+  async function updateConfig(settings) {
+    const updatedConfig = {
+      ...config,
+      ...settings,
+    };
+
+    setConfig(updatedConfig);
+
+    try {
+      await fetch("http://localhost:8000/api/config", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updatedConfig),
+      });
+    } catch (err) {
+      console.error("Failed to update config:", err);
+    }
+  }
+
+  useEffect(() => {
+    if (darkMode) {
+      document.body.classList.add("dark");
+    } else {
+      document.body.classList.remove("dark");
+    }
+
+    updateConfig({ is_dark: darkMode });
+  }, [darkMode, config?.is_dark]);
+
+  useEffect(() => {
+    setCanFinishOnboarding(isOllamaConnected && isPiperConnected);
+  }, [isOllamaConnected, isPiperConnected]);
+
+  async function checkOllamaConnection(url) {
+    setIsRefreshingOllama(true);
+    setOllamaStatus(null);
+
+    try {
+      const response = await fetch(`${url}/api/tags`);
+
+      if (!response.ok) {
+        throw new Error(`Ollama responded with ${response.status}`);
+      }
+
+      updateConfig({ ollama_url: url });
+
+      setOllamaStatus("success");
+      setIsOllamaConnected(true);
+    } catch (error) {
+      console.error("Ollama connection failed:", error);
+      setOllamaStatus("error");
+      setIsOllamaConnected(false);
+    } finally {
+      setIsRefreshingOllama(false);
+    }
+  }
+
+  async function checkPiperConnection(url) {
+    setIsRefreshingPiper(true);
+    setPiperStatus(null);
+
+    try {
+      const response = await fetch(`${url}/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          text: "ping",
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Piper responded with ${response.status}`);
+      }
+
+      updateConfig({ piper_url: url });
+      setPiperStatus("success");
+      setIsPiperConnected(true);
+    } catch (error) {
+      console.error("Piper connection failed:", error);
+      setPiperStatus("error");
+      setIsPiperConnected(false);
+    } finally {
+      setIsRefreshingPiper(false);
+    }
+  }
+
+  return (
+    <>
+      <div className="onboarding-shell">
+        <div className="onboarding-container">
+          <h1 className="onboarding-title">Customize your way.</h1>
+
+          <div class="onboarding-img-wrapper">
+            <img
+              class="onboarding-img-small"
+              src="/onboarding/features-onboarding-img.png"
+            />
+          </div>
+
+          <div className="features-container">
+            <div className="feature">
+              <div className="feature-icon">
+                <Ollama />
+              </div>
+
+              <div className="feature-content">
+                <h1 className="feature-title">Ollama</h1>
+
+                <div className="ollama-input-group">
+                  <input
+                    className="feature-input"
+                    type="text"
+                    placeholder="Ollama url"
+                    value={ollamaUrl}
+                    onChange={(e) => setOllamaUrl(e.target.value)}
+                  />
+
+                  <button
+                    type="button"
+                    className={`refresh-btn
+                    ${isRefreshingOllama ? "spinning" : ""}
+                    ${ollamaStatus === "success" ? "success" : ""}
+                    ${ollamaStatus === "error" ? "error" : ""}`}
+                    onClick={() => checkOllamaConnection(ollamaUrl)}
+                  ></button>
+                </div>
+              </div>
+            </div>
+
+            <div className="feature">
+              <div className="feature-icon">
+                <Piper />
+              </div>
+
+              <div className="feature-content">
+                <h1 className="feature-title">Piper tts</h1>
+
+                <div className="ollama-input-group">
+                  <input
+                    className="feature-input"
+                    type="text"
+                    placeholder="Piper url"
+                    value={piperUrl}
+                    onChange={(e) => setPiperUrl(e.target.value)}
+                  />
+
+                  <button
+                    type="button"
+                    className={`refresh-btn
+                    ${isRefreshingPiper ? "spinning" : ""}
+                    ${piperStatus === "success" ? "success" : ""}
+                    ${piperStatus === "error" ? "error" : ""}`}
+                    onClick={() => checkPiperConnection(piperUrl)}
+                  ></button>
+                </div>
+              </div>
+            </div>
+
+            <div className="feature">
+              <div className="feature-icon">
+                <Live3d />
+              </div>
+
+              <div className="feature-content">
+                <h1 className="feature-title">Dark Mode</h1>
+
+                <h2 className="feature-description">
+                  Easy on the eyes at night
+                </h2>
+              </div>
+
+              <label className="toggle-switch">
+                <input
+                  type="checkbox"
+                  checked={darkMode}
+                  onChange={(e) => setDarkMode(e.target.checked)}
+                />
+                <span className="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <div className="bottom-container">
+            <div class="onboarding-dots-container">
+              <div class="onboarding-dot"></div>
+              <div class="onboarding-dot"></div>
+              <div class="onboarding-dot active"></div>
+            </div>
+
+            <div className="onboarding-nav-buttons">
+              <button
+                className="back-btn"
+                onClick={() => setCurrentStep((prev) => prev - 1)}
+              >
+                <ArrowIcon />
+              </button>
+
+              <button
+                className={`next-btn ${!canFinishOnboarding ? "inactive" : ""}`}
+                onClick={() => canFinishOnboarding && setIsFirstVisit(false)}
               >
                 Finish
               </button>
@@ -219,7 +506,19 @@ function Onboarding({ setIsFirstVisit }) {
       )}
 
       {currentStep === 1 && (
-        <Features currentStep={currentStep} setCurrentStep={setCurrentStep} setIsFirstVisit={setIsFirstVisit} />
+        <Features
+          currentStep={currentStep}
+          setCurrentStep={setCurrentStep}
+          setIsFirstVisit={setIsFirstVisit}
+        />
+      )}
+
+      {currentStep === 2 && (
+        <Customize
+          currentStep={currentStep}
+          setCurrentStep={setCurrentStep}
+          setIsFirstVisit={setIsFirstVisit}
+        />
       )}
     </>
   );

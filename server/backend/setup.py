@@ -49,9 +49,10 @@ data = {
     "silence_delay_ms": 2000,
     "enable_welcome_message": True,
     "welcome_threshold": 120,
-    "enable_leave_notifications": true,
+    "enable_leave_notifications": True,
     "leave_notification_min_min": 10,
     "leave_notification_max_min": 60,
+    "is_dark": False,
 }
 
 with open(CONFIG_PATH, "w") as f:

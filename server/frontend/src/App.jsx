@@ -16,9 +16,7 @@ function App() {
   });
   const location = useLocation();
   const [config, setConfig] = useState({});
-  const [isDark, setIsDark] = useState(
-    () => localStorage.getItem("theme") === "dark",
-  );
+  const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
     if (isDark) {
@@ -47,6 +45,9 @@ function App() {
         .then((res) => res.json())
         .then((data) => {
           setConfig((prev) => ({ ...prev, ...data }));
+          if (data.is_dark !== undefined) {
+            setIsDark(data.is_dark);
+          }
         })
         .catch((err) => console.error("Error fetching config:", err));
     };
@@ -58,6 +59,9 @@ function App() {
     const handleConfigUpdate = (event) => {
       if (event.detail) {
         setConfig((prev) => ({ ...prev, ...event.detail }));
+        if (event.detail.is_dark !== undefined) {
+          setIsDark(event.detail.is_dark);
+        }
       }
     };
 

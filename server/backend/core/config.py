@@ -12,6 +12,7 @@ def load_config():
         "ollama_model": "qwen2.5-coder:1.5b-instruct",
         "base_prompt": "Your an ai companion be nice to the user",
         "stealth_mode": False,
+        "is_dark": True,
         "orbit_controls_enabled": True,
         "avatar_model": "Mia-casuel.vrm",
         "tts_enabled": False,

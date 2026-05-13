@@ -86,9 +86,6 @@ function GeneralSettings() {
   const [error, setError] = useState(null);
   const [vrmModels, setVrmModels] = useState([]);
   const [isVrmOpen, setIsVrmOpen] = useState(false);
-  const [isDark, setIsDark] = useState(() => {
-    return localStorage.getItem("theme") === "dark";
-  });
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [isSubscribing, setIsSubscribing] = useState(false);
   const [supportNotification, setSupportNotification] = useState(false);
@@ -101,17 +98,6 @@ function GeneralSettings() {
   const [diagnostics, setDiagnostics] = useState(() =>
     getNotificationDiagnostics(),
   );
-
-  useEffect(() => {
-    if (isDark) {
-      document.body.classList.add("dark");
-      localStorage.setItem("theme", "dark");
-    } else {
-      document.body.classList.remove("dark");
-      localStorage.setItem("theme", "light");
-    }
-    window.dispatchEvent(new CustomEvent("theme-updated", { detail: isDark }));
-  }, [isDark]);
 
   const refreshNotificationStatus = useCallback(async () => {
     const nextDiagnostics = getNotificationDiagnostics();
@@ -561,8 +547,15 @@ function GeneralSettings() {
           <div className="general-settings__field" id="dark-mode-container">
             <label className="general-settings__label">Dark Mode</label>
             <div
-              className={`theme-toggle ${isDark ? "active" : ""}`}
-              onClick={() => setIsDark(!isDark)}
+              className={`theme-toggle ${config.is_dark ? "active" : ""}`}
+              onClick={() => {
+                const nextConfig = {
+                  ...config,
+                  is_dark: !config.is_dark,
+                };
+                setConfig(nextConfig);
+                saveConfig(nextConfig);
+              }}
               style={{ marginLeft: "10px" }}
             >
               <div className="theme-toggle__circle" />

@@ -157,6 +157,26 @@ textarea.general-settings__input {
   -webkit-mask-size: contain;
 }
 
+body.dark .refresh-btn.success {
+  background-color: #27ae60;
+  box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.2);
+}
+
+body.dark .refresh-btn.error {
+  background-color: #ff5b5b;
+  box-shadow: 0 0 0 3px rgba(255, 91, 91, 0.2);
+}
+
+body:not(.dark) .refresh-btn.success {
+  background-color: #2ecc71;
+  box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.15);
+}
+
+body:not(.dark) .refresh-btn.error {
+  background-color: #e74c3c;
+  box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.15);
+}
+
 .refresh-btn:hover {
   background-color: var(--theme-active);
 }

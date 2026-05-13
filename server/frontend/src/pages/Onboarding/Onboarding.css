@@ -250,9 +250,19 @@
   animation: ob-fade-up 0.4s ease both;
 }
 
+.next-btn.inactive {
+  background-color: var(--overlay-2-background);
+  border: 1px solid var(--divador-color);
+  color: var(--h3-color);
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 .features-container {
   display: flex;
   flex-direction: column;
+  flex: 1;
   align-items: center;
   gap: 13px;
   margin-top: clamp(32px, 6vw, 40px);
@@ -311,4 +321,103 @@
   .onboarding-dot {
     transition: none;
   }
+}
+
+.toggle-switch {
+  margin-left: auto;
+  position: relative;
+  width: 48px;
+  height: 26px;
+  display: inline-block;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background-color: var(--divador-color);
+  border: 1px solid var(--overlay-border);
+  border-radius: 999px;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.toggle-slider::before {
+  content: "";
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  left: 3px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-radius: 50%;
+  background: white;
+  border: 0.5px solid rgba(0,0,0,0.08);
+  transition: transform 0.22s cubic-bezier(0.34, 1.2, 0.64, 1);
+}
+
+.toggle-switch input:checked + .toggle-slider {
+  background: var(--theme-active);
+}
+
+.toggle-switch input:checked + .toggle-slider::before {
+  transform: translate(22px, -50%);
+}
+
+.feature-input {
+  height: 26px;
+  padding: 0 10px;
+  font-size: 13px;
+  margin-top: 2px;
+  color: var(--h2-color);
+  background-color: var(--overlay-2-background);
+  border: 1px solid var(--overlay-border);
+  border-radius: 10px;
+  outline: none;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+  box-sizing: border-box;
+}
+
+.feature-input::placeholder {
+  color: var(--h3-color);
+  opacity: 0.6;
+}
+
+.feature-input:focus {
+  border-color: var(--theme-active);
+  background-color: var(--overlay-background);
+}
+
+.refresh-btn {
+  width: 24px;
+  height: 24px;
+  background-color: var(--sub-btn);
+  border: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8'%3E%3C/path%3E%3Cpath d='M21 3v5h-5'%3E%3C/path%3E%3Cpath d='M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16'%3E%3C/path%3E%3Cpath d='M8 16H3v5'%3E%3C/path%3E%3C/svg%3E");
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.refresh-btn:hover {
+  background-color: var(--theme-active);
+}
+
+.refresh-btn.spinning {
+  animation: spin 0.8s linear;
+}
+
+.ollama-input-group{
+    width: 110%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }

@@ -13,7 +13,7 @@ export default function AppGate() {
       })
       .catch((err) => {
         console.error("Error fetching onboarding status:", err);
-        setIsFirstVisit(false); // Default to false if backend fails
+        setIsFirstVisit(false);
       });
   }, []);
 
@@ -27,7 +27,7 @@ export default function AppGate() {
   };
 
   if (isFirstVisit === null) {
-    return null; // Or a loading spinner
+    return null;
   }
 
   return isFirstVisit ? (
@@ -36,4 +36,3 @@ export default function AppGate() {
     <App />
   );
 }
-
