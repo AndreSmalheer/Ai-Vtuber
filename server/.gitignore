@@ -5,6 +5,8 @@ node_modules/
 # Local configuration
 backend/data/config.json
 backend/data/user_state.json
+backend/history.json
+backend/subscriptions.json
 
 # Private assets
 frontend/public/3d-assests/vrm-models/Mia-naked.vrm

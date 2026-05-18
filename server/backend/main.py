@@ -34,8 +34,21 @@ parent_dir = os.path.dirname(SCRIPT_DIR)
 if parent_dir not in sys.path:
     sys.path.append(parent_dir)
 
+data_folder =  os.path.join(SCRIPT_DIR, 'data')
+os.makedirs(os.path.join(SCRIPT_DIR, "data"), exist_ok=True)
+
 CONFIG_PATH = os.path.join(SCRIPT_DIR, 'data', 'config.json')
 USER_STATE_PATH = os.path.join(SCRIPT_DIR, 'data', 'user_state.json')
+SUBSCRIPTIONS_path = os.path.join(SCRIPT_DIR, 'data', 'subscriptions.json')
+HISTORY_PATH = os.path.join(SCRIPT_DIR, 'data', 'history.json')
+
+if not os.path.exists(SUBSCRIPTIONS_path):
+    with open(SUBSCRIPTIONS_path, "w", encoding="utf-8") as f:
+        json.dump([], f, indent=4)
+
+if not os.path.exists(HISTORY_PATH):
+    with open(HISTORY_PATH, "w", encoding="utf-8") as f:
+        json.dump([], f, indent=4)
 
 def load_user_state():
     if os.path.exists(USER_STATE_PATH):

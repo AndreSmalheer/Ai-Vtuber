@@ -53,6 +53,7 @@ data = {
     "leave_notification_min_min": 10,
     "leave_notification_max_min": 60,
     "is_dark": False,
+    "orbit_controls_enabled": False,
 }
 
 with open(CONFIG_PATH, "w") as f:
