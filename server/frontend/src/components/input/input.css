@@ -64,8 +64,8 @@
   opacity: 0.7;
 }
 
-.input-container.disabled,
-.input-container input:disabled {
+.input-container.disabled input,
+.input-container.disabled .mic-btn {
   pointer-events: none;
   cursor: not-allowed;
   opacity: 0.5;
@@ -81,9 +81,10 @@
   position: relative;
   overflow: hidden;
   transition: 0.2s ease;
+  pointer-events: auto;
 }
 
-.send-btn {
+.send-btn, .pause-btn {
   background: var(--overlay-border);
 }
 
@@ -105,13 +106,24 @@
     center/16px no-repeat;
 }
 
-.send-btn:hover {
+.pause-btn::after {
+  content: "";
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  background: var(--nav-btn);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.send-btn:hover, .pause-btn:hover {
   background: var(--theme-active);
   transform: scale(1.08);
   box-shadow: 0 0 10px rgba(167, 139, 250, 0.35);
 }
 
-.send-btn:hover::after {
+.send-btn:hover::after, .pause-btn:hover::after {
   background: #fff;
 }
 

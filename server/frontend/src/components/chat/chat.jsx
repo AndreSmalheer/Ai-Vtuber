@@ -22,10 +22,46 @@ function Chat({
   const audioQueue = useRef([]);
   const isAudioPlaying = useRef(false);
   const audioContextRef = useRef(null);
+  const currentAudioRef = useRef(null);
   const displayInterval = useRef(null);
   const scrollRef = useRef(null);
+  const abortControllerRef = useRef(null);
 
   const displayText = chatRole === "ai" ? airesponse : chatmsg;
+
+  const stopGeneration = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+
+    if (displayInterval.current) {
+      clearInterval(displayInterval.current);
+      displayInterval.current = null;
+    }
+
+    // Stop audio
+    if (currentAudioRef.current) {
+      currentAudioRef.current.pause();
+      currentAudioRef.current = null;
+    }
+    audioQueue.current = [];
+    isAudioPlaying.current = false;
+    onAudioStateChange?.({
+      isPlaying: false,
+      analyser: null,
+      frequencyData: null,
+      timeDomainData: null,
+    });
+
+    finishChat();
+  };
+
+  useEffect(() => {
+    const handleStop = () => stopGeneration();
+    window.addEventListener("ai-stop-generation", handleStop);
+    return () => window.removeEventListener("ai-stop-generation", handleStop);
+  }, [stealthMode]); // stealthMode is a dependency of finishChat
 
   const createLipSyncAnalyser = (audio) => {
     try {
@@ -76,6 +112,7 @@ function Chat({
 
     const base64Audio = audioQueue.current.shift();
     const audio = new Audio(`data:audio/wav;base64,${base64Audio}`);
+    currentAudioRef.current = audio;
 
     // Resume context BEFORE creating analyser/source
     const resumeAndPlay = async () => {
@@ -94,17 +131,23 @@ function Chat({
 
       audio.play().catch((err) => {
         console.warn("Audio play blocked or failed:", err);
-        playNextAudio();
+        if (currentAudioRef.current === audio) playNextAudio();
       });
     };
 
     audio.onended = () => {
-      playNextAudio();
+      if (currentAudioRef.current === audio) {
+        currentAudioRef.current = null;
+        playNextAudio();
+      }
     };
 
     audio.onerror = (e) => {
       console.error("Audio playback error:", e);
-      playNextAudio();
+      if (currentAudioRef.current === audio) {
+        currentAudioRef.current = null;
+        playNextAudio();
+      }
     };
 
     resumeAndPlay();
@@ -160,6 +203,8 @@ function Chat({
   async function fetchAiResponse(input) {
     setAiResponseLoading(true);
 
+    abortControllerRef.current = new AbortController();
+
     let speed = 50;
     try {
       const configRes = await fetch("/api/config");
@@ -169,86 +214,99 @@ function Chat({
       console.error("Error fetching speed config:", e);
     }
 
-    // call api
-    const response = await fetch("/api/ollama", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ prompt: input }),
-    });
+    try {
+      // call api
+      const response = await fetch("/api/ollama", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ prompt: input }),
+        signal: abortControllerRef.current.signal,
+      });
 
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = "";
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
 
-    if (displayInterval.current) clearInterval(displayInterval.current);
+      if (displayInterval.current) clearInterval(displayInterval.current);
 
-    if (speed > 0) {
-      displayInterval.current = setInterval(() => {
-        if (streamQueue.current.length > 0) {
-          const char = streamQueue.current[0];
-          streamQueue.current = streamQueue.current.substring(1);
-          setAiResponse((prev) => prev + char);
-        }
-      }, speed);
-    }
+      if (speed > 0) {
+        displayInterval.current = setInterval(() => {
+          if (streamQueue.current.length > 0) {
+            const char = streamQueue.current[0];
+            streamQueue.current = streamQueue.current.substring(1);
+            setAiResponse((prev) => prev + char);
+          }
+        }, speed);
+      }
 
-    while (true) {
-      const { value, done } = await reader.read();
+      while (true) {
+        const { value, done } = await reader.read();
 
-      if (done) break;
+        if (done) break;
 
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n\n");
-      buffer = lines.pop();
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n\n");
+        buffer = lines.pop();
 
-      for (const line of lines) {
-        if (line.startsWith("data: ")) {
-          try {
-            const jsonStr = line.replace("data: ", "");
-            const json = JSON.parse(jsonStr);
-            if (json.error) {
-              setAiResponseLoading(false);
-              setAiResponse(
-                "I couldn’t get a response right now. Please check your connection or try again.",
-              );
-              console.error("Backend error:", json.error);
-              finishChat();
-              return;
-            }
-            if (json.text) {
-              setAiResponseLoading(false);
-              accumulatedResponseRef.current += json.text;
-              if (speed > 0) {
-                streamQueue.current += json.text;
-              } else {
-                setAiResponse((prev) => prev + json.text);
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            try {
+              const jsonStr = line.replace("data: ", "");
+              const json = JSON.parse(jsonStr);
+              if (json.error) {
+                setAiResponseLoading(false);
+                setAiResponse(
+                  "I couldn’t get a response right now. Please check your connection or try again.",
+                );
+                console.error("Backend error:", json.error);
+                finishChat();
+                return;
               }
-            }
-            if (json.audio) {
-              audioQueue.current.push(json.audio);
-              if (!isAudioPlaying.current) {
-                playNextAudio();
+              if (json.text) {
+                setAiResponseLoading(false);
+                accumulatedResponseRef.current += json.text;
+                if (speed > 0) {
+                  streamQueue.current += json.text;
+                } else {
+                  setAiResponse((prev) => prev + json.text);
+                }
               }
+              if (json.audio) {
+                audioQueue.current.push(json.audio);
+                if (!isAudioPlaying.current) {
+                  playNextAudio();
+                }
+              }
+            } catch (e) {
+              console.error("Error parsing stream:", e);
             }
-          } catch (e) {
-            console.error("Error parsing stream:", e);
           }
         }
       }
-    }
 
-    if (speed > 0) {
-      const checkEmpty = setInterval(() => {
-        if (streamQueue.current.length === 0) {
-          clearInterval(checkEmpty);
-          clearInterval(displayInterval.current);
-          finishChat();
-        }
-      }, 100);
-    } else {
-      finishChat();
+      if (speed > 0) {
+        const checkEmpty = setInterval(() => {
+          if (streamQueue.current.length === 0) {
+            clearInterval(checkEmpty);
+            clearInterval(displayInterval.current);
+            finishChat();
+          }
+        }, 100);
+      } else {
+        finishChat();
+      }
+    } catch (err) {
+      if (err.name === "AbortError") {
+        console.log("AI response fetch aborted");
+      } else {
+        console.error("Fetch error:", err);
+        setAiResponseLoading(false);
+        finishChat();
+      }
+    } finally {
+      abortControllerRef.current = null;
     }
   }
 

@@ -223,6 +223,10 @@ function Input({
     setIsRecording(false);
   }
 
+  function handleStop() {
+    window.dispatchEvent(new CustomEvent("ai-stop-generation"));
+  }
+
   function focusWithoutScroll() {
     if (!inputRef.current || inputLocked) {
       return;
@@ -275,9 +279,9 @@ function Input({
         <span className="recording-dot"></span>
       </button>
       <button
-        disabled={inputLocked || inputmsg.trim().length === 0}
-        className="send-btn"
-        onClick={handleInput}
+        disabled={!inputLocked && (inputmsg.trim().length === 0)}
+        className={inputLocked ? "pause-btn" : "send-btn"}
+        onClick={inputLocked ? handleStop : handleInput}
       />
     </div>
   );
