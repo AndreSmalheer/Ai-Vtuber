@@ -3,30 +3,36 @@ import json
 import subprocess
 import sys
 
-VENV_DIR = ".venv"
+def is_docker():
+    return os.path.exists('/.dockerenv') or os.path.exists('/run/.containerenv')
 
-if not os.path.exists(VENV_DIR):
-    print("Creating virtual environment...")
-    subprocess.run([sys.executable, "-m", "venv", VENV_DIR])
+if not is_docker():
+    VENV_DIR = ".venv"
 
-if os.name == "nt":
-    python_path = os.path.join(VENV_DIR, "Scripts", "python.exe")
+    if not os.path.exists(VENV_DIR):
+        print("Creating virtual environment...")
+        subprocess.run([sys.executable, "-m", "venv", VENV_DIR])
+
+    if os.name == "nt":
+        python_path = os.path.join(VENV_DIR, "Scripts", "python.exe")
+    else:
+        python_path = os.path.join(VENV_DIR, "bin", "python")
+
+    print("Installing Python dependencies...")
+
+    result = subprocess.run(
+        [python_path, "-m", "pip", "install", "-r", "backend/requirements.txt"],
+        capture_output=True,
+        text=True
+    )
+
+    if result.returncode == 0:
+        print("Python environment ready.")
+    else:
+        print("Error occurred while installing Python dependencies.")
+        print(result.stderr)
 else:
-    python_path = os.path.join(VENV_DIR, "bin", "python")
-
-print("Installing Python dependencies...")
-
-result = subprocess.run(
-    [python_path, "-m", "pip", "install", "-r", "backend/requirements.txt"],
-    capture_output=True,
-    text=True
-)
-
-if result.returncode == 0:
-    print("Python environment ready.")
-else:
-    print("Error occurred while installing Python dependencies.")
-    print(result.stderr)
+    print("Docker environment detected. Skipping venv creation and local pip install.")
 
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -34,13 +40,15 @@ CONFIG_PATH = os.path.join(SCRIPT_DIR, 'data', 'config.json')
 
 os.makedirs(os.path.dirname(CONFIG_PATH), exist_ok=True)
 
+default_host = "host.docker.internal" if is_docker() else "localhost"
+
 data = {
-    "ollama_url": "http://localhost:11434",
+    "ollama_url": f"http://{default_host}:11434",
     "ollama_model": "tinyllama:latest",
     "base_prompt": "You are a helpful AI assistant.",
     "avatar_model": "Mia-casuel.vrm",
     "tts_enabled": True,
-    "piper_url": "http://localhost:10200",
+    "piper_url": f"http://{default_host}:10200",
     "response_speed": 50,
     "stealth_mode": False,
     "enable_effects": True,
@@ -56,5 +64,9 @@ data = {
     "orbit_controls_enabled": False,
 }
 
-with open(CONFIG_PATH, "w") as f:
-    json.dump(data, f, indent=4)
+if not os.path.exists(CONFIG_PATH):
+    with open(CONFIG_PATH, "w") as f:
+        json.dump(data, f, indent=4)
+    print(f"Default config created at {CONFIG_PATH} using host: {default_host}")
+else:
+    print(f"Config already exists at {CONFIG_PATH}. Skipping creation.")

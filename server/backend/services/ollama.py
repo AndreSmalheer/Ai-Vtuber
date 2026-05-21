@@ -3,11 +3,10 @@ import json
 import re
 import base64
 import os
-
-CONFIG_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "config.json")
+from backend.core.config import load_config as load_runtime_config
 
 def generate_prompt(user_message):
-    from core.history import get_history, add_history
+    from backend.core.history import get_history, add_history
 
     config = load_runtime_config() or {}
     base_prompt = config.get("base_prompt", "")
@@ -24,15 +23,6 @@ def generate_prompt(user_message):
         result = prompt_context + f"{user_name}: {user_message}\n{ai_name}:"
         print("[DEBUG] No base_prompt | Final prompt:", result, flush=True)
         return result
-
-def load_runtime_config():
-    try:
-        if os.path.exists(CONFIG_PATH):
-            with open(CONFIG_PATH, "r") as f:
-                return json.load(f)
-    except:
-        pass
-    return {}
 
 def get_piper_audio(text, piper_url):
     if not text.strip():
@@ -75,7 +65,7 @@ def get_piper_audio(text, piper_url):
         return None, err_msg
 
 def ollama_event_generator(user_message):
-    from core.history import get_history, add_history
+    from backend.core.history import get_history, add_history
     config = load_runtime_config()
 
     ollama_url = config.get("ollama_url", "http://localhost:11434").rstrip("/")

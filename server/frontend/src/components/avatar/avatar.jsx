@@ -5,6 +5,7 @@ import * as THREE from "three";
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass";
+import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass";
 
 import {
   createRenderer,
@@ -98,6 +99,7 @@ export default function Avatar({
     );
 
     composer.addPass(bloomPass);
+    composer.addPass(new OutputPass());
 
     rendererRef.current = renderer;
     sceneRef.current = scene;

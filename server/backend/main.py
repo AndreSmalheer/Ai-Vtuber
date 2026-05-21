@@ -64,9 +64,8 @@ def save_user_state(state):
 last_seen_timestamp = 0
 last_seen_timestamp = 0
 leave_job_id = None
-
 try:
-    from core.config import (
+    from backend.core.config import (
         config,
         CONFIG_PATH as CORE_CONFIG_PATH,
         OLLAMA_URL,
@@ -78,6 +77,8 @@ try:
     )
     CONFIG_PATH = CORE_CONFIG_PATH
 except ImportError:
+    # ... fallback logic ...
+
     OLLAMA_URL = "http://localhost:11434"
     OLLAMA_MODEL = "llama3"
     BASE_PROMPT = "You are a helpful AI assistant."
@@ -134,7 +135,7 @@ except ImportError:
     }
 
 try:
-    from core.history import get_history_list, delete_message, delete_history
+    from backend.core.history import get_history_list, delete_message, delete_history
 except ImportError:
     def get_history_list(): return []
     def delete_message(index): return False

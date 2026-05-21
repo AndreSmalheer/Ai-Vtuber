@@ -272,6 +272,8 @@ function Customize({ currentStep, setCurrentStep, setIsFirstVisit }) {
       const data = await res.json();
 
       setConfig(data);
+      setOllamaUrl(data.ollama_url);
+      setPiperUrl(data.piper_url);
     }
 
     loadConfig();
