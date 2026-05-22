@@ -7,6 +7,8 @@ import ChatHistory from "./pages/ChatHistory/ChatHistory";
 import Header from "./components/header/header";
 import Avatar from "./components/avatar/avatar";
 
+const DEFAULT_AVATAR_MODEL = "Mia-casuel.vrm";
+
 function App() {
   const [lipSyncState, setLipSyncState] = useState({
     isPlaying: false,
@@ -102,6 +104,7 @@ function App() {
   }, [config]);
 
   const showAvatar = location.pathname === "/" && !config.stealth_mode;
+  const avatarModel = config.avatar_model || DEFAULT_AVATAR_MODEL;
 
   return (
     <div
@@ -109,7 +112,7 @@ function App() {
     >
       <Avatar
         visible={showAvatar}
-        avatarModel={config.avatar_model}
+        avatarModel={avatarModel}
         lipSyncState={lipSyncState}
         orbitControlsEnabled={config.orbit_controls_enabled !== false}
         enableEffects={config.enable_effects}
