@@ -39,7 +39,7 @@ function ChatHistory() {
 
   const handleDeleteMessage = async () => {
     if (indexToDelete === null) return;
-    
+
     try {
       const response = await fetch(`/api/history/${indexToDelete}`, {
         method: "DELETE",
@@ -70,7 +70,7 @@ function ChatHistory() {
 
   const getAvailableDates = () => {
     const dates = new Set(["All"]);
-    history.forEach(entry => {
+    history.forEach((entry) => {
       if (entry.timestamp) {
         const date = new Date(entry.timestamp).toLocaleDateString();
         dates.add(date);
@@ -79,8 +79,9 @@ function ChatHistory() {
     return Array.from(dates);
   };
 
-  const filteredHistory = history.map((entry, index) => ({ ...entry, originalIndex: index }))
-    .filter(entry => {
+  const filteredHistory = history
+    .map((entry, index) => ({ ...entry, originalIndex: index }))
+    .filter((entry) => {
       if (selectedDate === "All") return true;
       if (!entry.timestamp) return false;
       return new Date(entry.timestamp).toLocaleDateString() === selectedDate;
@@ -91,9 +92,9 @@ function ChatHistory() {
     <div className="chatHistory">
       <div className="historyHeader">
         <div className="dateFilters">
-          {getAvailableDates().map(date => (
-            <button 
-              key={date} 
+          {getAvailableDates().map((date) => (
+            <button
+              key={date}
               className={`dateTag ${selectedDate === date ? "active" : ""}`}
               onClick={() => setSelectedDate(date)}
             >
@@ -102,43 +103,51 @@ function ChatHistory() {
           ))}
         </div>
         {history.length > 0 && (
-          <button className="clearAllBtn" onClick={() => setShowClearAllConfirm(true)}>
+          <button
+            className="clearAllBtn"
+            onClick={() => setShowClearAllConfirm(true)}
+          >
             Clear All
           </button>
         )}
       </div>
 
-      {filteredHistory.length === 0 && <p className="noHistory">No history available for this selection.</p>}
-      
-      {filteredHistory.map((entry) => (
-        <div key={entry.originalIndex} className="chatEntry">
-          <button 
-            className="deleteMessageBtn" 
-            onClick={() => confirmDelete(entry.originalIndex)}
-            title="Delete message"
-          ></button>
-          
-          <div className="aiMessage">
-            <div className="messageHeader">
-              <h1 className="aiLabel">{config.ai_name}</h1>
-              {entry.timestamp && (
-                <span className="messageTimestamp">
-                  {new Date(entry.timestamp).toLocaleString()}
-                </span>
-              )}
+      {filteredHistory.length === 0 && (
+        <p className="noHistory">No history available for this selection.</p>
+      )}
+
+      <div className="chatEntryList">
+        {filteredHistory.map((entry) => (
+          <div key={entry.originalIndex} className="chatEntry">
+            <button
+              className="deleteMessageBtn"
+              onClick={() => confirmDelete(entry.originalIndex)}
+              title="Delete message"
+            ></button>
+
+            <div className="aiMessage">
+              <div className="messageHeader">
+                <h1 className="aiLabel">{config.ai_name}</h1>
+                {entry.timestamp && (
+                  <span className="messageTimestamp">
+                    {new Date(entry.timestamp).toLocaleString()}
+                  </span>
+                )}
+              </div>
+              <p className="aiText">{entry.ai}</p>
             </div>
-            <h2 className="aiText">{entry.ai}</h2>
-          </div>
-          <div className="messageDivider"></div>
 
-          <div className="userMessage">
-            <h1 className="userLabel">{config.user_name}</h1>
-            <h2 className="userText">{entry.user}</h2>
-          </div>
+            <div className="messageDivider"></div>
 
-          <div className="messageDivider"></div>
-        </div>
-      ))}
+            <div className="userMessage">
+              <div className="messageHeader">
+                <h1 className="userLabel">{config.user_name}</h1>
+              </div>
+              <p className="userText">{entry.user}</p>
+            </div>
+          </div>
+        ))}
+      </div>
 
       {showConfirm && (
         <div className="modal-overlay">
@@ -146,7 +155,10 @@ function ChatHistory() {
             <h2 className="modal-title">Delete Message?</h2>
             <p className="modal-text">This action cannot be undone.</p>
             <div className="modal-actions">
-              <button className="modal-btn cancel" onClick={() => setShowConfirm(false)}>
+              <button
+                className="modal-btn cancel"
+                onClick={() => setShowConfirm(false)}
+              >
                 Cancel
               </button>
               <button className="modal-btn confirm" onClick={handleDeleteMessage}>
@@ -161,9 +173,14 @@ function ChatHistory() {
         <div className="modal-overlay">
           <div className="modal-content">
             <h2 className="modal-title">Clear All History?</h2>
-            <p className="modal-text">This will delete ALL messages. This action cannot be undone.</p>
+            <p className="modal-text">
+              This will delete ALL messages. This action cannot be undone.
+            </p>
             <div className="modal-actions">
-              <button className="modal-btn cancel" onClick={() => setShowClearAllConfirm(false)}>
+              <button
+                className="modal-btn cancel"
+                onClick={() => setShowClearAllConfirm(false)}
+              >
                 Cancel
               </button>
               <button className="modal-btn confirm" onClick={handleClearAll}>

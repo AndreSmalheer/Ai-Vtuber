@@ -1,3 +1,5 @@
+/* ─── Page Layout ───────────────────────────────────────────── */
+
 .chatHistory {
   box-sizing: border-box;
   width: 100%;
@@ -6,30 +8,45 @@
   z-index: 900;
 }
 
+/* ─── Header ────────────────────────────────────────────────── */
+
 .historyHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 15px;
-  margin-bottom: 20px;
+  gap: 12px;
+  width: min(820px, 92%);
+  margin: 0 auto 20px;
 }
+
+.historyTitle {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--h1-color);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+/* ─── Date Filter Pills ─────────────────────────────────────── */
 
 .dateFilters {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
 .dateTag {
-  padding: 6px 14px;
+  padding: 5px 14px;
   border-radius: 999px;
   background: var(--overlay-background);
   border: 1px solid var(--overlay-border);
-  color: var(--h1-color);
-  font-size: 14px;
+  color: var(--h2-color);
+  font-size: 13px;
+  font-weight: 500;
   cursor: pointer;
-  transition: 0.2s ease;
+  transition: border-color 0.15s ease, transform 0.15s ease, background 0.15s ease;
+  line-height: 1.5;
 }
 
 .dateTag:hover {
@@ -39,39 +56,56 @@
 
 .dateTag.active {
   background: var(--theme-active);
-  color: var(--divador-color);
+  color: var(--overlay-background);
   border-color: var(--theme-active);
 }
 
+/* ─── Clear All Button ──────────────────────────────────────── */
+
 .clearAllBtn {
-  padding: 8px 16px;
-  border-radius: 10px;
-  background: #ff4d4d;
-  color: #fff;
-  border: none;
+  padding: 6px 16px;
+  border-radius: 8px;
+  background: transparent;
+  color: #e05555;
+  border: 1px solid rgba(224, 85, 85, 0.35);
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: 0.2s ease;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+  line-height: 1.5;
 }
 
 .clearAllBtn:hover {
-  opacity: 0.85;
+  background: rgba(224, 85, 85, 0.08);
+  border-color: rgba(224, 85, 85, 0.6);
   transform: translateY(-1px);
 }
 
-/* chat entry card (now matches chat container style) */
+/* ─── Entry List ────────────────────────────────────────────── */
+
+.chatEntryList {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ─── Chat Entry Card ───────────────────────────────────────── */
+
 .chatEntry {
   position: relative;
+  width: min(820px, 92%);
   border-radius: 16px;
   background: var(--overlay-background);
   border: 1px solid var(--overlay-border);
-  padding: 20px;
-  margin-bottom: 12px;
-  transition: 0.2s ease;
+  padding: 20px 24px;
+  box-shadow:
+    0 0 0 4px var(--accent-glow),
+    0 8px 32px rgba(0, 0, 0, 0.06);
   overflow: hidden;
+  transition: transform 0.15s ease, border-color 0.15s ease;
 }
 
-/* subtle top shine like your input/chat */
 .chatEntry::before {
   content: "";
   position: absolute;
@@ -84,48 +118,64 @@
 
 .chatEntry:hover {
   transform: translateY(-2px);
-  /* border-color: var(--theme-active); */
 }
 
-/* delete button */
+.is-electron .chatEntry {
+  background-color: var(--overlay-2-background);
+  border: none;
+  box-shadow: none;
+}
+
+/* ─── Delete Button ─────────────────────────────────────────── */
+
 .deleteMessageBtn {
   position: absolute;
-  top: 12px;
-  right: 12px;
+  top: 14px;
+  right: 14px;
   width: 20px;
   height: 20px;
   border: none;
-  background: var(--nav-btn);
+  background-color: var(--nav-btn);
   cursor: pointer;
+  opacity: 0.45;
+  transition: background-color 0.15s ease, opacity 0.15s ease;
   -webkit-mask-image: url("data:image/svg+xml,%3Csvg width='15' height='15' viewBox='0 0 15 15' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M8.6 5.45751V10.7775M5.56 5.45751V10.7775M11.64 2.41751V10.1695C11.64 11.4465 11.64 12.0849 11.3915 12.5726C11.1729 13.0017 10.8241 13.3504 10.3951 13.569C9.90735 13.8175 9.26895 13.8175 7.992 13.8175H6.168C4.89108 13.8175 4.25262 13.8175 3.7649 13.569C3.33589 13.3504 2.9871 13.0017 2.7685 12.5726C2.52 12.0849 2.52 11.4465 2.52 10.1695V2.41751M1 2.41751H13.16M10.12 2.41751L9.91434 1.80045C9.715 1.20246 9.61528 0.903471 9.43045 0.682417C9.2672 0.487211 9.0576 0.336116 8.82078 0.242985C8.55258 0.137512 8.23748 0.137512 7.60714 0.137512H6.55289C5.92256 0.137512 5.60739 0.137512 5.33923 0.242985C5.10242 0.336116 4.89278 0.487211 4.72954 0.682417C4.54468 0.903471 4.44502 1.20246 4.24569 1.80045L4.04 2.41751' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   -webkit-mask-size: contain;
   -webkit-mask-repeat: no-repeat;
   -webkit-mask-position: center;
-  transition: background-color 0.2s;
+}
+
+.chatEntry:hover .deleteMessageBtn {
+  opacity: 0.7;
 }
 
 .deleteMessageBtn:hover {
-  background: #ff4d4d;
+  background-color: #e05555;
+  opacity: 1 !important;
 }
 
-/* message styling */
+/* ─── Message Layout ────────────────────────────────────────── */
+
 .messageHeader {
   display: flex;
   align-items: baseline;
-  gap: 10px;
-  margin-bottom: 6px;
+  gap: 8px;
+  margin-bottom: 4px;
 }
 
 .messageTimestamp {
   font-size: 12px;
   color: var(--h3-color);
+  font-weight: 400;
 }
 
 .aiLabel,
 .userLabel {
-  font-size: 20px;
-  margin: 0;
+  font-size: 13px;
   font-weight: 600;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .aiLabel {
@@ -138,33 +188,43 @@
 
 .aiText,
 .userText {
-  margin: 0 0 10px 6px;
-  font-size: 16px;
-  font-weight: 500;
+  margin: 0 0 10px 0;
+  font-size: 15px;
+  font-weight: 400;
   color: var(--h2-color);
+  line-height: 1.6;
 }
 
-/* divider */
+.aiText:last-child,
+.userText:last-child {
+  margin-bottom: 0;
+}
+
+/* ─── Divider ───────────────────────────────────────────────── */
+
 .messageDivider {
   height: 1px;
-  margin: 12px 0;
+  margin: 14px 0;
   background: var(--overlay-border);
-  opacity: 0.6;
+  opacity: 0.5;
 }
 
-/* empty state */
+/* ─── Empty State ───────────────────────────────────────────── */
+
 .noHistory {
   text-align: center;
   color: var(--h3-color);
-  margin-top: 50px;
-  font-size: 1.1rem;
+  margin-top: 60px;
+  font-size: 15px;
+  line-height: 1.6;
 }
 
-/* modal */
+/* ─── Modal ─────────────────────────────────────────────────── */
+
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.45);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -176,34 +236,52 @@
   background: var(--overlay-background);
   border: 1px solid var(--overlay-border);
   border-radius: 16px;
-  padding: 24px;
+  padding: 28px 24px 24px;
   text-align: center;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  box-shadow:
+    0 0 0 4px var(--accent-glow),
+    0 16px 48px rgba(0, 0, 0, 0.3);
+  position: relative;
+}
+
+.modal-content::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--overlay-border), transparent);
 }
 
 .modal-title {
+  font-size: 17px;
+  font-weight: 600;
   color: var(--h1-color);
-  margin: 0 0 10px 0;
+  margin: 0 0 8px;
 }
 
 .modal-text {
+  font-size: 14px;
   color: var(--h3-color);
-  margin-bottom: 20px;
+  line-height: 1.55;
+  margin: 0 0 22px;
 }
 
 .modal-actions {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   justify-content: center;
 }
 
 .modal-btn {
-  padding: 10px 20px;
+  padding: 9px 22px;
   border-radius: 10px;
-  border: none;
+  border: 1px solid var(--overlay-border);
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: 0.2s ease;
+  transition: transform 0.15s ease, opacity 0.15s ease;
 }
 
 .modal-btn:hover {
@@ -212,10 +290,45 @@
 
 .cancel {
   background: var(--overlay-2-background);
-  color: var(--h1-color);
+  color: var(--h2-color);
+  border-color: var(--overlay-border);
+}
+
+.cancel:hover {
+  border-color: var(--theme-active);
 }
 
 .confirm {
-  background: #ff4d4d;
-  color: #fff;
+  background: transparent;
+  color: #e05555;
+  border-color: rgba(224, 85, 85, 0.35);
+}
+
+.confirm:hover {
+  background: rgba(224, 85, 85, 0.08);
+  border-color: rgba(224, 85, 85, 0.6);
+}
+
+/* ─── Responsive ────────────────────────────────────────────── */
+
+@media (max-width: 600px) {
+  .historyHeader {
+    width: 92%;
+  }
+
+  .chatEntry {
+    padding: 16px;
+  }
+
+  .modal-content {
+    padding: 22px 18px 18px;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+  }
+
+  .modal-btn {
+    width: 100%;
+  }
 }

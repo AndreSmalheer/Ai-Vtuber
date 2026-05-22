@@ -44,8 +44,8 @@
 .input-container.recording-active {
   border-color: var(--theme-active);
   box-shadow:
-    0 0 0 4px rgba(167, 139, 250, 0.22),
-    0 8px 32px rgba(0, 0, 0, 0.4);
+    0 0 0 2px rgba(167, 139, 250, 0.15),
+    0 6px 18px rgba(0, 0, 0, 0.25);
 }
 
 .input-container input {
@@ -84,7 +84,8 @@
   pointer-events: auto;
 }
 
-.send-btn, .pause-btn {
+.send-btn,
+.pause-btn {
   background: var(--overlay-border);
 }
 
@@ -117,18 +118,21 @@
   transform: translate(-50%, -50%);
 }
 
-.send-btn:hover, .pause-btn:hover {
+.send-btn:hover,
+.pause-btn:hover {
   background: var(--theme-active);
   transform: scale(1.08);
   box-shadow: 0 0 10px rgba(167, 139, 250, 0.35);
 }
 
-.send-btn:hover::after, .pause-btn:hover::after {
+.send-btn:hover::after,
+.pause-btn:hover::after {
   background: #fff;
 }
 
 .input-container.keyboard-visible {
-  transform: translateX(-50%) translateY(calc(-1 * var(--keyboard-offset, 0px)));
+  transform: translateX(-50%)
+    translateY(calc(-1 * var(--keyboard-offset, 0px) + 30px));
 }
 
 .mic-btn {
