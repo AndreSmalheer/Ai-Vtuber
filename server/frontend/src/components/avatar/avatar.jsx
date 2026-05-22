@@ -1,24 +1,11 @@
 import "./avatar.css";
 import { useEffect, useRef, useState } from "react";
-import * as THREE from "three";
-
-import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer";
-import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass";
-import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass";
-import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass";
-
 import {
-  createRenderer,
-  createScene,
-  createCamera,
-  createControls,
-} from "./three/core";
+  AvatarCharacter,
+  AvatarScene,
+  startAnimation,
+} from "./three/avatarRuntime";
 
-import { updateThemeVisuals } from "./three/lighting";
-import { startAnimation } from "./three/animation";
-import { handleResize } from "./three/resize";
-
-import { useVrmLoader } from "./hooks/useVRMLoader";
 import { useAvatarStateMachine } from "./hooks/useAvatarStateMachine";
 import { AvatarState } from "./hooks/avatarState";
 
@@ -32,18 +19,15 @@ export default function Avatar({
 }) {
   const mountRef = useRef(null);
 
-  const rendererRef = useRef(null);
   const sceneRef = useRef(null);
-  const cameraRef = useRef(null);
-  const controlsRef = useRef(null);
-  const composerRef = useRef(null);
-  const bloomPassRef = useRef(null);
-  const vrmRef = useRef(null);
-  const lightsRef = useRef(null);
+  const characterRef = useRef(new AvatarCharacter());
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(Boolean(avatarModel));
+  const [sceneReady, setSceneReady] = useState(false);
+  const [sceneError, setSceneError] = useState(null);
 
-  const { state, setState } = useAvatarStateMachine();
+  const { state, setState, isWindowVisible, visibilityReloadKey } =
+    useAvatarStateMachine();
 
   const enableEffectsRef = useRef(enableEffects);
   useEffect(() => {
@@ -57,21 +41,12 @@ export default function Avatar({
 
   // Update controls when prop changes
   useEffect(() => {
-    if (controlsRef.current) {
-      controlsRef.current.enabled = orbitControlsEnabled;
-    }
+    sceneRef.current?.setOrbitControlsEnabled(orbitControlsEnabled);
   }, [orbitControlsEnabled]);
 
   // Update visuals when effects or theme changes
   useEffect(() => {
-    if (rendererRef.current && sceneRef.current) {
-      lightsRef.current = updateThemeVisuals(
-        rendererRef.current,
-        sceneRef.current,
-        isDark,
-        enableEffects
-      );
-    }
+    sceneRef.current?.setVisuals({ isDark, enableEffects });
   }, [enableEffects, isDark]);
 
   // ----------------------------
@@ -80,98 +55,129 @@ export default function Avatar({
   useEffect(() => {
     const container = mountRef.current;
     if (!container) return;
+    let cancelled = false;
 
-    const renderer = createRenderer(container);
-    const scene = createScene();
-    const camera = createCamera(container);
-    const controls = createControls(camera, renderer);
+    try {
+      sceneRef.current = new AvatarScene(container, {
+        orbitControlsEnabled,
+        enableEffects,
+        isDark,
+      });
+      Promise.resolve().then(() => {
+        if (!cancelled) {
+          setSceneReady(true);
+          setSceneError(null);
+        }
+      });
+    } catch (err) {
+      console.error("Avatar scene error:", err);
+      sceneRef.current?.dispose();
+      sceneRef.current = null;
+      Promise.resolve().then(() => {
+        if (!cancelled) {
+          setSceneReady(false);
+          setLoading(false);
+          setSceneError(
+            "3D avatar is unavailable because this browser could not start WebGL.",
+          );
+        }
+      });
+      return;
+    }
 
-    controls.enabled = orbitControlsEnabled;
-
-    const composer = new EffectComposer(renderer);
-    composer.addPass(new RenderPass(scene, camera));
-
-    const bloomPass = new UnrealBloomPass(
-      new THREE.Vector2(container.clientWidth, container.clientHeight),
-      0.08,
-      0.3,
-      0.9
-    );
-
-    composer.addPass(bloomPass);
-    composer.addPass(new OutputPass());
-
-    rendererRef.current = renderer;
-    sceneRef.current = scene;
-    cameraRef.current = camera;
-    controlsRef.current = controls;
-    composerRef.current = composer;
-    bloomPassRef.current = bloomPass;
-
-    lightsRef.current = updateThemeVisuals(
-      renderer,
-      scene,
-      isDark,
-      enableEffects
-    );
-
-    const resize = handleResize(container, camera, renderer, composer);
+    const character = characterRef.current;
 
     return () => {
-      resize();
-      controls.dispose();
-      renderer.dispose();
-
-      if (vrmRef.current) {
-        vrmRef.current = null;
-      }
-
-      if (renderer.domElement.parentElement === container) {
-        container.removeChild(renderer.domElement);
-      }
+      cancelled = true;
+      character.dispose(sceneRef.current?.scene);
+      sceneRef.current?.dispose();
+      sceneRef.current = null;
+      setSceneReady(false);
     };
   }, []);
 
   // ----------------------------
   // VRM LOADER (STATE DRIVEN)
   // ----------------------------
-  useVrmLoader({
-    scene: sceneRef.current,
-    avatarModel,
-    state,
-    setState,
-    vrmRef,
-    setLoading,
-  });
+  useEffect(() => {
+    const avatarScene = sceneRef.current;
+    const character = characterRef.current;
+    if (!sceneReady || !avatarScene) return;
+
+    if (!isWindowVisible) {
+      return;
+    }
+
+    if (!avatarModel) {
+      character.dispose(avatarScene.scene);
+      return;
+    }
+
+    setState(AvatarState.LOADING);
+
+    const controller = new AbortController();
+    let cancelled = false;
+    Promise.resolve().then(() => {
+      if (!cancelled) {
+        setLoading(true);
+      }
+    });
+
+    character
+      .load(avatarScene.scene, avatarModel, controller.signal)
+      .then(() => {
+        if (!cancelled) {
+          setState(AvatarState.ACTIVE);
+        }
+      })
+      .catch((err) => {
+        if (err.name !== "AbortError") {
+          console.error("VRM load error:", err);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [avatarModel, isWindowVisible, sceneReady, visibilityReloadKey]);
+
+  useEffect(() => {
+    const avatarScene = sceneRef.current;
+    const character = characterRef.current;
+    if (!sceneReady || !avatarScene) return;
+
+    if (state === AvatarState.DISPOSING) {
+      character.dispose(avatarScene.scene);
+      setState(AvatarState.IDLE);
+      Promise.resolve().then(() => setLoading(false));
+    }
+  }, [sceneReady, state]);
 
   // ----------------------------
   // ANIMATION LOOP
   // ----------------------------
   useEffect(() => {
-    const renderer = rendererRef.current;
-    const scene = sceneRef.current;
-    const camera = cameraRef.current;
-    const controls = controlsRef.current;
-    const composer = composerRef.current;
-
-    if (!renderer || !scene || !camera) return;
-
+    const avatarScene = sceneRef.current;
+    const character = characterRef.current;
+    if (!avatarScene) return;
+    if (!isWindowVisible) return;
     if (state !== AvatarState.ACTIVE) return;
 
     const stop = startAnimation(
-      renderer,
-      scene,
-      camera,
-      controls,
-      composer,
-      () => vrmRef.current,
-      () => lightsRef.current,
+      avatarScene,
+      character,
       () => lipSyncStateRef.current,
       () => enableEffectsRef.current
     );
 
     return () => stop?.();
-  }, [state]);
+  }, [isWindowVisible, state]);
 
   return (
     <div
@@ -183,6 +189,7 @@ export default function Avatar({
           <div className="avatar-loader__ring" />
         </div>
       )}
+      {sceneError && <div className="avatar-error">{sceneError}</div>}
     </div>
   );
 }

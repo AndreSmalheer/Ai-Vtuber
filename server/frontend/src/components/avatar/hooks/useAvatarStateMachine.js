@@ -2,45 +2,38 @@ import { useEffect, useRef, useState } from "react";
 import { AvatarState } from "./avatarState";
 
 export function useAvatarStateMachine() {
-  const [state, setState] = useState(AvatarState.IDLE);
-  const unloadTimerRef = useRef(null);
+  const [state, setState] = useState(() =>
+    document.hidden ? AvatarState.PAUSED : AvatarState.ACTIVE,
+  );
+  const [isWindowVisible, setIsWindowVisible] = useState(
+    () => !document.hidden,
+  );
+  const [visibilityReloadKey, setVisibilityReloadKey] = useState(0);
+  const wasHiddenRef = useRef(document.hidden);
 
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        setState(AvatarState.PAUSED);
-
-        unloadTimerRef.current = setTimeout(() => {
-          setState(AvatarState.DISPOSING);
-        }, 60000);
-
+        wasHiddenRef.current = true;
+        setIsWindowVisible(false);
+        setState(AvatarState.DISPOSING);
         return;
       }
 
-      if (unloadTimerRef.current) {
-        clearTimeout(unloadTimerRef.current);
-        unloadTimerRef.current = null;
+      setIsWindowVisible(true);
+      if (wasHiddenRef.current) {
+        wasHiddenRef.current = false;
+        setVisibilityReloadKey((key) => key + 1);
       }
-
       setState(AvatarState.ACTIVE);
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
 
-    if (!document.hidden) {
-      setState(AvatarState.ACTIVE);
-    } else {
-      setState(AvatarState.PAUSED);
-    }
-
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
-
-      if (unloadTimerRef.current) {
-        clearTimeout(unloadTimerRef.current);
-      }
     };
   }, []);
 
-  return { state, setState };
+  return { state, setState, isWindowVisible, visibilityReloadKey };
 }

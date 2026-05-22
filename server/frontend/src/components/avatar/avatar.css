@@ -71,6 +71,20 @@ body:not(.dark) .three-js-container::after {
     animation: avatar-spin 1s linear infinite;
 }
 
+.avatar-error {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: min(320px, calc(100% - 32px));
+    transform: translate(-50%, -50%);
+    color: currentColor;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    text-align: center;
+    opacity: 0.72;
+    pointer-events: none;
+}
+
 @keyframes avatar-spin {
     to { transform: rotate(360deg); }
 }
