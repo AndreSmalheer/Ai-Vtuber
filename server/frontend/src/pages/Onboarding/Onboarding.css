@@ -43,6 +43,7 @@
   }
 }
 
+/* ─── Shell (desktop centering wrapper) ─── */
 @media (min-width: 770px) {
   .onboarding-shell {
     display: flex;
@@ -50,45 +51,71 @@
     align-items: center;
     min-height: 100vh;
     height: 100%;
+    padding: 32px;
+    box-sizing: border-box;
   }
 }
 
+/* ─── Container ─── */
 .onboarding-container {
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   width: 100%;
-  padding-bottom: 46px;
+  min-height: 100dvh;
+  /* Mobile: tighter, more comfortable side padding */
+  padding: 0 20px 36px;
 }
 
+/* ─── Title ─── */
 .onboarding-title {
   font-family: "Sora", sans-serif;
-  padding-top: clamp(32px, 6vw, 62px);
-  padding-bottom: clamp(12px, 3vw, 28px);
+  /* Mobile: less top space, tighter bottom gap */
+  padding-top: clamp(24px, 5vw, 48px);
+  padding-bottom: clamp(8px, 2vw, 20px);
   color: var(--h1-color);
   text-align: center;
-  font-family: 24px;
+  /* Mobile: slightly smaller floor so it never feels oversized on small screens */
+  font-size: clamp(22px, 7vw, 42px);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
   margin: 0;
   animation: ob-fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both;
 }
 
+/* ─── Sub-title ─── */
 .onboarding-sub-title {
   text-align: center;
-  font-size: 20px;
+  font-size: clamp(15px, 4vw, 22px);
   color: var(--h2-color);
   font-weight: 400;
+  line-height: 1.4;
+  /* Horizontal padding ensures readable line length on wide phones */
+  margin: 8px auto 0;
+  max-width: 340px;
   animation: ob-fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.25s both;
 }
 
+/* ─── Image wrapper ─── */
+.onboarding-img-wrapper {
+  /* On mobile the image should never eat the whole width */
+  width: min(300px, calc(100% - 32px));
+  margin-inline: auto;
+  /* Add breathing room above/below the image on mobile */
+  margin-top: clamp(16px, 4vw, 28px);
+  margin-bottom: clamp(4px, 2vw, 12px);
+}
+
+/* ─── Images ─── */
 .onboarding-img-big {
   display: block;
   margin-inline: auto;
   object-fit: cover;
   width: 100%;
-  max-width: min(354px, 100%);
+  max-width: min(300px, 100%);
   aspect-ratio: 354 / 374;
   height: auto;
-  border-radius: 8px;
+  border-radius: 10px;
   animation: ob-scale-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
@@ -97,21 +124,23 @@
   margin-inline: auto;
   object-fit: cover;
   width: 100%;
-  max-width: min(354px, 100%);
+  max-width: min(300px, 100%);
   aspect-ratio: 354 / 240;
   height: auto;
-  border-radius: 8px;
+  border-radius: 6px;
   animation: ob-scale-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
-  border-radius: 8px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.1);
 }
 
+/* ─── Progress dots ─── */
 .onboarding-dots-container {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  margin-top: 24px;
-  margin-bottom: 10px;
+  /* Tighter vertical rhythm on mobile */
+  margin-top: 16px;
+  margin-bottom: 8px;
   animation: ob-fade-in 0.4s ease 0.45s both;
 }
 
@@ -136,25 +165,31 @@
   animation: ob-dot-pop 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+/* ─── Bottom container ─── */
 .bottom-container {
   margin-top: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
+  /* Extra breathing room above the CTA on mobile */
+  padding-top: 12px;
 }
 
+/* ─── Get started button ─── */
 .get-started-btn {
   margin-top: 8px;
   font-family: "Inter", sans-serif;
   font-size: 16px;
+  font-weight: 500;
   background-color: var(--overlay-background);
   color: var(--h1-color);
   border: 1px solid var(--overlay-border);
-  border-radius: 18px;
-  padding: 19px 70px;
+  border-radius: 12px;
+  /* Full-width on mobile feels native and intentional */
+  width: 100%;
+  max-width: 340px;
+  padding: 17px 0;
   cursor: pointer;
-  width: max-content;
-  min-width: 160px;
   transition:
     transform 0.25s ease,
     box-shadow 0.25s ease;
@@ -177,12 +212,10 @@
   outline-offset: 4px;
 }
 
+/* ─── Skip button ─── */
 .skip-btn {
   all: unset;
   display: block;
-  font-family: inherit;
-  color: inherit;
-  cursor: pointer;
   font-family: "Sora", sans-serif;
   font-size: 14px;
   font-weight: 500;
@@ -192,15 +225,17 @@
   display: inline-block;
   animation: ob-fade-in 0.4s ease 0.5s both;
   outline: none;
-  margin-top: 16px;
+  margin-top: 18px;
+  /* Large tap target on mobile without affecting visual size */
+  padding: 6px 2px;
 }
 
 .skip-btn::after {
   content: "";
   position: absolute;
-  left: 0;
-  bottom: -2px;
-  width: 100%;
+  left: 2px;
+  bottom: 4px;
+  width: calc(100% - 4px);
   height: 2px;
   background-color: var(--divador-color);
   transform: scaleX(1);
@@ -221,20 +256,29 @@
   border-radius: 3px;
 }
 
+/* ─── Nav buttons (back + next) ─── */
 .onboarding-nav-buttons {
   display: flex;
-  gap: 24px;
+  gap: 12px;
+  /* Full width on mobile, capped to a comfortable max */
+  width: 100%;
+  max-width: 340px;
 }
 
 .back-btn {
   background-color: var(--overlay-background);
   border: 1px solid var(--overlay-border);
-  width: 57px;
-  height: 57px;
+  width: 54px;
+  height: 54px;
   border-radius: 10px;
   cursor: pointer;
   animation: ob-fade-up 0.4s ease both;
   color: var(--sub-btn);
+  flex: 0 0 54px;
+  /* Keeps the icon centered */
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .next-btn {
@@ -243,11 +287,19 @@
   font-size: 14px;
   font-weight: 600;
   border-radius: 10px;
-  padding: 18px 70px;
-  min-width: 256px;
+  /* Let it fill remaining space naturally */
+  flex: 1;
+  min-width: 0;
+  height: 54px;
+  padding: 0;
   color: var(--h1-color);
   cursor: pointer;
   animation: ob-fade-up 0.4s ease both;
+}
+
+.next-btn:disabled {
+  opacity: 0.65;
+  cursor: progress;
 }
 
 .next-btn.inactive {
@@ -259,33 +311,36 @@
   pointer-events: none;
 }
 
+/* ─── Features list ─── */
 .features-container {
   display: flex;
   flex-direction: column;
   flex: 1;
   align-items: center;
-  gap: 13px;
-  margin-top: clamp(32px, 6vw, 40px);
-  margin-bottom: clamp(16px, 4vw, 15px);
+  gap: 10px;
+  /* Balanced vertical margins on mobile */
+  margin-top: clamp(20px, 5vw, 36px);
+  margin-bottom: clamp(12px, 3vw, 20px);
 }
 
 .feature {
   box-sizing: border-box;
-  width: clamp(220px, 80vw, 320px);
-  height: 83px;
-  border-radius: 8px;
+  width: 100%;
+  max-width: 340px;
+  min-height: 78px;
+  border-radius: 10px;
   background-color: var(--overlay-background);
   border: 1px solid var(--overlay-border);
   display: flex;
   align-items: center;
-  padding: 0 17px;
+  padding: 14px 16px;
   gap: 14px;
   animation: ob-fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.25s both;
 }
 
 .feature-icon {
-  width: 42px;
-  height: 42px;
+  width: 38px;
+  height: 38px;
   flex-shrink: 0;
   color: var(--sub-btn);
 }
@@ -304,31 +359,31 @@
   margin: 0;
   padding: 0;
   font-weight: 400;
+  color: var(--h2-color);
+  line-height: 1.35;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .onboarding-image,
-  .onboarding-title,
-  .onboarding-subtitle,
-  .onboarding-skip,
-  .onboarding-btn,
-  .onboarding-dots-container,
-  .onboarding-dot.active {
-    animation: none;
-  }
-
-  .onboarding-btn,
-  .onboarding-dot {
-    transition: none;
-  }
+.feature--notification {
+  min-height: 108px;
+  padding-block: 14px;
 }
 
+.notification-status {
+  font-family: "Inter", sans-serif;
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--h3-color);
+  margin: 7px 0 0;
+}
+
+/* ─── Toggle switch ─── */
 .toggle-switch {
   margin-left: auto;
   position: relative;
   width: 48px;
   height: 26px;
   display: inline-block;
+  flex-shrink: 0;
 }
 
 .toggle-switch input {
@@ -345,7 +400,9 @@
   background-color: var(--divador-color);
   border: 1px solid var(--overlay-border);
   border-radius: 999px;
-  transition: background-color 0.2s ease, border-color 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .toggle-slider::before {
@@ -358,7 +415,7 @@
   transform: translateY(-50%);
   border-radius: 50%;
   background: white;
-  border: 0.5px solid rgba(0,0,0,0.08);
+  border: 0.5px solid rgba(0, 0, 0, 0.08);
   transition: transform 0.22s cubic-bezier(0.34, 1.2, 0.64, 1);
 }
 
@@ -370,8 +427,9 @@
   transform: translate(22px, -50%);
 }
 
+/* ─── Feature input ─── */
 .feature-input {
-  height: 26px;
+  height: 32px;
   padding: 0 10px;
   font-size: 13px;
   margin-top: 2px;
@@ -380,8 +438,12 @@
   border: 1px solid var(--overlay-border);
   border-radius: 10px;
   outline: none;
-  transition: border-color 0.2s ease, background-color 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease;
   box-sizing: border-box;
+  /* Easier to tap on mobile */
+  min-height: 32px;
 }
 
 .feature-input::placeholder {
@@ -394,6 +456,7 @@
   background-color: var(--overlay-background);
 }
 
+/* ─── Refresh button ─── */
 .refresh-btn {
   width: 24px;
   height: 24px;
@@ -415,9 +478,194 @@
   animation: spin 0.8s linear;
 }
 
-.ollama-input-group{
-    width: 110%;
-    display: flex;
+/* ─── Ollama input group ─── */
+.ollama-input-group {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ─── Extra-small phones (< 390px) ─── */
+@media (max-width: 389px) {
+  .onboarding-container {
+    padding-inline: 16px;
+    padding-bottom: 24px;
+  }
+
+  .onboarding-title {
+    font-size: clamp(20px, 6.5vw, 26px);
+  }
+
+  .feature {
+    padding-inline: 12px;
+    gap: 10px;
+  }
+
+  .feature-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .feature-input {
+    width: 100%;
+  }
+
+  .back-btn {
+    width: 48px;
+    height: 48px;
+    flex: 0 0 48px;
+  }
+
+  .next-btn {
+    height: 48px;
+  }
+}
+
+/* ─── Desktop (≥ 770px) ─── */
+@media (min-width: 770px) {
+  .onboarding-container {
+    max-width: 900px;
+    min-height: min(760px, calc(100vh - 64px));
+    /* Reset mobile padding, restore desktop padding */
+    padding: 34px 44px 38px;
+    border: 1px solid var(--overlay-border);
+    border-radius: 8px;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent),
+      var(--overlay-2-background);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  }
+
+  .onboarding-title {
+    padding-top: 0;
+    padding-bottom: 20px;
+    font-size: clamp(26px, 4vw, 42px);
+  }
+
+  .onboarding-sub-title {
+    font-size: clamp(18px, 2.5vw, 24px);
+    max-width: none;
+    margin-inline: 20px;
+  }
+
+  .onboarding-img-wrapper {
+    width: min(354px, 38vw);
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+
+  .onboarding-img-big {
+    max-width: min(354px, 100%);
+    border-radius: 8px;
+  }
+
+  .onboarding-img-small {
+    max-width: min(354px, 100%);
+    border-radius: 8px;
+  }
+
+  .features-container {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: stretch;
+    width: 100%;
+    max-width: 760px;
+    margin-inline: auto;
+    margin-top: 34px;
+    margin-bottom: 0;
+    gap: 14px;
+  }
+
+  .feature {
+    width: 100%;
+    max-width: none;
+    min-height: 138px;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    padding: 18px;
+    border-radius: 8px;
+  }
+
+  .feature--notification {
+    grid-column: span 3;
+    min-height: 112px;
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr) auto;
     align-items: center;
-    justify-content: space-between;
+  }
+
+  .feature-icon {
+    width: 42px;
+    height: 42px;
+  }
+
+  .feature-title {
+    font-size: 15px;
+  }
+
+  .feature-description {
+    font-size: 12px;
+  }
+
+  .bottom-container {
+    padding-top: 10px;
+  }
+
+  .get-started-btn {
+    width: max-content;
+    min-width: 160px;
+    padding: 17px 52px;
+  }
+
+  .onboarding-nav-buttons {
+    width: 360px;
+    max-width: none;
+  }
+
+  .back-btn {
+    width: 57px;
+    height: 57px;
+    flex: 0 0 57px;
+  }
+
+  .next-btn {
+    height: auto;
+    padding: 18px 70px;
+  }
+
+  .get-started-btn,
+  .next-btn,
+  .back-btn {
+    transition:
+      transform 0.22s ease,
+      border-color 0.22s ease,
+      box-shadow 0.22s ease;
+  }
+
+  .next-btn:hover,
+  .back-btn:hover {
+    transform: translateY(-2px);
+    border-color: var(--theme-active);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.1);
+  }
+}
+
+/* ─── Reduced motion ─── */
+@media (prefers-reduced-motion: reduce) {
+  .onboarding-image,
+  .onboarding-title,
+  .onboarding-subtitle,
+  .onboarding-skip,
+  .onboarding-btn,
+  .onboarding-dots-container,
+  .onboarding-dot.active {
+    animation: none;
+  }
+
+  .onboarding-btn,
+  .onboarding-dot {
+    transition: none;
+  }
 }

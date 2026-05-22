@@ -1,6 +1,76 @@
 import "./Onboarding.css";
 import { useEffect, useState, useRef } from "react";
 
+const FALLBACK_VAPID_PUBLIC_KEY =
+  "BG0sZ7qsau7n56E1kdGy3Gx5Rznw5OlOZDkSnJl2pkGCvs0lKdUbAFuBTfEktjHRGjJ9WhGhetmakYesoy2AW20";
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = base64String.replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = window.atob(base64 + padding);
+  const outputArray = new Uint8Array(rawData.length);
+
+  for (let i = 0; i < rawData.length; i += 1) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+
+  return outputArray;
+}
+
+function getNotificationSupportMessage() {
+  if (!window.isSecureContext) {
+    return "Notifications need HTTPS or localhost.";
+  }
+
+  if (!("Notification" in window)) {
+    return "This browser does not support notifications.";
+  }
+
+  if (!("serviceWorker" in navigator)) {
+    return "This browser does not support service workers.";
+  }
+
+  if (!("PushManager" in window)) {
+    return "This browser does not support Web Push here.";
+  }
+
+  return "";
+}
+
+async function saveConfigPatch(settings) {
+  try {
+    const response = await fetch("http://localhost:8000/api/config");
+    const config = await response.json();
+
+    await fetch("http://localhost:8000/api/config", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        ...config,
+        ...settings,
+      }),
+    });
+  } catch (error) {
+    console.error("Failed to update onboarding config:", error);
+  }
+}
+
+async function fetchVapidPublicKey() {
+  try {
+    const response = await fetch("/api/notifaction/public-key");
+    if (!response.ok) return FALLBACK_VAPID_PUBLIC_KEY;
+
+    const data = await response.json();
+    return typeof data.publicKey === "string" && data.publicKey.length > 0
+      ? data.publicKey
+      : FALLBACK_VAPID_PUBLIC_KEY;
+  } catch {
+    return FALLBACK_VAPID_PUBLIC_KEY;
+  }
+}
+
 const ArrowIcon = ({ size = 47 }) => {
   return (
     <svg
@@ -118,17 +188,115 @@ const SpeakerIcon = ({ size = 33 }) => {
   );
 };
 
-function Welcome({ currentStep, setCurrentStep, setIsFirstVisit }) {
+const PresenceIcon = ({ size = 42, className = "" }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 46 42"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+  >
+    <path
+      d="M36.0332 16.8L40.825 22.05"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M36.0332 27.3L40.825 22.05"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M37.95 22.05H23"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+    />
+    <path
+      d="M9.2002 7.35001H29.9002"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+    />
+    <path
+      d="M9.2002 36.75H29.9002"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+    />
+    <path
+      d="M29.8999 7.35001V15.75"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+    />
+    <path
+      d="M29.8999 28.35V36.75"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+    />
+    <path
+      d="M9.2002 7.35001V36.75"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+    />
+  </svg>
+);
+
+const QuietIcon = ({ size = 42, className = "" }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 40 40"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+  >
+    <path
+      d="M8.43587 20C9.25603 13.4228 14.8667 8.33333 21.666 8.33333C29.0298 8.33333 34.9993 14.3029 34.9993 21.6667C34.9993 29.0305 29.0298 35 21.666 35H13.3333M21.6667 21.6667V15M18.3333 5H25M5 25H13.3333M8.33333 30H16.6667"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+const NotificationIcon = ({ size = 35, className = "" }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 38 38"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+  >
+    <path
+      d="M15.8335 33.25H22.1669C22.1669 34.0899 21.8332 34.8953 21.2394 35.4892C20.6455 36.083 19.84 36.4167 19.0002 36.4167C18.1603 36.4167 17.3549 36.083 16.761 35.4892C16.1671 34.8953 15.8335 34.0899 15.8335 33.25ZM4.87052 29.1064C4.75065 28.817 4.71932 28.4986 4.78047 28.1914C4.84163 27.8842 4.99254 27.602 5.2141 27.3806L7.91685 24.6778V15.8333C7.92194 13.171 8.88441 10.5992 10.6285 8.58768C12.3726 6.57613 14.7821 5.25897 17.4169 4.87668V3.16668C17.4169 2.74675 17.5837 2.34402 17.8806 2.04709C18.1775 1.75016 18.5803 1.58334 19.0002 1.58334C19.4201 1.58334 19.8228 1.75016 20.1198 2.04709C20.4167 2.34402 20.5835 2.74675 20.5835 3.16668V4.87668C23.2183 5.25897 25.6277 6.57613 27.3718 8.58768C29.116 10.5992 30.0784 13.171 30.0835 15.8333V24.6778L32.7863 27.3806C33.0076 27.602 33.1584 27.8841 33.2194 28.1912C33.2805 28.4983 33.2492 28.8166 33.1293 29.1059C33.0095 29.3952 32.8066 29.6424 32.5463 29.8164C32.286 29.9904 31.98 30.0833 31.6669 30.0833H6.33352C6.02039 30.0834 5.71427 29.9907 5.45386 29.8168C5.19345 29.6429 4.99045 29.3957 4.87052 29.1064ZM10.1557 26.9167H27.8447L27.3808 26.4528C27.0838 26.1559 26.9169 25.7532 26.9169 25.3333V15.8333C26.9169 13.7337 26.0828 11.7201 24.5981 10.2354C23.1135 8.75075 21.0998 7.91668 19.0002 7.91668C16.9006 7.91668 14.8869 8.75075 13.4023 10.2354C11.9176 11.7201 11.0835 13.7337 11.0835 15.8333V25.3333C11.0834 25.7532 10.9166 26.1559 10.6196 26.4528L10.1557 26.9167Z"
+      fill="currentColor"
+    />
+  </svg>
+);
+
+function Welcome({ setCurrentStep, setIsFirstVisit }) {
   return (
     <>
       <div className="onboarding-shell">
         <div className="onboarding-container">
           <h1 className="onboarding-title">Meet Mia</h1>
 
-          <div class="onboarding-img-wrapper">
+          <div className="onboarding-img-wrapper">
             <img
-              class="onboarding-img-big"
+              className="onboarding-img-big"
               src="/onboarding/welcome-onboarding-img.png"
+              alt=""
             />
           </div>
 
@@ -137,10 +305,11 @@ function Welcome({ currentStep, setCurrentStep, setIsFirstVisit }) {
           </h2>
 
           <div className="bottom-container">
-            <div class="onboarding-dots-container">
-              <div class="onboarding-dot active"></div>
-              <div class="onboarding-dot"></div>
-              <div class="onboarding-dot"></div>
+            <div className="onboarding-dots-container">
+              <div className="onboarding-dot active"></div>
+              <div className="onboarding-dot"></div>
+              <div className="onboarding-dot"></div>
+              <div className="onboarding-dot"></div>
             </div>
 
             <button
@@ -160,17 +329,18 @@ function Welcome({ currentStep, setCurrentStep, setIsFirstVisit }) {
   );
 }
 
-function Features({ setCurrentStep, setIsFirstVisit }) {
+function Features({ setCurrentStep }) {
   return (
     <>
       <div className="onboarding-shell">
         <div className="onboarding-container">
           <h1 className="onboarding-title">More Than Just Chat</h1>
 
-          <div class="onboarding-img-wrapper">
+          <div className="onboarding-img-wrapper">
             <img
-              class="onboarding-img-small"
+              className="onboarding-img-small"
               src="/onboarding/features-onboarding-img.png"
+              alt=""
             />
           </div>
 
@@ -216,10 +386,11 @@ function Features({ setCurrentStep, setIsFirstVisit }) {
           </div>
 
           <div className="bottom-container">
-            <div class="onboarding-dots-container">
-              <div class="onboarding-dot"></div>
-              <div class="onboarding-dot active"></div>
-              <div class="onboarding-dot"></div>
+            <div className="onboarding-dots-container">
+              <div className="onboarding-dot"></div>
+              <div className="onboarding-dot active"></div>
+              <div className="onboarding-dot"></div>
+              <div className="onboarding-dot"></div>
             </div>
 
             <div className="onboarding-nav-buttons">
@@ -244,14 +415,13 @@ function Features({ setCurrentStep, setIsFirstVisit }) {
   );
 }
 
-function Customize({ currentStep, setCurrentStep, setIsFirstVisit }) {
+function Customize({ setCurrentStep, setIsFirstVisit }) {
   const [isRefreshingOllama, setIsRefreshingOllama] = useState(false);
   const [isRefreshingPiper, setIsRefreshingPiper] = useState(false);
   const [isOllamaConnected, setIsOllamaConnected] = useState(false);
   const [isPiperConnected, setIsPiperConnected] = useState(false);
   const [ollamaUrl, setOllamaUrl] = useState("");
   const [piperUrl, setPiperUrl] = useState("");
-  const [canFinishOnboarding, setCanFinishOnboarding] = useState(false);
   const [ollamaStatus, setOllamaStatus] = useState(null);
   const [piperStatus, setPiperStatus] = useState(null);
 
@@ -262,6 +432,7 @@ function Customize({ currentStep, setCurrentStep, setIsFirstVisit }) {
   const [darkMode, setDarkMode] = useState(
     document.body.classList.contains("dark"),
   );
+  const canFinishOnboarding = isOllamaConnected && isPiperConnected;
 
   useEffect(() => {
     async function loadConfig() {
@@ -306,13 +477,12 @@ function Customize({ currentStep, setCurrentStep, setIsFirstVisit }) {
     } else {
       document.body.classList.remove("dark");
     }
+  }, [darkMode]);
 
-    updateConfig({ is_dark: darkMode });
-  }, [darkMode, config?.is_dark]);
-
-  useEffect(() => {
-    setCanFinishOnboarding(isOllamaConnected && isPiperConnected);
-  }, [isOllamaConnected, isPiperConnected]);
+  function handleDarkModeChange(checked) {
+    setDarkMode(checked);
+    updateConfig({ is_dark: checked });
+  }
 
   async function checkOllamaConnection(url) {
     setIsRefreshingOllama(true);
@@ -375,10 +545,11 @@ function Customize({ currentStep, setCurrentStep, setIsFirstVisit }) {
         <div className="onboarding-container">
           <h1 className="onboarding-title">Customize your way.</h1>
 
-          <div class="onboarding-img-wrapper">
+          <div className="onboarding-img-wrapper">
             <img
-              class="onboarding-img-small"
+              className="onboarding-img-small"
               src="/onboarding/features-onboarding-img.png"
+              alt=""
             />
           </div>
 
@@ -458,7 +629,7 @@ function Customize({ currentStep, setCurrentStep, setIsFirstVisit }) {
                 <input
                   type="checkbox"
                   checked={darkMode}
-                  onChange={(e) => setDarkMode(e.target.checked)}
+                  onChange={(e) => handleDarkModeChange(e.target.checked)}
                 />
                 <span className="toggle-slider"></span>
               </label>
@@ -466,10 +637,11 @@ function Customize({ currentStep, setCurrentStep, setIsFirstVisit }) {
           </div>
 
           <div className="bottom-container">
-            <div class="onboarding-dots-container">
-              <div class="onboarding-dot"></div>
-              <div class="onboarding-dot"></div>
-              <div class="onboarding-dot active"></div>
+            <div className="onboarding-dots-container">
+              <div className="onboarding-dot"></div>
+              <div className="onboarding-dot"></div>
+              <div className="onboarding-dot"></div>
+              <div className="onboarding-dot active"></div>
             </div>
 
             <div className="onboarding-nav-buttons">
@@ -494,6 +666,188 @@ function Customize({ currentStep, setCurrentStep, setIsFirstVisit }) {
   );
 }
 
+function Notifications({ setCurrentStep }) {
+  const [wantsNotifications, setWantsNotifications] = useState(false);
+  const [isSubscribing, setIsSubscribing] = useState(false);
+  const [notificationStatus, setNotificationStatus] = useState(
+    "Choose whether Mia can send PWA notifications when you are away.",
+  );
+  const [unsupportedReason, setUnsupportedReason] = useState(() =>
+    getNotificationSupportMessage(),
+  );
+
+  async function subscribeNotifications() {
+    const reason = getNotificationSupportMessage();
+    if (reason) {
+      setUnsupportedReason(reason);
+      setNotificationStatus(reason);
+      return false;
+    }
+
+    setIsSubscribing(true);
+    setNotificationStatus("Requesting notification permission...");
+
+    try {
+      let permission = Notification.permission;
+      if (permission === "default") {
+        permission = await Notification.requestPermission();
+      }
+
+      if (permission !== "granted") {
+        await saveConfigPatch({ enable_leave_notifications: false });
+        setNotificationStatus("Notifications were not enabled.");
+        return false;
+      }
+
+      const registration = await navigator.serviceWorker.ready;
+      let subscription = await registration.pushManager.getSubscription();
+
+      if (!subscription) {
+        setNotificationStatus("Subscribing this device...");
+        const vapidPublicKey = await fetchVapidPublicKey();
+        subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+        });
+      }
+
+      const response = await fetch("/api/subscribe-notifaction", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(subscription.toJSON()),
+      });
+
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+
+      await saveConfigPatch({ enable_leave_notifications: true });
+      setNotificationStatus("Subscribed. Mia can now send PWA notifications.");
+      return true;
+    } catch (error) {
+      console.error("Notification subscription failed:", error);
+      await saveConfigPatch({ enable_leave_notifications: false });
+      setNotificationStatus("Subscription failed. You can still continue.");
+      return false;
+    } finally {
+      setIsSubscribing(false);
+    }
+  }
+
+  async function handleNotificationToggle(event) {
+    const checked = event.target.checked;
+    setWantsNotifications(checked);
+
+    if (!checked) {
+      await saveConfigPatch({ enable_leave_notifications: false });
+      setNotificationStatus(
+        "Notifications are off. You can enable them later.",
+      );
+      return;
+    }
+
+    const subscribed = await subscribeNotifications();
+    setWantsNotifications(subscribed);
+  }
+
+  return (
+    <>
+      <div className="onboarding-shell">
+        <div className="onboarding-container">
+          <h1 className="onboarding-title">Mia reaches out</h1>
+
+          <div className="onboarding-img-wrapper">
+            <img
+              className="onboarding-img-small"
+              src="/onboarding/notification-onboarding.png"
+              alt=""
+            />
+          </div>
+
+          <div className="features-container">
+            <div className="feature">
+              <div className="feature-icon">
+                <PresenceIcon />
+              </div>
+              <div className="feature-content">
+                <h1 className="feature-title">Presence</h1>
+                <h2 className="feature-description">
+                  Mia can check in after you leave the app.
+                </h2>
+              </div>
+            </div>
+
+            <div className="feature">
+              <div className="feature-icon">
+                <QuietIcon />
+              </div>
+              <div className="feature-content">
+                <h1 className="feature-title">Timing</h1>
+                <h2 className="feature-description">
+                  Notifications are quiet and optional.
+                </h2>
+              </div>
+            </div>
+
+            <div className="feature feature--notification">
+              <div className="feature-icon">
+                <NotificationIcon />
+              </div>
+              <div className="feature-content">
+                <h1 className="feature-title">PWA notifications</h1>
+                <h2 className="feature-description">
+                  Subscribe this device for notifications.
+                </h2>
+              </div>
+
+              <label
+                className="toggle-switch"
+                aria-label="Subscribe to PWA notifications"
+              >
+                <input
+                  type="checkbox"
+                  checked={wantsNotifications}
+                  disabled={isSubscribing || Boolean(unsupportedReason)}
+                  onChange={handleNotificationToggle}
+                />
+                <span className="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <div className="bottom-container">
+            <div className="onboarding-dots-container">
+              <div className="onboarding-dot"></div>
+              <div className="onboarding-dot"></div>
+              <div className="onboarding-dot active"></div>
+              <div className="onboarding-dot"></div>
+            </div>
+
+            <div className="onboarding-nav-buttons">
+              <button
+                className="back-btn"
+                onClick={() => setCurrentStep((prev) => prev - 1)}
+              >
+                <ArrowIcon />
+              </button>
+
+              <button
+                className="next-btn"
+                onClick={() => setCurrentStep((prev) => prev + 1)}
+                disabled={isSubscribing}
+              >
+                {isSubscribing ? "Saving..." : "next"}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
 function Onboarding({ setIsFirstVisit }) {
   const [currentStep, setCurrentStep] = useState(0);
 
@@ -501,23 +855,17 @@ function Onboarding({ setIsFirstVisit }) {
     <>
       {currentStep === 0 && (
         <Welcome
-          currentStep={currentStep}
           setCurrentStep={setCurrentStep}
           setIsFirstVisit={setIsFirstVisit}
         />
       )}
 
-      {currentStep === 1 && (
-        <Features
-          currentStep={currentStep}
-          setCurrentStep={setCurrentStep}
-          setIsFirstVisit={setIsFirstVisit}
-        />
-      )}
+      {currentStep === 1 && <Features setCurrentStep={setCurrentStep} />}
 
-      {currentStep === 2 && (
+      {currentStep === 2 && <Notifications setCurrentStep={setCurrentStep} />}
+
+      {currentStep === 3 && (
         <Customize
-          currentStep={currentStep}
           setCurrentStep={setCurrentStep}
           setIsFirstVisit={setIsFirstVisit}
         />
