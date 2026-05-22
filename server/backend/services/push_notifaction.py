@@ -2,20 +2,23 @@ from pywebpush import WebPushException, webpush
 import json
 import os
 import sys
+from dotenv import load_dotenv
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(SCRIPT_DIR)
+
+dotenv_path = os.path.join(SCRIPT_DIR, '..', '..', '.env')
+load_dotenv(dotenv_path)
+
 SUBSCRIPTIONS_FILE = os.path.join(SCRIPT_DIR, '..', 'data', 'subscriptions.json')
 
-VAPID_PUBLIC_KEY_BACKEND = os.getenv(
-    "VAPID_PUBLIC_KEY",
-    "BG0sZ7qsau7n56E1kdGy3Gx5Rznw5OlOZDkSnJl2pkGCvs0lKdUbAFuBTfEktjHRGjJ9WhGhetmakYesoy2AW20",
-)
-VAPID_PRIVATE_KEY_BACKEND = os.getenv(
-    "VAPID_PRIVATE_KEY",
-    "VyjBMBFJfzIERgh1mdZDU47kJ71bVKcOMbnxKysMzPc",
-)
+VAPID_PUBLIC_KEY_BACKEND = os.getenv("VAPID_PUBLIC_KEY")
+VAPID_PRIVATE_KEY_BACKEND = os.getenv("VAPID_PRIVATE_KEY")
 VAPID_MAILTO_URL = os.getenv("VAPID_SUBJECT", "mailto:your-email@example.com")
+
+if not VAPID_PUBLIC_KEY_BACKEND or not VAPID_PRIVATE_KEY_BACKEND:
+    print("Warning: VAPID keys not found in environment. Push notifications may fail.")
+    print("Please run server/backend/setup.py to generate them.")
 
 def save_subscriptions(subscriptions):
     try:

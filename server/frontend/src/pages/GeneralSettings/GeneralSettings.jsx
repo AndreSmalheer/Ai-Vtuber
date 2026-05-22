@@ -15,7 +15,7 @@ function urlBase64ToUint8Array(base64String) {
 }
 
 const FALLBACK_VAPID_PUBLIC_KEY =
-  "BG0sZ7qsau7n56E1kdGy3Gx5Rznw5OlOZDkSnJl2pkGCvs0lKdUbAFuBTfEktjHRGjJ9WhGhetmakYesoy2AW20";
+  import.meta.env.VITE_VAPID_PUBLIC_KEY;
 const isIos =
   /iPad|iPhone|iPod/.test(navigator.userAgent) ||
   (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);

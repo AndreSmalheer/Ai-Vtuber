@@ -2,7 +2,7 @@ import "./Onboarding.css";
 import { useEffect, useState, useRef } from "react";
 
 const FALLBACK_VAPID_PUBLIC_KEY =
-  "BG0sZ7qsau7n56E1kdGy3Gx5Rznw5OlOZDkSnJl2pkGCvs0lKdUbAFuBTfEktjHRGjJ9WhGhetmakYesoy2AW20";
+  import.meta.env.VITE_VAPID_PUBLIC_KEY;
 
 function urlBase64ToUint8Array(base64String) {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);

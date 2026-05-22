@@ -39,6 +39,7 @@ pydantic_core==2.46.3
 pymupdf
 python-multipart==0.0.27
 pywebpush==2.3.0
+python-dotenv
 regex==2026.4.4
 requests==2.33.1
 starlette==1.0.0

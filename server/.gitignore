@@ -1,6 +1,9 @@
 # Environment
 .venv/
 node_modules/
+.env
+.env.*
+!.env.example
 
 # Local configuration
 backend/data/config.json

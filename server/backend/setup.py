@@ -6,6 +6,79 @@ import sys
 def is_docker():
     return os.path.exists('/.dockerenv') or os.path.exists('/run/.containerenv')
 
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+SERVER_DIR = os.path.join(SCRIPT_DIR, "..")
+ENV_PATH = os.path.join(SERVER_DIR, ".env")
+CONFIG_PATH = os.path.join(SCRIPT_DIR, 'data', 'config.json')
+
+def ensure_env_file(python_exe):
+    existing_vars = {}
+    if os.path.exists(ENV_PATH):
+        with open(ENV_PATH, 'r') as f:
+            for line in f:
+                line = line.strip()
+                if line and '=' in line and not line.startswith('#'):
+                    key, value = line.split('=', 1)
+                    existing_vars[key] = value
+
+    needs_update = False
+    if 'VAPID_PUBLIC_KEY' not in existing_vars or 'VAPID_PRIVATE_KEY' not in existing_vars:
+        print("VAPID keys missing. Generating new ones...")
+
+        gen_script = """
+try:
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric import ec
+    import base64
+    import json
+
+    private_key = ec.generate_private_key(ec.SECP256R1())
+    public_key = private_key.public_key()
+
+    private_bytes = private_key.private_numbers().private_value.to_bytes(32, byteorder='big')
+    public_bytes = public_key.public_bytes(
+        encoding=serialization.Encoding.X962,
+        format=serialization.PublicFormat.UncompressedPoint
+    )
+
+    pub_key = base64.urlsafe_b64encode(public_bytes).decode('utf-8').strip('=')
+    priv_key = base64.urlsafe_b64encode(private_bytes).decode('utf-8').strip('=')
+    print(json.dumps({"pub": pub_key, "priv": priv_key}))
+except Exception as e:
+    import sys
+    print(f"ERROR:{e}", file=sys.stderr)
+"""
+        try:
+            result = subprocess.run(
+                [python_exe, "-c", gen_script],
+                capture_output=True,
+                text=True
+            )
+            if result.returncode == 0:
+                output = result.stdout.strip()
+                if output.startswith('{'):
+                    keys = json.loads(output)
+                    existing_vars['VAPID_PUBLIC_KEY'] = keys['pub']
+                    existing_vars['VAPID_PRIVATE_KEY'] = keys['priv']
+                    existing_vars['VITE_VAPID_PUBLIC_KEY'] = keys['pub']
+                    needs_update = True
+                else:
+                    print(f"Unexpected output from key generator: {output}")
+            else:
+                print(f"Error generating VAPID keys: {result.stderr}")
+        except Exception as e:
+            print(f"Failed to run key generation: {e}")
+
+    if needs_update:
+        with open(ENV_PATH, 'w') as f:
+            f.write("# Environment variables for Project Mia\n")
+            for k, v in existing_vars.items():
+                f.write(f"{k}={v}\n")
+        print(f"Environment variables updated in {ENV_PATH}")
+    else:
+        if os.path.exists(ENV_PATH):
+            print(f".env file already exists at {ENV_PATH}")
+
 if not is_docker():
     VENV_DIR = ".venv"
 
@@ -33,10 +106,9 @@ if not is_docker():
         print(result.stderr)
 else:
     print("Docker environment detected. Skipping venv creation and local pip install.")
+    python_path = sys.executable
 
-
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-CONFIG_PATH = os.path.join(SCRIPT_DIR, 'data', 'config.json')
+ensure_env_file(python_path)
 
 os.makedirs(os.path.dirname(CONFIG_PATH), exist_ok=True)
 
