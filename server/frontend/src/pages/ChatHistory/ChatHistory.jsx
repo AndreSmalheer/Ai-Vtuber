@@ -90,6 +90,23 @@ function ChatHistory() {
 
   return (
     <div className="chatHistory">
+      <section className="chatHistoryHero">
+        <div className="chatHistoryHero__glow"></div>
+        <img
+          className="chatHistoryHero__image"
+          src="/settings-img/chat-history.png"
+          alt=""
+        />
+        <div className="chatHistoryHero__content">
+          <h1 className="chatHistoryHero__title">Chat history</h1>
+          <p className="chatHistoryHero__copy">
+            {history.length === 0
+              ? "Saved conversations will appear here."
+              : `${history.length} saved conversation${history.length === 1 ? "" : "s"}.`}
+          </p>
+        </div>
+      </section>
+
       <div className="historyHeader">
         <div className="dateFilters">
           {getAvailableDates().map((date) => (

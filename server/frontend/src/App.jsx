@@ -119,43 +119,70 @@ function App() {
         isDark={isDark}
       />
 
-      <Routes>
-        <Route
-          path="/"
-          element={
-            <Home config={config} onAudioStateChange={setLipSyncState} />
-          }
-        />
-        {/* This route acts as the settings navigation menu */}
-        <Route
-          path="/settings-nav"
-          element={
-            <>
-              <Header backBtn={true} settingsBtn={false} />
-              <Settings /> {/* This component now acts as the menu */}
-            </>
-          }
-        />
-        {/* New routes for specific settings pages */}
-        <Route
-          path="/settings"
-          element={
-            <>
-              <Header backBtn={true} settingsBtn={false} fixed={true} />
-              <GeneralSettings />
-            </>
-          }
-        />
-        <Route
-          path="/chat-history"
-          element={
-            <>
-              <Header backBtn={true} settingsBtn={false} fixed={true} />
-              <ChatHistory />
-            </>
-          }
-        />{" "}
-      </Routes>
+      <PageTransitionWrapper path={location.pathname}>
+        <Routes location={location}>
+          <Route
+            path="/"
+            element={
+              <Home config={config} onAudioStateChange={setLipSyncState} />
+            }
+          />
+          {/* This route acts as the settings navigation menu */}
+          <Route
+            path="/settings-nav"
+            element={
+              <>
+                <Header backBtn={true} settingsBtn={false} />
+                <Settings /> {/* This component now acts as the menu */}
+              </>
+            }
+          />
+          {/* New routes for specific settings pages */}
+          <Route
+            path="/settings"
+            element={
+              <>
+                <Header backBtn={true} settingsBtn={false} fixed={true} />
+                <GeneralSettings />
+              </>
+            }
+          />
+          <Route
+            path="/chat-history"
+            element={
+              <>
+                <Header backBtn={true} settingsBtn={false} fixed={true} />
+                <ChatHistory />
+              </>
+            }
+          />{" "}
+        </Routes>
+      </PageTransitionWrapper>
+    </div>
+  );
+}
+
+function PageTransitionWrapper({ children, path }) {
+  const [isAnimating, setIsAnimating] = useState(true);
+
+  useEffect(() => {
+    setIsAnimating(true);
+  }, [path]);
+
+  return (
+    <div
+      className={
+        isAnimating
+          ? "page-transition-container page-transition-container--animating"
+          : "page-transition-container"
+      }
+      onAnimationEnd={(e) => {
+        if (e.target === e.currentTarget) {
+          setIsAnimating(false);
+        }
+      }}
+    >
+      {children}
     </div>
   );
 }

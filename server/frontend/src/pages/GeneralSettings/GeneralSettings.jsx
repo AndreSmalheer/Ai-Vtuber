@@ -92,18 +92,13 @@ function GeneralSettings() {
   const [notificationStatus, setNotificationStatus] = useState(
     "Checking notification support...",
   );
+  const [activeSettingsTab, setActiveSettingsTab] = useState("basic");
   const [vapidPublicKey, setVapidPublicKey] = useState(
     FALLBACK_VAPID_PUBLIC_KEY,
   );
-  const [diagnostics, setDiagnostics] = useState(() =>
-    getNotificationDiagnostics(),
-  );
-
   const refreshNotificationStatus = useCallback(async () => {
     const nextDiagnostics = getNotificationDiagnostics();
     const unsupportedReason = getUnsupportedNotificationReason(nextDiagnostics);
-
-    setDiagnostics(nextDiagnostics);
 
     if (unsupportedReason) {
       setSupportNotification(false);
@@ -140,7 +135,7 @@ function GeneralSettings() {
   }, []);
 
   useEffect(() => {
-    refreshNotificationStatus();
+    Promise.resolve().then(refreshNotificationStatus);
   }, [refreshNotificationStatus]);
 
   useEffect(() => {
@@ -157,7 +152,9 @@ function GeneralSettings() {
         if (typeof data.publicKey === "string" && data.publicKey.length > 0) {
           setVapidPublicKey(data.publicKey);
         }
-      } catch {}
+      } catch (error) {
+        console.error("Error fetching VAPID public key:", error);
+      }
     };
 
     fetchVapidPublicKey();
@@ -372,577 +369,656 @@ function GeneralSettings() {
 
   return (
     <div className="general-settings">
+      <section className="general-settings__profile">
+        <div className="general-settings__profile-backdrop"></div>
+        <img
+          className="general-settings__profile-image"
+          src="/onboarding/features-onboarding-img.png"
+          alt=""
+        />
+        <div className="general-settings__profile-content">
+          <p className="general-settings__eyebrow">Settings</p>
+          <h1 className="general-settings__profile-title">
+            {config.ai_name || "Mia"}
+          </h1>
+          <p className="general-settings__profile-copy">
+            Tune the everyday experience first. Deeper model and prompt controls
+            stay tucked away when you do not need them.
+          </p>
+        </div>
+      </section>
+
+      <div
+        className="general-settings__tabs"
+        role="tablist"
+        aria-label="Settings mode"
+      >
+        <button
+          type="button"
+          className={`general-settings__tab ${activeSettingsTab === "basic" ? "active" : ""}`}
+          onClick={() => setActiveSettingsTab("basic")}
+        >
+          Basic
+        </button>
+        <button
+          type="button"
+          className={`general-settings__tab ${activeSettingsTab === "advanced" ? "active" : ""}`}
+          onClick={() => setActiveSettingsTab("advanced")}
+        >
+          Advanced
+        </button>
+      </div>
+
       <form className="general-settings__form" onSubmit={handleSave}>
         {saveMessage && <div className="save-message">{saveMessage}</div>}
-        <div className="general-settings__section">
-          <h1 className="general-settings__title">Ollama</h1>
-
-          <div className="general-settings__field">
-            <label className="general-settings__label">Ollama URL</label>
+        {activeSettingsTab === "basic" ? (
+          <div key="basic-pane" className="settings-tab-pane">
             <div
-              className="general-settings__input-group"
-              id="ollama-url-group"
+              className={`general-settings__section ${isVrmOpen ? "general-settings__section--dropdown-open" : ""}`}
+              style={{ marginTop: "20px" }}
             >
-              <input
-                type="text"
-                className="general-settings__input"
-                name="ollama_url"
-                value={config.ollama_url}
-                onChange={handleChange}
-              />
-              <button
-                type="button"
-                className={`refresh-btn ${isRefreshing ? "spinning" : ""}`}
-                onClick={fetchModels}
-              ></button>
-            </div>
-          </div>
+              <h1 className="general-settings__title">Identity</h1>
+              <div className="general-settings__field">
+                <label className="general-settings__label">Avatar Model</label>
+                <div className="custom-select">
+                  <div
+                    className="open-icon"
+                    onClick={() => setIsVrmOpen(!isVrmOpen)}
+                  ></div>
+                  <div
+                    className="custom-select__selected"
+                    onClick={() => setIsVrmOpen(!isVrmOpen)}
+                  >
+                    {config.avatar_model || "Select a model"}
+                  </div>
 
-          <div className="general-settings__field">
-            <label className="general-settings__label">Ollama Model</label>
-            <div className="custom-select">
+                  {isVrmOpen && (
+                    <ul className="custom-select__dropdown">
+                      {vrmModels.map((m) => (
+                        <li
+                          key={m}
+                          className="custom-select__option"
+                          onClick={() => handleAvatarModelSelect(m)}
+                        >
+                          {m}
+                        </li>
+                      ))}
+                      <li className="custom-select__option add-model-option">
+                        <label htmlFor="vrm-upload" className="add-model-label">
+                          <span className="plus-icon">+</span> Add VRM Model
+                        </label>
+                        <input
+                          type="file"
+                          id="vrm-upload"
+                          accept=".vrm"
+                          onChange={handleVrmUpload}
+                          style={{ display: "none" }}
+                        />
+                      </li>
+                    </ul>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="general-settings__section">
+              <h1 className="general-settings__title">Welcome Message</h1>
               <div
-                className="open-icon"
-                onClick={() => setIsOpen(!isOpen)}
-              ></div>
-              <div
-                className="custom-select__selected"
-                onClick={() => setIsOpen(!isOpen)}
+                className="general-settings__field"
+                id="welcome-threshold-toggle-container"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                }}
               >
-                {config.ollama_model || "Select a model"}
+                <label className="general-settings__label">
+                  Enable Welcome
+                </label>
+
+                <div
+                  className={`theme-toggle ${config.enable_welcome_message ? "active" : ""}`}
+                  onClick={() => {
+                    const nextConfig = {
+                      ...config,
+                      enable_welcome_message: !config.enable_welcome_message,
+                    };
+                    setConfig(nextConfig);
+                    saveConfig(nextConfig);
+                  }}
+                  style={{ marginLeft: "10px" }}
+                >
+                  <div className="theme-toggle__circle" />
+                </div>
+              </div>
+            </div>
+
+            <div
+              className="general-settings__section"
+              style={{ marginTop: "20px" }}
+            >
+              <h1 className="general-settings__title">Appearance</h1>
+
+              <div className="general-settings__field" id="dark-mode-container">
+                <label className="general-settings__label">Dark Mode</label>
+                <div
+                  className={`theme-toggle ${config.is_dark ? "active" : ""}`}
+                  onClick={() => {
+                    const nextConfig = {
+                      ...config,
+                      is_dark: !config.is_dark,
+                    };
+                    setConfig(nextConfig);
+                    saveConfig(nextConfig);
+                  }}
+                  style={{ marginLeft: "10px" }}
+                >
+                  <div className="theme-toggle__circle" />
+                </div>
               </div>
 
-              {isOpen && (
-                <ul className="custom-select__dropdown">
-                  <li
-                    className="custom-select__option"
-                    onClick={() => {
-                      setConfig((prev) => ({ ...prev, ollama_model: "" }));
-                      setIsOpen(false);
-                    }}
+              <div
+                className="general-settings__field"
+                id="stealth-mode-container"
+              >
+                <label className="general-settings__label">Stealth Mode</label>
+                <div
+                  className={`theme-toggle ${config.stealth_mode ? "active" : ""}`}
+                  onClick={() => {
+                    const nextConfig = {
+                      ...config,
+                      stealth_mode: !config.stealth_mode,
+                    };
+                    setConfig(nextConfig);
+                    saveConfig(nextConfig);
+                  }}
+                  style={{ marginLeft: "10px" }}
+                >
+                  <div className="theme-toggle__circle" />
+                </div>
+              </div>
+
+              <div
+                className="general-settings__field"
+                id="effects-controls-container"
+              >
+                <label className="general-settings__label">Effects</label>
+                <div
+                  className={`theme-toggle ${config.enable_effects !== false ? "active" : ""}`}
+                  onClick={() => {
+                    const nextConfig = {
+                      ...config,
+                      enable_effects: !(config.enable_effects !== false),
+                    };
+                    setConfig(nextConfig);
+                    saveConfig(nextConfig);
+                  }}
+                  style={{ marginLeft: "10px" }}
+                >
+                  <div className="theme-toggle__circle" />
+                </div>
+              </div>
+            </div>
+
+            <div className="general-settings__section">
+              <h1 className="general-settings__title">Interaction</h1>
+
+              <div
+                className="general-settings__field"
+                id="orbit-controls-container"
+              >
+                <label className="general-settings__label">
+                  Orbit Controls
+                </label>
+                <div
+                  className={`theme-toggle ${config.orbit_controls_enabled !== false ? "active" : ""}`}
+                  onClick={() => {
+                    const nextConfig = {
+                      ...config,
+                      orbit_controls_enabled: !(
+                        config.orbit_controls_enabled !== false
+                      ),
+                    };
+                    setConfig(nextConfig);
+                    saveConfig(nextConfig);
+                  }}
+                  style={{ marginLeft: "10px" }}
+                >
+                  <div className="theme-toggle__circle" />
+                </div>
+              </div>
+            </div>
+
+            <div
+              className="general-settings__section"
+              style={{ marginTop: "20px" }}
+            >
+              <h1 className="general-settings__title">Notifications</h1>
+              <div className="general-settings__field notification-settings-field">
+                <div>
+                  <label className="general-settings__label">Subscribed</label>
+                  <p className="notification-settings__status">
+                    {notificationStatus}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className={`theme-toggle notification-settings__toggle ${isSubscribed ? "active" : ""}`}
+                  onClick={handleSubscribeNotifications}
+                  disabled={
+                    isSubscribing ||
+                    isSubscribed ||
+                    !supportNotification ||
+                    ("Notification" in window &&
+                      Notification.permission === "denied")
+                  }
+                  aria-label="Subscribe to push notifications"
+                  aria-pressed={isSubscribed}
+                >
+                  <div className="theme-toggle__circle"></div>
+                </button>
+              </div>
+
+              <div
+                className="general-settings__field"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                }}
+              >
+                <label className="general-settings__label">
+                  Enable Leave Notification
+                </label>
+                <div
+                  className={`theme-toggle ${config.enable_leave_notifications ? "active" : ""}`}
+                  onClick={() => {
+                    const nextConfig = {
+                      ...config,
+                      enable_leave_notifications:
+                        !config.enable_leave_notifications,
+                    };
+                    setConfig(nextConfig);
+                    saveConfig(nextConfig);
+                  }}
+                  style={{ marginLeft: "10px" }}
+                >
+                  <div className="theme-toggle__circle" />
+                </div>
+              </div>
+            </div>
+
+            <div
+              className="general-settings__section"
+              style={{ marginTop: "20px" }}
+            >
+              <h1 className="general-settings__title">Piper TTS</h1>
+              <div className="general-settings__field" id="tts-mode-container">
+                <label className="general-settings__label">Enable TTS</label>
+                <div
+                  className={`theme-toggle ${config.tts_enabled ? "active" : ""}`}
+                  onClick={() => {
+                    const nextConfig = {
+                      ...config,
+                      tts_enabled: !config.tts_enabled,
+                    };
+                    setConfig(nextConfig);
+                    saveConfig(nextConfig);
+                  }}
+                  style={{ marginLeft: "10px" }}
+                >
+                  <div className="theme-toggle__circle"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div key="advanced-pane" className="settings-tab-pane">
+            <div className="general-settings__section">
+              <h1 className="general-settings__title">Ollama</h1>
+
+              <div className="general-settings__field">
+                <label className="general-settings__label">Ollama URL</label>
+                <div
+                  className="general-settings__input-group"
+                  id="ollama-url-group"
+                >
+                  <input
+                    type="text"
+                    className="general-settings__input"
+                    name="ollama_url"
+                    value={config.ollama_url}
+                    onChange={handleChange}
+                  />
+                  <button
+                    type="button"
+                    className={`refresh-btn ${isRefreshing ? "spinning" : ""}`}
+                    onClick={fetchModels}
+                  ></button>
+                </div>
+              </div>
+
+              <div className="general-settings__field">
+                <label className="general-settings__label">Ollama Model</label>
+                <div className="custom-select">
+                  <div
+                    className="open-icon"
+                    onClick={() => setIsOpen(!isOpen)}
+                  ></div>
+                  <div
+                    className="custom-select__selected"
+                    onClick={() => setIsOpen(!isOpen)}
                   >
-                    Select a model
-                  </li>
+                    {config.ollama_model || "Select a model"}
+                  </div>
 
-                  {models.map((m) => (
-                    <li
-                      key={m.name}
-                      className="custom-select__option"
-                      onClick={() => {
-                        setConfig((prev) => ({
-                          ...prev,
-                          ollama_model: m.name,
-                        }));
-                        setIsOpen(false);
-                      }}
-                    >
-                      {m.name}
-                    </li>
-                  ))}
-
-                  {config.ollama_model &&
-                    !models.find((m) => m.name === config.ollama_model) && (
+                  {isOpen && (
+                    <ul className="custom-select__dropdown">
                       <li
                         className="custom-select__option"
-                        onClick={() => setIsOpen(false)}
+                        onClick={() => {
+                          setConfig((prev) => ({ ...prev, ollama_model: "" }));
+                          setIsOpen(false);
+                        }}
                       >
-                        {config.ollama_model}
+                        Select a model
                       </li>
-                    )}
-                </ul>
-              )}
-            </div>
-            {error && <div className="error-message">{error}</div>}
-          </div>
 
-          <div
-            className="general-settings__field"
-            id="response-speed-container"
-          >
-            <label className="general-settings__label">
-              Response Speed (ms)
-            </label>
-            <input
-              type="number"
-              className="general-settings__input"
-              name="response_speed"
-              min="0"
-              max="1000"
-              value={
-                config.response_speed === ""
-                  ? ""
-                  : (config.response_speed ?? 50)
-              }
-              onChange={handleChange}
-              style={{ marginLeft: "10px", width: "100px" }}
-            />
-          </div>
+                      {models.map((m) => (
+                        <li
+                          key={m.name}
+                          className="custom-select__option"
+                          onClick={() => {
+                            setConfig((prev) => ({
+                              ...prev,
+                              ollama_model: m.name,
+                            }));
+                            setIsOpen(false);
+                          }}
+                        >
+                          {m.name}
+                        </li>
+                      ))}
 
-          <div className="general-settings__field">
-            <label className="general-settings__label">Base Prompt</label>
-            <textarea
-              className="general-settings__input"
-              name="base_prompt"
-              value={config.base_prompt}
-              onChange={handleChange}
-              rows={4}
-            />
-          </div>
-        </div>
-
-        <div
-          className="general-settings__section"
-          style={{ marginTop: "20px" }}
-        >
-          <h1 className="general-settings__title">Identity</h1>
-          <div className="general-settings__field">
-            <label className="general-settings__label">Avatar Model</label>
-            <div className="custom-select">
-              <div
-                className="open-icon"
-                onClick={() => setIsVrmOpen(!isVrmOpen)}
-              ></div>
-              <div
-                className="custom-select__selected"
-                onClick={() => setIsVrmOpen(!isVrmOpen)}
-              >
-                {config.avatar_model || "Select a model"}
+                      {config.ollama_model &&
+                        !models.find((m) => m.name === config.ollama_model) && (
+                          <li
+                            className="custom-select__option"
+                            onClick={() => setIsOpen(false)}
+                          >
+                            {config.ollama_model}
+                          </li>
+                        )}
+                    </ul>
+                  )}
+                </div>
+                {error && <div className="error-message">{error}</div>}
               </div>
 
-              {isVrmOpen && (
-                <ul className="custom-select__dropdown">
-                  {vrmModels.map((m) => (
-                    <li
-                      key={m}
-                      className="custom-select__option"
-                      onClick={() => handleAvatarModelSelect(m)}
-                    >
-                      {m}
-                    </li>
-                  ))}
-                  <li className="custom-select__option add-model-option">
-                    <label htmlFor="vrm-upload" className="add-model-label">
-                      <span className="plus-icon">+</span> Add VRM Model
-                    </label>
-                    <input
-                      type="file"
-                      id="vrm-upload"
-                      accept=".vrm"
-                      onChange={handleVrmUpload}
-                      style={{ display: "none" }}
-                    />
-                  </li>
-                </ul>
-              )}
+              <div
+                className="general-settings__field"
+                id="response-speed-container"
+              >
+                <label className="general-settings__label">
+                  Response Speed (ms)
+                </label>
+                <input
+                  type="number"
+                  className="general-settings__input"
+                  name="response_speed"
+                  min="0"
+                  max="1000"
+                  value={
+                    config.response_speed === ""
+                      ? ""
+                      : (config.response_speed ?? 50)
+                  }
+                  onChange={handleChange}
+                  style={{ marginLeft: "10px", width: "100px" }}
+                />
+              </div>
+
+              <div className="general-settings__field">
+                <label className="general-settings__label">Base Prompt</label>
+                <textarea
+                  className="general-settings__input"
+                  name="base_prompt"
+                  value={config.base_prompt}
+                  onChange={handleChange}
+                  rows={4}
+                />
+              </div>
+            </div>
+
+            <div className="general-settings__section">
+              <h1 className="general-settings__title">Microphone</h1>
+
+              <div
+                className="general-settings__field"
+                style={{
+                  display: "flex",
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+                id="auto-silence-toggle-container"
+              >
+                <label className="general-settings__label">
+                  Auto Silence Detection
+                </label>
+
+                <div
+                  className={`theme-toggle ${
+                    config.auto_silence_detection ? "active" : ""
+                  }`}
+                  onClick={() => {
+                    const nextConfig = {
+                      ...config,
+                      auto_silence_detection: !config.auto_silence_detection,
+                    };
+
+                    setConfig(nextConfig);
+                    saveConfig(nextConfig);
+                  }}
+                  style={{ marginLeft: "10px" }}
+                >
+                  <div className="theme-toggle__circle" />
+                </div>
+              </div>
+
+              <div
+                className="general-settings__field"
+                style={{
+                  display: "flex",
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <label className="general-settings__label">
+                  Auto-send when mic stops
+                </label>
+
+                <div
+                  className={`theme-toggle ${
+                    config.auto_send_on_mic_stop ? "active" : ""
+                  }`}
+                  onClick={() => {
+                    const nextConfig = {
+                      ...config,
+                      auto_send_on_mic_stop: !config.auto_send_on_mic_stop,
+                    };
+
+                    setConfig(nextConfig);
+                    saveConfig(nextConfig);
+                  }}
+                  style={{ marginLeft: "10px" }}
+                >
+                  <div className="theme-toggle__circle" />
+                </div>
+              </div>
+
+              <div
+                className="general-settings__field"
+                id="silence-delay-container"
+                style={{
+                  display: "flex",
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <label className="general-settings__label">
+                  Silence Delay (ms)
+                </label>
+
+                <input
+                  type="number"
+                  min="0"
+                  value={config.silence_delay_ms ?? 2000}
+                  onChange={(e) => {
+                    const nextConfig = {
+                      ...config,
+                      silence_delay_ms: Number(e.target.value),
+                    };
+
+                    setConfig(nextConfig);
+                    saveConfig(nextConfig);
+                  }}
+                  className="general-settings__input"
+                  style={{
+                    marginLeft: "10px",
+                    maxWidth: "75px",
+                  }}
+                />
+              </div>
+            </div>
+
+            <div className="general-settings__section">
+              <h1 className="general-settings__title">Welcome Message</h1>
+              <div
+                className="general-settings__field"
+                id="welcome-threshold-container"
+              >
+                <label className="general-settings__label">
+                  Welcome Threshold (s)
+                </label>
+                <input
+                  type="number"
+                  className="general-settings__input"
+                  name="welcome_threshold"
+                  min="10"
+                  max="3600"
+                  value={
+                    config.welcome_threshold === ""
+                      ? ""
+                      : (config.welcome_threshold ?? 120)
+                  }
+                  onChange={handleChange}
+                  style={{ marginLeft: "10px", width: "100px" }}
+                />
+              </div>
+
+              <div className="general-settings__field">
+                <label className="general-settings__label">
+                  Welcome Prompt
+                </label>
+                <textarea
+                  className="general-settings__input"
+                  name="welcome_message_prompt"
+                  value={config.welcome_message_prompt}
+                  onChange={handleChange}
+                  rows={3}
+                />
+              </div>
+            </div>
+
+            <div className="general-settings__section">
+              <h1 className="general-settings__title">Notifications</h1>
+              <div
+                className="general-settings__field"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                }}
+              >
+                <label className="general-settings__label">
+                  Min Delay (min)
+                </label>
+                <input
+                  type="number"
+                  className="general-settings__input"
+                  name="leave_notification_min_min"
+                  min="1"
+                  value={config.leave_notification_min_min ?? 10}
+                  onChange={handleChange}
+                  style={{
+                    marginLeft: "10px",
+                    width: "80px",
+                    maxWidth: "75px",
+                  }}
+                />
+              </div>
+
+              <div
+                className="general-settings__field"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                }}
+              >
+                <label className="general-settings__label">
+                  Max Delay (min)
+                </label>
+                <input
+                  type="number"
+                  className="general-settings__input"
+                  name="leave_notification_max_min"
+                  min="1"
+                  value={config.leave_notification_max_min ?? 60}
+                  onChange={handleChange}
+                  style={{
+                    marginLeft: "10px",
+                    width: "80px",
+                    maxWidth: "75px",
+                  }}
+                />
+              </div>
+
+              <div className="general-settings__field">
+                <label className="general-settings__label">Leave Prompt</label>
+                <textarea
+                  className="general-settings__input"
+                  name="leave_notification_prompt"
+                  value={config.leave_notification_prompt}
+                  onChange={handleChange}
+                  rows={3}
+                />
+              </div>
+            </div>
+
+            <div className="general-settings__section">
+              <h1 className="general-settings__title">Piper TTS</h1>
+              <div className="general-settings__field">
+                <label className="general-settings__label">Piper URL</label>
+                <input
+                  type="text"
+                  className="general-settings__input"
+                  name="piper_url"
+                  value={config.piper_url || "http://localhost:10200"}
+                  onChange={handleChange}
+                  placeholder="http://localhost:10200"
+                />
+              </div>
             </div>
           </div>
-        </div>
-
-        <div
-          className="general-settings__section"
-          style={{ marginTop: "20px" }}
-        >
-          <h1 className="general-settings__title">Appearance</h1>
-
-          <div className="general-settings__field" id="dark-mode-container">
-            <label className="general-settings__label">Dark Mode</label>
-            <div
-              className={`theme-toggle ${config.is_dark ? "active" : ""}`}
-              onClick={() => {
-                const nextConfig = {
-                  ...config,
-                  is_dark: !config.is_dark,
-                };
-                setConfig(nextConfig);
-                saveConfig(nextConfig);
-              }}
-              style={{ marginLeft: "10px" }}
-            >
-              <div className="theme-toggle__circle" />
-            </div>
-          </div>
-
-          <div className="general-settings__field" id="stealth-mode-container">
-            <label className="general-settings__label">Stealth Mode</label>
-            <div
-              className={`theme-toggle ${config.stealth_mode ? "active" : ""}`}
-              onClick={() => {
-                const nextConfig = {
-                  ...config,
-                  stealth_mode: !config.stealth_mode,
-                };
-                setConfig(nextConfig);
-                saveConfig(nextConfig);
-              }}
-              style={{ marginLeft: "10px" }}
-            >
-              <div className="theme-toggle__circle" />
-            </div>
-          </div>
-
-          <div
-            className="general-settings__field"
-            id="effects-controls-container"
-          >
-            <label className="general-settings__label">Effects</label>
-            <div
-              className={`theme-toggle ${config.enable_effects !== false ? "active" : ""}`}
-              onClick={() => {
-                const nextConfig = {
-                  ...config,
-                  enable_effects: !(config.enable_effects !== false),
-                };
-                setConfig(nextConfig);
-                saveConfig(nextConfig);
-              }}
-              style={{ marginLeft: "10px" }}
-            >
-              <div className="theme-toggle__circle" />
-            </div>
-          </div>
-        </div>
-
-        <div className="general-settings__section">
-          <h1 className="general-settings__title">Interaction</h1>
-
-          <div
-            className="general-settings__field"
-            id="orbit-controls-container"
-          >
-            <label className="general-settings__label">Orbit Controls</label>
-            <div
-              className={`theme-toggle ${config.orbit_controls_enabled !== false ? "active" : ""}`}
-              onClick={() => {
-                const nextConfig = {
-                  ...config,
-                  orbit_controls_enabled: !(
-                    config.orbit_controls_enabled !== false
-                  ),
-                };
-                setConfig(nextConfig);
-                saveConfig(nextConfig);
-              }}
-              style={{ marginLeft: "10px" }}
-            >
-              <div className="theme-toggle__circle" />
-            </div>
-          </div>
-        </div>
-
-        <div className="general-settings__section">
-          <h1 className="general-settings__title">Microphone</h1>
-
-          <div
-            className="general-settings__field"
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-            id="auto-silence-toggle-container"
-          >
-            <label className="general-settings__label">
-              Auto Silence Detection
-            </label>
-
-            <div
-              className={`theme-toggle ${
-                config.auto_silence_detection ? "active" : ""
-              }`}
-              onClick={() => {
-                const nextConfig = {
-                  ...config,
-                  auto_silence_detection: !config.auto_silence_detection,
-                };
-
-                setConfig(nextConfig);
-                saveConfig(nextConfig);
-              }}
-              style={{ marginLeft: "10px" }}
-            >
-              <div className="theme-toggle__circle" />
-            </div>
-          </div>
-
-          <div
-            className="general-settings__field"
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <label className="general-settings__label">
-              Auto-send when mic stops
-            </label>
-
-            <div
-              className={`theme-toggle ${
-                config.auto_send_on_mic_stop ? "active" : ""
-              }`}
-              onClick={() => {
-                const nextConfig = {
-                  ...config,
-                  auto_send_on_mic_stop: !config.auto_send_on_mic_stop,
-                };
-
-                setConfig(nextConfig);
-                saveConfig(nextConfig);
-              }}
-              style={{ marginLeft: "10px" }}
-            >
-              <div className="theme-toggle__circle" />
-            </div>
-          </div>
-
-          <div
-            className="general-settings__field"
-            id="silence-delay-container"
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <label className="general-settings__label">
-              Silence Delay (ms)
-            </label>
-
-            <input
-              type="number"
-              min="0"
-              value={config.silence_delay_ms ?? 2000}
-              onChange={(e) => {
-                const nextConfig = {
-                  ...config,
-                  silence_delay_ms: Number(e.target.value),
-                };
-
-                setConfig(nextConfig);
-                saveConfig(nextConfig);
-              }}
-              className="general-settings__input"
-              style={{
-                marginLeft: "10px",
-                maxWidth: "75px",
-              }}
-            />
-          </div>
-        </div>
-
-        <div className="general-settings__section">
-          <h1 className="general-settings__title">Welcome Message</h1>
-          <div
-            className="general-settings__field"
-            id="welcome-threshold-toggle-container"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              flexDirection: "row",
-              justifyContent: "space-between",
-            }}
-          >
-            <label className="general-settings__label">Enable Welcome</label>
-
-            <div
-              className={`theme-toggle ${config.enable_welcome_message ? "active" : ""}`}
-              onClick={() => {
-                const nextConfig = {
-                  ...config,
-                  enable_welcome_message: !config.enable_welcome_message,
-                };
-                setConfig(nextConfig);
-                saveConfig(nextConfig);
-              }}
-              style={{ marginLeft: "10px" }}
-            >
-              <div className="theme-toggle__circle" />
-            </div>
-          </div>
-
-          <div
-            className="general-settings__field"
-            id="welcome-threshold-container"
-          >
-            <label className="general-settings__label">
-              Welcome Threshold (s)
-            </label>
-            <input
-              type="number"
-              className="general-settings__input"
-              name="welcome_threshold"
-              min="10"
-              max="3600"
-              value={
-                config.welcome_threshold === ""
-                  ? ""
-                  : (config.welcome_threshold ?? 120)
-              }
-              onChange={handleChange}
-              style={{ marginLeft: "10px", width: "100px" }}
-            />
-          </div>
-
-          <div className="general-settings__field">
-            <label className="general-settings__label">Welcome Prompt</label>
-            <textarea
-              className="general-settings__input"
-              name="welcome_message_prompt"
-              value={config.welcome_message_prompt}
-              onChange={handleChange}
-              rows={3}
-            />
-          </div>
-        </div>
-
-        <div
-          className="general-settings__section"
-          style={{ marginTop: "20px" }}
-        >
-          <h1 className="general-settings__title">Notifications</h1>
-          <div className="general-settings__field notification-settings-field">
-            <div>
-              <label className="general-settings__label">Subscribed</label>
-            </div>
-            <button
-              type="button"
-              className={`theme-toggle notification-settings__toggle ${isSubscribed ? "active" : ""}`}
-              onClick={handleSubscribeNotifications}
-              disabled={
-                isSubscribing ||
-                isSubscribed ||
-                !supportNotification ||
-                ("Notification" in window &&
-                  Notification.permission === "denied")
-              }
-              aria-label="Subscribe to push notifications"
-              aria-pressed={isSubscribed}
-            >
-              <div className="theme-toggle__circle"></div>
-            </button>
-          </div>
-
-          <div
-            className="general-settings__field"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              flexDirection: "row",
-              justifyContent: "space-between",
-            }}
-          >
-            <label className="general-settings__label">
-              Enable Leave Notification
-            </label>
-            <div
-              className={`theme-toggle ${config.enable_leave_notifications ? "active" : ""}`}
-              onClick={() => {
-                const nextConfig = {
-                  ...config,
-                  enable_leave_notifications:
-                    !config.enable_leave_notifications,
-                };
-                setConfig(nextConfig);
-                saveConfig(nextConfig);
-              }}
-              style={{ marginLeft: "10px" }}
-            >
-              <div className="theme-toggle__circle" />
-            </div>
-          </div>
-
-          <div
-            className="general-settings__field"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              flexDirection: "row",
-              justifyContent: "space-between",
-            }}
-          >
-            <label className="general-settings__label">Min Delay (min)</label>
-            <input
-              type="number"
-              className="general-settings__input"
-              name="leave_notification_min_min"
-              min="1"
-              value={config.leave_notification_min_min ?? 10}
-              onChange={handleChange}
-              style={{ marginLeft: "10px", width: "80px", maxWidth: "75px" }}
-            />
-          </div>
-
-          <div
-            className="general-settings__field"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              flexDirection: "row",
-              justifyContent: "space-between",
-            }}
-          >
-            <label className="general-settings__label">Max Delay (min)</label>
-            <input
-              type="number"
-              className="general-settings__input"
-              name="leave_notification_max_min"
-              min="1"
-              value={config.leave_notification_max_min ?? 60}
-              onChange={handleChange}
-              style={{ marginLeft: "10px", width: "80px", maxWidth: "75px" }}
-            />
-          </div>
-
-          <div className="general-settings__field">
-            <label className="general-settings__label">Leave Prompt</label>
-            <textarea
-              className="general-settings__input"
-              name="leave_notification_prompt"
-              value={config.leave_notification_prompt}
-              onChange={handleChange}
-              rows={3}
-            />
-          </div>
-        </div>
-
-        <div
-          className="general-settings__section"
-          style={{ marginTop: "20px" }}
-        >
-          <h1 className="general-settings__title">Piper TTS</h1>
-          <div className="general-settings__field" id="tts-mode-container">
-            <label className="general-settings__label">Enable TTS</label>
-            <div
-              className={`theme-toggle ${config.tts_enabled ? "active" : ""}`}
-              onClick={() => {
-                const nextConfig = {
-                  ...config,
-                  tts_enabled: !config.tts_enabled,
-                };
-                setConfig(nextConfig);
-                saveConfig(nextConfig);
-              }}
-              style={{ marginLeft: "10px" }}
-            >
-              <div className="theme-toggle__circle"></div>
-            </div>
-          </div>
-
-          <div className="general-settings__field">
-            <label className="general-settings__label">Piper URL</label>
-            <input
-              type="text"
-              className="general-settings__input"
-              name="piper_url"
-              value={config.piper_url || "http://localhost:10200"}
-              onChange={handleChange}
-              placeholder="http://localhost:10200"
-            />
-          </div>
-        </div>
+        )}
 
         <button type="submit" className="save-btn">
           Save
