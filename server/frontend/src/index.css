@@ -18,6 +18,9 @@
   --typing-dots-background: #eeeeee;
 
   --theme-active: #5b7cff;
+
+  --success-color: #3fbf7f;
+  --error-color: #ff6b81;
 }
 
 body.dark {
@@ -40,6 +43,9 @@ body.dark {
   --typing-dots-background: #2a2d36;
 
   --theme-active: #a9c1ff;
+
+  --success-color: #4fd19a;
+  --error-color: #ff5f7a;
 }
 
 html.is-electron,
@@ -117,7 +123,7 @@ html {
 }
 
 .page-transition-container--animating {
-  animation: pageFadeIn 0.35s cubic-bezier(0.215, 0.610, 0.355, 1.000) both;
+  animation: pageFadeIn 0.35s cubic-bezier(0.215, 0.61, 0.355, 1) both;
 }
 
 @keyframes pageFadeIn {
@@ -132,4 +138,3 @@ html {
     filter: blur(0);
   }
 }
-
