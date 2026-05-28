@@ -9,6 +9,8 @@ function Home({ config, onAudioStateChange }) {
   const [chathidden, setChathidden] = useState(true);
   const [inputmsg, setInputmsg] = useState("");
   const [inputLocked, setInputLocked] = useState(false);
+  const [callMode, setCallMode] = useState(false);
+  const [callExit, setCallExit] = useState(false);
 
   return (
     <div
@@ -30,6 +32,8 @@ function Home({ config, onAudioStateChange }) {
         userName={config.user_name}
         aiName={config.ai_name}
         onAudioStateChange={onAudioStateChange}
+        callMode={callMode}
+        setCallMode={setCallMode}
       />
       <Input
         inputmsg={inputmsg}
@@ -39,6 +43,11 @@ function Home({ config, onAudioStateChange }) {
         setChatRole={setChatRole}
         inputLocked={inputLocked}
         config={config}
+        callMode={callMode}
+        setCallMode={setCallMode}
+        stealthMode={config.stealth_mode}
+        callExit={callExit}
+        setCallExit={setCallExit}
       />
     </div>
   );

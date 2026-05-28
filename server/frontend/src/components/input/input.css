@@ -36,15 +36,120 @@
 .input-container.call-mode {
   width: 72px;
   height: 72px;
+}
+
+.input-container.call-mode-fullscreen {
+  width: 92px;
+  height: 92px;
+  position: fixed;
+  animation: callToCenter 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.input-container.call-mode-exit{
+  animation: callToBottom 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes callToCenter {
+  0% {
+    bottom: 0%;
+    transform: translateX(-50%) scale(0.95);
+    opacity: 0.6;
+  }
+
+  40% {
+    bottom: 60%;
+    transform: translateX(-50%) scale(1.08);
+    opacity: 1;
+  }
+
+  70% {
+    bottom: 48%;
+    transform: translateX(-50%) scale(0.98);
+  }
+
+  100% {
+    bottom: 50%;
+    transform: translateX(-50%) scale(1);
+  }
+}
+
+@keyframes callToBottom {
+  0% {
+    bottom: 50%;
+    transform: translateX(-50%) scale(1);
+    opacity: 1;
+  }
+
+  30% {
+    bottom: 48%;
+    transform: translateX(-50%) scale(0.98);
+  }
+
+  60% {
+    bottom: 60%;
+    transform: translateX(-50%) scale(1.08);
+    opacity: 1;
+  }
+
+  100% {
+    bottom: 0%;
+    transform: translateX(-50%) scale(0.95);
+    opacity: 0.6;
+  }
+}
+
+.input-container.call-mode,
+.input-container.call-mode-fullscreen {
   border-radius: 50%;
   background: var(--overlay-background);
   border: 1px solid var(--overlay-border);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
-.input-container.call-mode::before {
+.input-container.call-mode .input-inner,
+.input-container.call-mode-fullscreen .input-inner {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.input-container.call-mode .circle-icon,
+.input-container.call-mode-fullscreen .circle-icon {
+  opacity: 1;
+  transform: scale(1) rotate(0deg);
+}
+
+.input-container.call-mode .orbit-ring,
+.input-container.call-mode-fullscreen .orbit-ring {
+  opacity: 1;
+  animation: orbit 2.4s linear infinite;
+}
+
+.input-container.call-mode::before,
+.input-container.call-mode-fullscreen::before {
   opacity: 0;
   transition: opacity 0.3s ease;
+}
+
+.call-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background:
+    radial-gradient(circle at top, var(--overlay-background), transparent 60%),
+    radial-gradient(
+      circle at bottom,
+      var(--overlay-2-background),
+      transparent 70%
+    ),
+    linear-gradient(180deg, var(--main-background), var(--overlay-background));
+  opacity: 0;
+  transition: opacity 2s ease;
+  pointer-events: none;
+}
+.call-background.active {
+  opacity: 1;
 }
 
 .input-inner {
@@ -53,6 +158,36 @@
   width: 100%;
   height: 100%;
   transition: opacity 0.22s ease;
+}
+
+.call-btn {
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--h3-color);
+  margin-left: 8px;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.call-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.call-btn:hover {
+  color: var(--theme-active);
+  transform: scale(1.08);
+}
+
+.call-btn:active {
+  transform: scale(0.94);
 }
 
 .circle-icon {
@@ -84,25 +219,10 @@
   }
 }
 
-.input-container.call-mode .orbit-ring {
-  opacity: 1;
-  animation: orbit 2.4s linear infinite;
-}
-
 @keyframes orbit {
   to {
     transform: rotate(360deg);
   }
-}
-
-.input-container.call-mode .circle-icon {
-  opacity: 1;
-  transform: scale(1) rotate(0deg);
-}
-
-.input-container.call-mode .input-inner {
-  opacity: 0;
-  pointer-events: none;
 }
 
 .input-container::before {

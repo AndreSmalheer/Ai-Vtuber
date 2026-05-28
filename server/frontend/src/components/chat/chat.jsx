@@ -13,6 +13,8 @@ function Chat({
   userName = "Andre",
   aiName = "Mia",
   onAudioStateChange,
+  callMode,
+  setCallMode,
 }) {
   const [airesponse, setAiResponse] = useState("");
   const [aiResponseLoading, setAiResponseLoading] = useState(false);
@@ -398,28 +400,33 @@ function Chat({
     };
   }, [stealthMode, userName, aiName]);
 
-  if (stealthMode) {
-    return (
-      <div className="chat-wrapper stealth" ref={scrollRef}>
-        {messages.map((m, i) => (
-          <div key={i} className={`stealth-message ${m.role}`}>
-            <span className="role">
-              {m.role === "user" ? userName : aiName}
-            </span>
-            <p className="text">{m.text}</p>
-          </div>
-        ))}
-        {chatRole === "ai" && (
-          <div className="stealth-message ai current">
-            <span className="role">{aiName}</span>
-            <p className={`text ${aiResponseLoading ? "loading" : ""}`}>
-              {airesponse}
-            </p>
-          </div>
-        )}
-      </div>
-    );
+  if (callMode){
+    return(
+        <></>
+    )
   }
+    if (stealthMode) {
+      return (
+        <div className="chat-wrapper stealth" ref={scrollRef}>
+          {messages.map((m, i) => (
+            <div key={i} className={`stealth-message ${m.role}`}>
+              <span className="role">
+                {m.role === "user" ? userName : aiName}
+              </span>
+              <p className="text">{m.text}</p>
+            </div>
+          ))}
+          {chatRole === "ai" && (
+            <div className="stealth-message ai current">
+              <span className="role">{aiName}</span>
+              <p className={`text ${aiResponseLoading ? "loading" : ""}`}>
+                {airesponse}
+              </p>
+            </div>
+          )}
+        </div>
+      );
+    }
 
   return (
     <div className="chat-wrapper">
