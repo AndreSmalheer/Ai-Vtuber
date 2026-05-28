@@ -22,22 +22,34 @@ function Input({
   const audioChunksRef = useRef([]);
   const silenceTimerRef = useRef(null);
   const audioContextRef = useRef(null);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
 
   useEffect(() => {
-    const setStableAppHeight = () => {
-      stableHeightRef.current = window.innerHeight;
+    const viewport = window.visualViewport;
+
+    if (!viewport) return;
+
+    const handleViewportChange = () => {
+      const heightDifference = stableHeightRef.current - viewport.height;
+
+      setKeyboardVisible(heightDifference > 150);
+
+      const keyboardOffset = Math.max(0, heightDifference - viewport.offsetTop);
+
       document.documentElement.style.setProperty(
-        "--app-height",
-        `${stableHeightRef.current}px`,
+        "--keyboard-offset",
+        `${keyboardOffset}px`,
       );
     };
 
-    setStableAppHeight();
+    viewport.addEventListener("resize", handleViewportChange);
+    viewport.addEventListener("scroll", handleViewportChange);
 
-    window.addEventListener("orientationchange", setStableAppHeight);
+    handleViewportChange();
 
     return () => {
-      window.removeEventListener("orientationchange", setStableAppHeight);
+      viewport.removeEventListener("resize", handleViewportChange);
+      viewport.removeEventListener("scroll", handleViewportChange);
     };
   }, []);
 
@@ -246,8 +258,9 @@ function Input({
   return (
     <div
       className={`input-container
-    ${inputLocked ? "disabled" : ""}
-    ${isFocused ? "focused keyboard-visible" : ""}`}
+        ${inputLocked ? "disabled" : ""}
+        ${isFocused ? "focused" : ""}
+        ${keyboardVisible ? "keyboard-visible" : ""}`}
     >
       <input
         ref={inputRef}
@@ -279,7 +292,7 @@ function Input({
         <span className="recording-dot"></span>
       </button>
       <button
-        disabled={!inputLocked && (inputmsg.trim().length === 0)}
+        disabled={!inputLocked && inputmsg.trim().length === 0}
         className={inputLocked ? "pause-btn" : "send-btn"}
         onClick={inputLocked ? handleStop : handleInput}
       />
