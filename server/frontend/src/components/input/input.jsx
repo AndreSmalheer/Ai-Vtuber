@@ -258,44 +258,52 @@ function Input({
   return (
     <div
       className={`input-container
-        ${inputLocked ? "disabled" : ""}
-        ${isFocused ? "focused" : ""}
-        ${keyboardVisible ? "keyboard-visible" : ""}`}
+      ${inputLocked ? "disabled is-circle" : ""}
+      ${isFocused ? "focused" : ""}
+      ${keyboardVisible ? "keyboard-visible" : ""}`}
     >
-      <input
-        ref={inputRef}
-        type="text"
-        placeholder="Type your message here..."
-        value={inputmsg}
-        onChange={(e) => {
-          setInputmsg(e.target.value);
-        }}
-        onKeyPress={(e) => e.key === "Enter" && handleInput()}
-        onTouchStart={handleTouchStart}
-        onFocus={() => setIsFocused(true)}
-        onBlur={() => setIsFocused(false)}
-        disabled={inputLocked}
-      />
-      <button
-        type="button"
-        className={`mic-btn ${isRecording ? "recording" : ""}`}
-        disabled={inputLocked}
-        onClick={handleMicClick}
-        aria-label="Voice input"
-      >
-        <svg viewBox="0 0 24 24">
-          <path d="M12 15a3 3 0 0 0 3-3V7a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3Z" />
-          <path d="M19 12a7 7 0 0 1-14 0" />
-          <path d="M12 19v3" />
-          <path d="M8 22h8" />
-        </svg>
-        <span className="recording-dot"></span>
-      </button>
-      <button
-        disabled={!inputLocked && inputmsg.trim().length === 0}
-        className={inputLocked ? "pause-btn" : "send-btn"}
-        onClick={inputLocked ? handleStop : handleInput}
-      />
+      <div className="orbit-ring" />
+
+      <div className="input-inner">
+        <input
+          ref={inputRef}
+          type="text"
+          placeholder="Type your message here..."
+          value={inputmsg}
+          onChange={(e) => setInputmsg(e.target.value)}
+          onKeyPress={(e) => e.key === "Enter" && handleInput()}
+          onTouchStart={handleTouchStart}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
+          disabled={inputLocked}
+        />
+
+        <div
+          className={`action-btn-wrapper ${inputmsg.trim().length > 0 ? "has-text" : ""}`}
+        >
+          <button
+            type="button"
+            className={`mic-btn ${isRecording ? "recording" : ""}`}
+            disabled={inputLocked}
+            onClick={handleMicClick}
+            aria-label="Voice input"
+          >
+            <svg viewBox="0 0 24 24">
+              <path d="M12 15a3 3 0 0 0 3-3V7a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3Z" />
+              <path d="M19 12a7 7 0 0 1-14 0" />
+              <path d="M12 19v3" />
+              <path d="M8 22h8" />
+            </svg>
+            <span className="recording-dot"></span>
+          </button>
+
+          <button
+            className={inputLocked ? "pause-btn" : "send-btn"}
+            onClick={inputLocked ? handleStop : handleInput}
+            aria-label="Send"
+          />
+        </div>
+      </div>
     </div>
   );
 }

@@ -24,6 +24,85 @@
   will-change: transform;
   transform: translateX(-50%);
   backface-visibility: hidden;
+  transition:
+    width 0.6s cubic-bezier(0.68, -0.3, 0.32, 1.3),
+    height 0.6s cubic-bezier(0.68, -0.3, 0.32, 1.3),
+    border-radius 0.6s cubic-bezier(0.68, -0.3, 0.32, 1.3),
+    box-shadow 0.5s ease,
+    border-color 0.4s ease;
+  will-change: width, height, border-radius;
+}
+
+.input-container.call-mode {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--overlay-background);
+  border: 1px solid var(--overlay-border);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.input-container.call-mode::before {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.input-inner {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  transition: opacity 0.22s ease;
+}
+
+.circle-icon {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0.5) rotate(-30deg);
+  transition:
+    opacity 0.3s ease 0.35s,
+    transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0.35s;
+  pointer-events: none;
+}
+
+@keyframes softPulse {
+  0% {
+    opacity: 0.5;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0.5;
+    transform: scale(0.85);
+  }
+}
+
+.input-container.call-mode .orbit-ring {
+  opacity: 1;
+  animation: orbit 2.4s linear infinite;
+}
+
+@keyframes orbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.input-container.call-mode .circle-icon {
+  opacity: 1;
+  transform: scale(1) rotate(0deg);
+}
+
+.input-container.call-mode .input-inner {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .input-container::before {
@@ -85,7 +164,7 @@
 
 .send-btn,
 .pause-btn {
-  background: var(--overlay-border);
+  background: var(--overlay-2-background);
 }
 
 .send-btn:disabled {
@@ -168,7 +247,6 @@
   transform: scale(1.05);
 }
 
-/* subtle breathing dot */
 .mic-btn .recording-dot {
   position: absolute;
   top: 8px;
@@ -203,4 +281,49 @@
     opacity: 0.5;
     transform: scale(0.85);
   }
+}
+
+.action-btn-wrapper {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+.action-btn-wrapper .mic-btn,
+.action-btn-wrapper .send-btn,
+.action-btn-wrapper .pause-btn {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+
+.action-btn-wrapper .mic-btn {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
+}
+
+.action-btn-wrapper .send-btn {
+  opacity: 0;
+  transform: scale(0.7);
+  pointer-events: none;
+}
+
+.action-btn-wrapper.has-text .mic-btn {
+  opacity: 0;
+  transform: scale(0.7);
+  pointer-events: none;
+}
+
+.action-btn-wrapper.has-text .send-btn {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
 }
