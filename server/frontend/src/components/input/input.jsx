@@ -259,23 +259,7 @@ function Input({
     focusWithoutScroll();
   }
 
-  const toggleCallMode = () => {
-    if (callMode) {
-      setCallExit(true);
 
-      setTimeout(() => {
-        setCallMode(false);
-        setCallExit(false);
-      }, 600);
-    } else {
-      setCallMode(true);
-
-      setCallAnimatingIn(true);
-      requestAnimationFrame(() => {
-        setCallAnimatingIn(false);
-      });
-    }
-  };
 
   return (
     <>

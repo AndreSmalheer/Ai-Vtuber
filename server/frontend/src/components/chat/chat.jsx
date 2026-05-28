@@ -400,36 +400,31 @@ function Chat({
     };
   }, [stealthMode, userName, aiName]);
 
-  if (callMode){
-    return(
-        <></>
-    )
+  if (stealthMode) {
+    return (
+      <div className="chat-wrapper stealth" ref={scrollRef}>
+        {messages.map((m, i) => (
+          <div key={i} className={`stealth-message ${m.role}`}>
+            <span className="role">
+              {m.role === "user" ? userName : aiName}
+            </span>
+            <p className="text">{m.text}</p>
+          </div>
+        ))}
+        {chatRole === "ai" && (
+          <div className="stealth-message ai current">
+            <span className="role">{aiName}</span>
+            <p className={`text ${aiResponseLoading ? "loading" : ""}`}>
+              {airesponse}
+            </p>
+          </div>
+        )}
+      </div>
+    );
   }
-    if (stealthMode) {
-      return (
-        <div className="chat-wrapper stealth" ref={scrollRef}>
-          {messages.map((m, i) => (
-            <div key={i} className={`stealth-message ${m.role}`}>
-              <span className="role">
-                {m.role === "user" ? userName : aiName}
-              </span>
-              <p className="text">{m.text}</p>
-            </div>
-          ))}
-          {chatRole === "ai" && (
-            <div className="stealth-message ai current">
-              <span className="role">{aiName}</span>
-              <p className={`text ${aiResponseLoading ? "loading" : ""}`}>
-                {airesponse}
-              </p>
-            </div>
-          )}
-        </div>
-      );
-    }
 
   return (
-    <div className="chat-wrapper">
+    <div className={`chat-wrapper ${callMode ? "hidden" : ""}`}>
       <div
         className={`chat-container ${
           !chatmsg && !chatRole && !airesponse

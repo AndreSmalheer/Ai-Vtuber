@@ -88,3 +88,40 @@
 .settings-button:hover {
   background-color: var(--theme-active);
 }
+
+.call-btn {
+  width: 46px;
+  height: 46px;
+  color: var(--nav-btn);
+  background-color: transparent;
+  border: none;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+  border-radius: 12px;
+
+  transition:
+    transform 0.15s ease,
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .call-btn:hover {
+    transform: scale(1.06);
+    color: var(--theme-active);
+  }
+}
+
+.call-btn:active {
+  transform: scale(0.92);
+  color: var(--theme-active);
+}
+
+.call-btn:focus-visible {
+  outline: 2px solid var(--theme-active);
+  outline-offset: 2px;
+}

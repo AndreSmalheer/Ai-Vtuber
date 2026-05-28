@@ -12,13 +12,31 @@ function Home({ config, onAudioStateChange }) {
   const [callMode, setCallMode] = useState(false);
   const [callExit, setCallExit] = useState(false);
 
+  const toggleCallMode = () => {
+    if (callMode) {
+      setCallExit(true);
+
+      setTimeout(() => {
+        setCallMode(false);
+        setCallExit(false);
+      }, 600);
+    } else {
+      setCallMode(true);
+
+      setCallAnimatingIn(true);
+      requestAnimationFrame(() => {
+        setCallAnimatingIn(false);
+      });
+    }
+  };
+
   return (
     <div
       className={
         config.stealth_mode ? "home-layout stealth-layout" : "home-layout"
       }
     >
-      <Header backBtn={false} settingsBtn={true} />
+      <Header backBtn={false} settingsBtn={true} callBtn={true} toggleCallMode={toggleCallMode} />
       <Chat
         chatmsg={chatmsg}
         chathidden={chathidden}
