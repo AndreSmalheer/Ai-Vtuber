@@ -104,7 +104,7 @@ export default function Avatar({
     const character = characterRef.current;
     if (!sceneReady || !avatarScene) return;
 
-    if (!isWindowVisible) {
+    if (!isWindowVisible || !visible) {
       return;
     }
 
@@ -145,7 +145,13 @@ export default function Avatar({
       cancelled = true;
       controller.abort();
     };
-  }, [avatarModel, isWindowVisible, sceneReady, visibilityReloadKey]);
+  }, [avatarModel, isWindowVisible, sceneReady, visibilityReloadKey, visible]);
+
+  useEffect(() => {
+    if (!visible) {
+      setState(AvatarState.DISPOSING);
+    }
+  }, [visible, setState]);
 
   useEffect(() => {
     const avatarScene = sceneRef.current;
@@ -173,7 +179,7 @@ export default function Avatar({
       avatarScene,
       character,
       () => lipSyncStateRef.current,
-      () => enableEffectsRef.current
+      () => enableEffectsRef.current,
     );
 
     return () => stop?.();

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import "./chat.css";
+import { useVoiceAnimation } from "../../hooks/useVoiceAnimation";
 
 function Chat({
   chatmsg,
@@ -29,6 +30,9 @@ function Chat({
   const scrollRef = useRef(null);
   const abortControllerRef = useRef(null);
 
+  const [aiAnalyser, setAiAnalyser] = useState(null);
+  const aiVolume = useVoiceAnimation(aiAnalyser);
+
   const displayText = chatRole === "ai" ? airesponse : chatmsg;
 
   const stopGeneration = () => {
@@ -49,6 +53,7 @@ function Chat({
     }
     audioQueue.current = [];
     isAudioPlaying.current = false;
+    setAiAnalyser(null);
     onAudioStateChange?.({
       isPlaying: false,
       analyser: null,
@@ -99,6 +104,7 @@ function Chat({
   const playNextAudio = () => {
     if (audioQueue.current.length === 0) {
       isAudioPlaying.current = false;
+      setAiAnalyser(null);
       onAudioStateChange?.({
         isPlaying: false,
         analyser: null,
@@ -123,6 +129,7 @@ function Chat({
       }
 
       const lipSyncAnalyser = createLipSyncAnalyser(audio);
+      setAiAnalyser(lipSyncAnalyser?.analyser || null);
 
       onAudioStateChange?.({
         isPlaying: true,
@@ -400,6 +407,37 @@ function Chat({
     };
   }, [stealthMode, userName, aiName]);
 
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('ai-volume-change', { detail: aiVolume }));
+  }, [aiVolume]);
+
+  const [showScrollBtn, setShowScrollBtn] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (scrollRef.current) {
+        const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
+        setShowScrollBtn(scrollTop < scrollHeight - clientHeight - 100);
+      }
+    };
+
+    const currentRef = scrollRef.current;
+    if (currentRef) {
+      currentRef.addEventListener("scroll", handleScroll);
+    }
+    return () => {
+      if (currentRef) {
+        currentRef.removeEventListener("scroll", handleScroll);
+      }
+    };
+  }, [stealthMode]);
+
+  const scrollToBottom = () => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
+    }
+  };
+
   if (stealthMode) {
     return (
       <div className="chat-wrapper stealth" ref={scrollRef}>
@@ -419,6 +457,15 @@ function Chat({
             </p>
           </div>
         )}
+        <button
+          className={`scroll-to-bottom-btn ${showScrollBtn ? "visible" : ""}`}
+          onClick={scrollToBottom}
+          aria-label="Scroll to bottom"
+        >
+          <svg viewBox="0 0 24 24">
+            <path d="M7 10l5 5 5-5z" />
+          </svg>
+        </button>
       </div>
     );
   }

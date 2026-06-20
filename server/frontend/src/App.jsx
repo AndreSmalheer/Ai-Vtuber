@@ -132,7 +132,7 @@ function App() {
             path="/settings-nav"
             element={
               <>
-                <Header backBtn={true} settingsBtn={false} />
+                <Header backBtn={true} settingsBtn={false} config={config} />
                 <Settings /> {/* This component now acts as the menu */}
               </>
             }
@@ -142,7 +142,7 @@ function App() {
             path="/settings"
             element={
               <>
-                <Header backBtn={true} settingsBtn={false} fixed={true} />
+                <Header backBtn={true} settingsBtn={false} fixed={true} config={config} />
                 <GeneralSettings />
               </>
             }
@@ -151,7 +151,7 @@ function App() {
             path="/chat-history"
             element={
               <>
-                <Header backBtn={true} settingsBtn={false} fixed={true} />
+                <Header backBtn={true} settingsBtn={false} fixed={true} config={config} />
                 <ChatHistory />
               </>
             }

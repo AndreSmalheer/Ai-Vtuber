@@ -1,8 +1,7 @@
 import "./Onboarding.css";
 import { useEffect, useState, useRef } from "react";
 
-const FALLBACK_VAPID_PUBLIC_KEY =
-  import.meta.env.VITE_VAPID_PUBLIC_KEY;
+const FALLBACK_VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
 
 function urlBase64ToUint8Array(base64String) {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
@@ -279,8 +278,33 @@ const NotificationIcon = ({ size = 35, className = "" }) => (
     className={className}
   >
     <path
-      d="M15.8335 33.25H22.1669C22.1669 34.0899 21.8332 34.8953 21.2394 35.4892C20.6455 36.083 19.84 36.4167 19.0002 36.4167C18.1603 36.4167 17.3549 36.083 16.761 35.4892C16.1671 34.8953 15.8335 34.0899 15.8335 33.25ZM4.87052 29.1064C4.75065 28.817 4.71932 28.4986 4.78047 28.1914C4.84163 27.8842 4.99254 27.602 5.2141 27.3806L7.91685 24.6778V15.8333C7.92194 13.171 8.88441 10.5992 10.6285 8.58768C12.3726 6.57613 14.7821 5.25897 17.4169 4.87668V3.16668C17.4169 2.74675 17.5837 2.34402 17.8806 2.04709C18.1775 1.75016 18.5803 1.58334 19.0002 1.58334C19.4201 1.58334 19.8228 1.75016 20.1198 2.04709C20.4167 2.34402 20.5835 2.74675 20.5835 3.16668V4.87668C23.2183 5.25897 25.6277 6.57613 27.3718 8.58768C29.116 10.5992 30.0784 13.171 30.0835 15.8333V24.6778L32.7863 27.3806C33.0076 27.602 33.1584 27.8841 33.2194 28.1912C33.2805 28.4983 33.2492 28.8166 33.1293 29.1059C33.0095 29.3952 32.8066 29.6424 32.5463 29.8164C32.286 29.9904 31.98 30.0833 31.6669 30.0833H6.33352C6.02039 30.0834 5.71427 29.9907 5.45386 29.8168C5.19345 29.6429 4.99045 29.3957 4.87052 29.1064ZM10.1557 26.9167H27.8447L27.3808 26.4528C27.0838 26.1559 26.9169 25.7532 26.9169 25.3333V15.8333C26.9169 13.7337 26.0828 11.7201 24.5981 10.2354C23.1135 8.75075 21.0998 7.91668 19.0002 7.91668C16.9006 7.91668 14.8869 8.75075 13.4023 10.2354C11.9176 11.7201 11.0835 13.7337 11.0835 15.8333V25.3333C11.0834 25.7532 10.9166 26.1559 10.6196 26.4528L10.1557 26.9167Z"
+      d="M15.8335 33.25H22.1669C22.1669 34.0899 21.8332 34.8953 21.2394 35.4892C20.6455 36.083 19.84 36.4167 19.0002 36.4167C18.1603 36.4167 17.3549 36.083 16.761 35.4892C16.1671 34.8953 15.8335 34.0899 15.8335 33.25ZM4.87052 29.1064C4.75065 28.817 4.71932 28.4986 4.78047 28.1914C4.84163 27.8842 4.99254 27.602 5.2141 27.3806L7.91685 24.6778V15.8333C7.92194 13.171 8.88441 10.5992 10.6285 8.58768C12.3726 6.57613 14.7821 5.25897 17.4169 4.87668V3.16668C17.4169 2.74675 17.5837 2.34402 17.8806 2.04709C18.1775 1.75016 18.5803 1.58334 19.0002 1.58334C19.4201 1.58334 19.8228 1.75016 20.1198 2.04709C20.4167 2.34402 20.5835 2.74675 20.5835 3.16668V4.87668C23.2183 5.25897 25.6277 6.57613 27.3718 8.58768C29.116 10.5992 30.0784 13.171 30.0835 15.8333V24.6778L32.7863 27.3806C33.0076 27.602 33.1584 27.8841 33.2194 28.1912C33.2805 28.4983 33.2492 28.8166 33.1293 29.1059C33.0095 29.3952 32.8066 29.6424 32.5463 29.8164C32.286 29.9904 31.98 30.0833 31.6669 30.0833H6.33352C6.02039 30.0834 5.71427 29.9907 5.45386 29.8168C5.19345 29.6429 4.99045 29.3957 4.87052 29.1064ZM10.1557 26.9167H27.8447L27.3808 26.4528C27.0838 26.1559 26.9169 25.3333V15.8333C26.9169 13.7337 26.0828 11.7201 24.5981 10.2354C23.1135 8.75075 21.0998 7.91668 19.0002 7.91668C16.9006 7.91668 14.8869 8.75075 13.4023 10.2354C11.9176 11.7201 11.0835 13.7337 11.0835 15.8333V25.3333C11.0834 25.7532 10.9166 26.1559 10.6196 26.4528L10.1557 26.9167Z"
       fill="currentColor"
+    />
+  </svg>
+);
+
+const DownloadIcon = ({ size = 33 }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M12 15L12 3M12 15L8 11M12 15L16 11"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M2 17L2.621 19.484C2.84649 20.3859 3.39462 21.1741 4.1673 21.7061C4.93998 22.2381 5.88241 22.4744 6.825 22.373H17.175C18.1176 22.4744 19.06 22.2381 19.8327 21.7061C20.6054 21.1741 21.1535 20.3859 21.379 19.484L22 17"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
     />
   </svg>
 );
@@ -288,42 +312,39 @@ const NotificationIcon = ({ size = 35, className = "" }) => (
 function Welcome({ setCurrentStep, setIsFirstVisit }) {
   return (
     <>
-      <div className="onboarding-shell">
-        <div className="onboarding-container">
-          <h1 className="onboarding-title">Meet Mia</h1>
+      <h1 className="onboarding-title">Meet Mia</h1>
 
-          <div className="onboarding-img-wrapper">
-            <img
-              className="onboarding-img-big"
-              src="/onboarding/welcome-onboarding-img.png"
-              alt=""
-            />
-          </div>
+      <div className="onboarding-img-wrapper">
+        <img
+          className="onboarding-img-big"
+          src="/onboarding/welcome-onboarding-img.png"
+          alt=""
+        />
+      </div>
 
-          <h2 className="onboarding-sub-title">
-            your personal AI<br></br> companion.
-          </h2>
+      <h2 className="onboarding-sub-title">
+        your personal AI<br></br> companion.
+      </h2>
 
-          <div className="bottom-container">
-            <div className="onboarding-dots-container">
-              <div className="onboarding-dot active"></div>
-              <div className="onboarding-dot"></div>
-              <div className="onboarding-dot"></div>
-              <div className="onboarding-dot"></div>
-            </div>
-
-            <button
-              className="get-started-btn"
-              onClick={() => setCurrentStep((prev) => prev + 1)}
-            >
-              Get Started
-            </button>
-
-            <button className="skip-btn" onClick={() => setIsFirstVisit(false)}>
-              Skip intro
-            </button>
-          </div>
+      <div className="bottom-container">
+        <div className="onboarding-dots-container">
+          <div className="onboarding-dot active"></div>
+          <div className="onboarding-dot"></div>
+          <div className="onboarding-dot"></div>
+          <div className="onboarding-dot"></div>
+          <div className="onboarding-dot"></div>
         </div>
+
+        <button
+          className="get-started-btn"
+          onClick={() => setCurrentStep((prev) => prev + 1)}
+        >
+          Get Started
+        </button>
+
+        <button className="skip-btn" onClick={() => setIsFirstVisit(false)}>
+          Skip intro
+        </button>
       </div>
     </>
   );
@@ -332,83 +353,251 @@ function Welcome({ setCurrentStep, setIsFirstVisit }) {
 function Features({ setCurrentStep }) {
   return (
     <>
-      <div className="onboarding-shell">
-        <div className="onboarding-container">
-          <h1 className="onboarding-title">More Than Just Chat</h1>
+      <h1 className="onboarding-title">More Than Just Chat</h1>
 
-          <div className="onboarding-img-wrapper">
-            <img
-              className="onboarding-img-small"
-              src="/onboarding/features-onboarding-img.png"
-              alt=""
-            />
+      <div className="onboarding-img-wrapper">
+        <img
+          className="onboarding-img-small"
+          src="/onboarding/features-onboarding-img.png"
+          alt=""
+        />
+      </div>
+
+      <div className="features-container">
+        <div className="feature">
+          <div className="feature-icon">
+            <Live3d />
           </div>
+          <div className="feature-content">
+            <h1 className="feature-title">Live 3D character</h1>
+            <h2 className="feature-description">
+              A VRM model rendered in Three.js orbit, zoom, and interact with
+              Mia in 3D.
+            </h2>
+          </div>
+        </div>
 
-          <div className="features-container">
-            <div className="feature">
-              <div className="feature-icon">
-                <Live3d />
-              </div>
-              <div className="feature-content">
-                <h1 className="feature-title">Live 3D character</h1>
-                <h2 className="feature-description">
-                  A VRM model rendered in Three.js orbit, zoom, and interact
-                  with Mia in 3D.
-                </h2>
-              </div>
-            </div>
+        <div className="feature">
+          <div className="feature-icon">
+            <SpeakerIcon />
+          </div>
+          <div className="feature-content">
+            <h1 className="feature-title">Voice with Piper TTS</h1>
+            <h2 className="feature-description">
+              Mia actually speaks to you natural, expressive text-to-speech
+              built in
+            </h2>
+          </div>
+        </div>
 
-            <div className="feature">
-              <div className="feature-icon">
-                <SpeakerIcon />
-              </div>
-              <div className="feature-content">
-                <h1 className="feature-title">Voice with Piper TTS</h1>
-                <h2 className="feature-description">
-                  Mia actually speaks to you natural, expressive text-to-speech
-                  built in
-                </h2>
-              </div>
-            </div>
+        <div className="feature">
+          <div className="feature-icon">
+            <Ollama />
+          </div>
+          <div className="feature-content">
+            <h1 className="feature-title">Ollama LLM brain</h1>
+            <h2 className="feature-description">
+              Powered locally by Ollama fast, private, and fully on your
+              machine.
+            </h2>
+          </div>
+        </div>
+      </div>
 
-            <div className="feature">
-              <div className="feature-icon">
-                <Ollama />
-              </div>
-              <div className="feature-content">
-                <h1 className="feature-title">Ollama LLM brain</h1>
-                <h2 className="feature-description">
-                  Powered locally by Ollama fast, private, and fully on your
-                  machine.
-                </h2>
-              </div>
+      <div className="bottom-container">
+        <div className="onboarding-dots-container">
+          <div className="onboarding-dot"></div>
+          <div className="onboarding-dot active"></div>
+          <div className="onboarding-dot"></div>
+          <div className="onboarding-dot"></div>
+          <div className="onboarding-dot"></div>
+        </div>
+
+        <div className="onboarding-nav-buttons">
+          <button
+            className="back-btn"
+            onClick={() => setCurrentStep((prev) => prev - 1)}
+          >
+            <ArrowIcon />
+          </button>
+
+          <button
+            className="next-btn"
+            onClick={() => setCurrentStep((prev) => prev + 1)}
+          >
+            next
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function DownloadModels({ setCurrentStep }) {
+  const [ollamaProgress, setOllamaProgress] = useState(0);
+  const [piperProgress, setPiperProgress] = useState(0);
+  const [isOllamaDownloading, setIsOllamaDownloading] = useState(false);
+  const [isPiperDownloading, setIsPiperDownloading] = useState(false);
+
+  const simulateDownload = (type) => {
+    if (type === "ollama") {
+      if (isOllamaDownloading || ollamaProgress === 100) return;
+      setIsOllamaDownloading(true);
+      let p = 0;
+      const interval = setInterval(() => {
+        p += Math.floor(Math.random() * 15) + 5;
+        if (p >= 100) {
+          setOllamaProgress(100);
+          setIsOllamaDownloading(false);
+          clearInterval(interval);
+        } else {
+          setOllamaProgress(p);
+        }
+      }, 150);
+    } else {
+      if (isPiperDownloading || piperProgress === 100) return;
+      setIsPiperDownloading(true);
+      let p = 0;
+      const interval = setInterval(() => {
+        p += Math.floor(Math.random() * 20) + 10;
+        if (p >= 100) {
+          setPiperProgress(100);
+          setIsPiperDownloading(false);
+          clearInterval(interval);
+        } else {
+          setPiperProgress(p);
+        }
+      }, 100);
+    }
+  };
+
+  return (
+    <>
+      <h1 className="onboarding-title">Get the Brains</h1>
+
+      <div className="onboarding-img-wrapper">
+        <img
+          className="onboarding-img-small"
+          src="/onboarding/models-onboarding-img.png"
+          alt=""
+        />
+      </div>
+
+      <h2 className="onboarding-sub-title">
+        Download Mia's custom models for the best experience.
+      </h2>
+
+      <div className="features-container">
+        <div className="feature feature--model">
+          <div className="feature-icon">
+            <Ollama />
+          </div>
+          <div className="feature-content">
+            <h1 className="feature-title">Ollama LLM</h1>
+            <h2 className="feature-description">3.8 GB • Fine-tuned Llama 3</h2>
+            <div className="model-progress-bar">
+              <div
+                className="model-progress-fill"
+                style={{ width: `${ollamaProgress}%` }}
+              ></div>
             </div>
           </div>
-
-          <div className="bottom-container">
-            <div className="onboarding-dots-container">
-              <div className="onboarding-dot"></div>
-              <div className="onboarding-dot active"></div>
-              <div className="onboarding-dot"></div>
-              <div className="onboarding-dot"></div>
-            </div>
-
-            <div className="onboarding-nav-buttons">
-              <button
-                className="back-btn"
-                onClick={() => setCurrentStep((prev) => prev - 1)}
+          <button
+            className={`model-download-btn `}
+            onClick={() => simulateDownload("ollama")}
+            disabled={isOllamaDownloading || ollamaProgress === 100}
+            aria-label="Download Ollama model"
+          >
+            {ollamaProgress === 100 ? (
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
               >
-                <ArrowIcon />
-              </button>
+                <path
+                  d="M5 13L9 17L19 7"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            ) : (
+              <DownloadIcon size={24} />
+            )}
+          </button>
+        </div>
 
-              <button
-                className="next-btn"
-                onClick={() => setCurrentStep((prev) => prev + 1)}
-              >
-                next
-              </button>
+        <div className="feature feature--model">
+          <div className="feature-icon">
+            <Piper />
+          </div>
+          <div className="feature-content">
+            <h1 className="feature-title">Piper Onyx</h1>
+            <h2 className="feature-description">
+              65 MB • High-quality natural voice
+            </h2>
+            <div className="model-progress-bar">
+              <div
+                className="model-progress-fill"
+                style={{ width: `${piperProgress}%` }}
+              ></div>
             </div>
           </div>
+          <button
+            className={`model-download-btn`}
+            onClick={() => simulateDownload("piper")}
+            disabled={isPiperDownloading || piperProgress === 100}
+            aria-label="Download Piper model"
+          >
+            {piperProgress === 100 ? (
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M5 13L9 17L19 7"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            ) : (
+              <DownloadIcon size={24} />
+            )}
+          </button>
+        </div>
+      </div>
+
+      <div className="bottom-container">
+        <div className="onboarding-dots-container">
+          <div className="onboarding-dot"></div>
+          <div className="onboarding-dot"></div>
+          <div className="onboarding-dot active"></div>
+          <div className="onboarding-dot"></div>
+          <div className="onboarding-dot"></div>
+        </div>
+
+        <div className="onboarding-nav-buttons">
+          <button
+            className="back-btn"
+            onClick={() => setCurrentStep((prev) => prev - 1)}
+          >
+            <ArrowIcon />
+          </button>
+
+          <button
+            className="next-btn"
+            onClick={() => setCurrentStep((prev) => prev + 1)}
+          >
+            next
+          </button>
         </div>
       </div>
     </>
@@ -541,125 +730,120 @@ function Customize({ setCurrentStep, setIsFirstVisit }) {
 
   return (
     <>
-      <div className="onboarding-shell">
-        <div className="onboarding-container">
-          <h1 className="onboarding-title">Customize your way.</h1>
+      <h1 className="onboarding-title">Customize your way.</h1>
 
-          <div className="onboarding-img-wrapper">
-            <img
-              className="onboarding-img-small"
-              src="/onboarding/features-onboarding-img.png"
-              alt=""
+      <div className="onboarding-img-wrapper">
+        <img
+          className="onboarding-img-small"
+          src="/onboarding/features-onboarding-img.png"
+          alt=""
+        />
+      </div>
+
+      <div className="features-container">
+        <div className="feature">
+          <div className="feature-icon">
+            <Ollama />
+          </div>
+
+          <div className="feature-content">
+            <h1 className="feature-title">Ollama</h1>
+
+            <div className="ollama-input-group">
+              <input
+                className="feature-input"
+                type="text"
+                placeholder="Ollama url"
+                value={ollamaUrl}
+                onChange={(e) => setOllamaUrl(e.target.value)}
+              />
+
+              <button
+                type="button"
+                className={`refresh-btn
+                ${isRefreshingOllama ? "spinning" : ""}
+                ${ollamaStatus === "success" ? "success" : ""}
+                ${ollamaStatus === "error" ? "error" : ""}`}
+                onClick={() => checkOllamaConnection(ollamaUrl)}
+              ></button>
+            </div>
+          </div>
+        </div>
+
+        <div className="feature">
+          <div className="feature-icon">
+            <Piper />
+          </div>
+
+          <div className="feature-content">
+            <h1 className="feature-title">Piper tts</h1>
+
+            <div className="ollama-input-group">
+              <input
+                className="feature-input"
+                type="text"
+                placeholder="Piper url"
+                value={piperUrl}
+                onChange={(e) => setPiperUrl(e.target.value)}
+              />
+
+              <button
+                type="button"
+                className={`refresh-btn
+                ${isRefreshingPiper ? "spinning" : ""}
+                ${piperStatus === "success" ? "success" : ""}
+                ${piperStatus === "error" ? "error" : ""}`}
+                onClick={() => checkPiperConnection(piperUrl)}
+              ></button>
+            </div>
+          </div>
+        </div>
+
+        <div className="feature">
+          <div className="feature-icon">
+            <Live3d />
+          </div>
+
+          <div className="feature-content">
+            <h1 className="feature-title">Dark Mode</h1>
+
+            <h2 className="feature-description">Easy on the eyes at night</h2>
+          </div>
+
+          <label className="toggle-switch">
+            <input
+              type="checkbox"
+              checked={darkMode}
+              onChange={(e) => handleDarkModeChange(e.target.checked)}
             />
-          </div>
+            <span className="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
 
-          <div className="features-container">
-            <div className="feature">
-              <div className="feature-icon">
-                <Ollama />
-              </div>
+      <div className="bottom-container">
+        <div className="onboarding-dots-container">
+          <div className="onboarding-dot"></div>
+          <div className="onboarding-dot"></div>
+          <div className="onboarding-dot"></div>
+          <div className="onboarding-dot"></div>
+          <div className="onboarding-dot active"></div>
+        </div>
 
-              <div className="feature-content">
-                <h1 className="feature-title">Ollama</h1>
+        <div className="onboarding-nav-buttons">
+          <button
+            className="back-btn"
+            onClick={() => setCurrentStep((prev) => prev - 1)}
+          >
+            <ArrowIcon />
+          </button>
 
-                <div className="ollama-input-group">
-                  <input
-                    className="feature-input"
-                    type="text"
-                    placeholder="Ollama url"
-                    value={ollamaUrl}
-                    onChange={(e) => setOllamaUrl(e.target.value)}
-                  />
-
-                  <button
-                    type="button"
-                    className={`refresh-btn
-                    ${isRefreshingOllama ? "spinning" : ""}
-                    ${ollamaStatus === "success" ? "success" : ""}
-                    ${ollamaStatus === "error" ? "error" : ""}`}
-                    onClick={() => checkOllamaConnection(ollamaUrl)}
-                  ></button>
-                </div>
-              </div>
-            </div>
-
-            <div className="feature">
-              <div className="feature-icon">
-                <Piper />
-              </div>
-
-              <div className="feature-content">
-                <h1 className="feature-title">Piper tts</h1>
-
-                <div className="ollama-input-group">
-                  <input
-                    className="feature-input"
-                    type="text"
-                    placeholder="Piper url"
-                    value={piperUrl}
-                    onChange={(e) => setPiperUrl(e.target.value)}
-                  />
-
-                  <button
-                    type="button"
-                    className={`refresh-btn
-                    ${isRefreshingPiper ? "spinning" : ""}
-                    ${piperStatus === "success" ? "success" : ""}
-                    ${piperStatus === "error" ? "error" : ""}`}
-                    onClick={() => checkPiperConnection(piperUrl)}
-                  ></button>
-                </div>
-              </div>
-            </div>
-
-            <div className="feature">
-              <div className="feature-icon">
-                <Live3d />
-              </div>
-
-              <div className="feature-content">
-                <h1 className="feature-title">Dark Mode</h1>
-
-                <h2 className="feature-description">
-                  Easy on the eyes at night
-                </h2>
-              </div>
-
-              <label className="toggle-switch">
-                <input
-                  type="checkbox"
-                  checked={darkMode}
-                  onChange={(e) => handleDarkModeChange(e.target.checked)}
-                />
-                <span className="toggle-slider"></span>
-              </label>
-            </div>
-          </div>
-
-          <div className="bottom-container">
-            <div className="onboarding-dots-container">
-              <div className="onboarding-dot"></div>
-              <div className="onboarding-dot"></div>
-              <div className="onboarding-dot"></div>
-              <div className="onboarding-dot active"></div>
-            </div>
-
-            <div className="onboarding-nav-buttons">
-              <button
-                className="back-btn"
-                onClick={() => setCurrentStep((prev) => prev - 1)}
-              >
-                <ArrowIcon />
-              </button>
-
-              <button
-                className={`next-btn ${!canFinishOnboarding ? "inactive" : ""}`}
-                onClick={() => canFinishOnboarding && setIsFirstVisit(false)}
-              >
-                Finish
-              </button>
-            </div>
-          </div>
+          <button
+            className={`next-btn ${!canFinishOnboarding ? "inactive" : ""}`}
+            onClick={() => canFinishOnboarding && setIsFirstVisit(false)}
+          >
+            Finish
+          </button>
         </div>
       </div>
     </>
@@ -754,94 +938,91 @@ function Notifications({ setCurrentStep }) {
 
   return (
     <>
-      <div className="onboarding-shell">
-        <div className="onboarding-container">
-          <h1 className="onboarding-title">Mia reaches out</h1>
+      <h1 className="onboarding-title">Mia reaches out</h1>
 
-          <div className="onboarding-img-wrapper">
-            <img
-              className="onboarding-img-small"
-              src="/onboarding/notification-onboarding.png"
-              alt=""
+      <div className="onboarding-img-wrapper">
+        <img
+          className="onboarding-img-small"
+          src="/onboarding/notification-onboarding.png"
+          alt=""
+        />
+      </div>
+
+      <div className="features-container">
+        <div className="feature">
+          <div className="feature-icon">
+            <PresenceIcon />
+          </div>
+          <div className="feature-content">
+            <h1 className="feature-title">Presence</h1>
+            <h2 className="feature-description">
+              Mia can check in after you leave the app.
+            </h2>
+          </div>
+        </div>
+
+        <div className="feature">
+          <div className="feature-icon">
+            <QuietIcon />
+          </div>
+          <div className="feature-content">
+            <h1 className="feature-title">Timing</h1>
+            <h2 className="feature-description">
+              Notifications are quiet and optional.
+            </h2>
+          </div>
+        </div>
+
+        <div className="feature feature--notification">
+          <div className="feature-icon">
+            <NotificationIcon />
+          </div>
+          <div className="feature-content">
+            <h1 className="feature-title">PWA notifications</h1>
+            <h2 className="feature-description">
+              Subscribe this device for notifications.
+            </h2>
+          </div>
+
+          <label
+            className="toggle-switch"
+            aria-label="Subscribe to PWA notifications"
+          >
+            <input
+              type="checkbox"
+              checked={wantsNotifications}
+              disabled={isSubscribing || Boolean(unsupportedReason)}
+              onChange={handleNotificationToggle}
             />
-          </div>
+            <span className="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
 
-          <div className="features-container">
-            <div className="feature">
-              <div className="feature-icon">
-                <PresenceIcon />
-              </div>
-              <div className="feature-content">
-                <h1 className="feature-title">Presence</h1>
-                <h2 className="feature-description">
-                  Mia can check in after you leave the app.
-                </h2>
-              </div>
-            </div>
+      <div className="bottom-container">
+        <div className="onboarding-dots-container">
+          <div className="onboarding-dot"></div>
+          <div className="onboarding-dot"></div>
+          <div className="onboarding-dot"></div>
+          <div className="onboarding-dot active"></div>
+          <div className="onboarding-dot"></div>
+        </div>
 
-            <div className="feature">
-              <div className="feature-icon">
-                <QuietIcon />
-              </div>
-              <div className="feature-content">
-                <h1 className="feature-title">Timing</h1>
-                <h2 className="feature-description">
-                  Notifications are quiet and optional.
-                </h2>
-              </div>
-            </div>
+        <div className="onboarding-nav-buttons">
+          <button
+            className="back-btn"
+            onClick={() => setCurrentStep((prev) => prev - 1)}
+          >
+            <ArrowIcon />
+          </button>
 
-            <div className="feature feature--notification">
-              <div className="feature-icon">
-                <NotificationIcon />
-              </div>
-              <div className="feature-content">
-                <h1 className="feature-title">PWA notifications</h1>
-                <h2 className="feature-description">
-                  Subscribe this device for notifications.
-                </h2>
-              </div>
-
-              <label
-                className="toggle-switch"
-                aria-label="Subscribe to PWA notifications"
-              >
-                <input
-                  type="checkbox"
-                  checked={wantsNotifications}
-                  disabled={isSubscribing || Boolean(unsupportedReason)}
-                  onChange={handleNotificationToggle}
-                />
-                <span className="toggle-slider"></span>
-              </label>
-            </div>
-          </div>
-
-          <div className="bottom-container">
-            <div className="onboarding-dots-container">
-              <div className="onboarding-dot"></div>
-              <div className="onboarding-dot"></div>
-              <div className="onboarding-dot active"></div>
-              <div className="onboarding-dot"></div>
-            </div>
-
-            <div className="onboarding-nav-buttons">
-              <button
-                className="back-btn"
-                onClick={() => setCurrentStep((prev) => prev - 1)}
-              >
-                <ArrowIcon />
-              </button>
-
-              <button
-                className="next-btn"
-                onClick={() => setCurrentStep((prev) => prev + 1)}
-                disabled={isSubscribing}
-              >
-                {isSubscribing ? "Saving..." : "next"}
-              </button>
-            </div>
-          </div>
+          <button
+            className="next-btn"
+            onClick={() => setCurrentStep((prev) => prev + 1)}
+            disabled={isSubscribing}
+          >
+            {isSubscribing ? "Saving..." : "next"}
+          </button>
         </div>
       </div>
     </>
@@ -852,25 +1033,31 @@ function Onboarding({ setIsFirstVisit }) {
   const [currentStep, setCurrentStep] = useState(0);
 
   return (
-    <>
-      {currentStep === 0 && (
-        <Welcome
-          setCurrentStep={setCurrentStep}
-          setIsFirstVisit={setIsFirstVisit}
-        />
-      )}
+    <div className="onboarding-shell">
+      <div className="onboarding-container" key={currentStep}>
+        {currentStep === 0 && (
+          <Welcome
+            setCurrentStep={setCurrentStep}
+            setIsFirstVisit={setIsFirstVisit}
+          />
+        )}
 
-      {currentStep === 1 && <Features setCurrentStep={setCurrentStep} />}
+        {currentStep === 1 && <Features setCurrentStep={setCurrentStep} />}
 
-      {currentStep === 2 && <Notifications setCurrentStep={setCurrentStep} />}
+        {currentStep === 2 && (
+          <DownloadModels setCurrentStep={setCurrentStep} />
+        )}
 
-      {currentStep === 3 && (
-        <Customize
-          setCurrentStep={setCurrentStep}
-          setIsFirstVisit={setIsFirstVisit}
-        />
-      )}
-    </>
+        {currentStep === 3 && <Notifications setCurrentStep={setCurrentStep} />}
+
+        {currentStep === 4 && (
+          <Customize
+            setCurrentStep={setCurrentStep}
+            setIsFirstVisit={setIsFirstVisit}
+          />
+        )}
+      </div>
+    </div>
   );
 }
 

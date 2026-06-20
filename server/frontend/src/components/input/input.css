@@ -17,30 +17,73 @@
     0 0 0 4px var(--accent-glow),
     0 8px 32px rgba(0, 0, 0, 0.4);
   overflow: hidden;
-  transition:
-    transform 0.24s ease-out,
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
-  will-change: transform;
   transform: translateX(-50%);
   backface-visibility: hidden;
   transition:
-    width 0.6s cubic-bezier(0.68, -0.3, 0.32, 1.3),
-    height 0.6s cubic-bezier(0.68, -0.3, 0.32, 1.3),
-    border-radius 0.6s cubic-bezier(0.68, -0.3, 0.32, 1.3),
-    box-shadow 0.5s ease,
-    border-color 0.4s ease;
-  will-change: width, height, border-radius;
+    width 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    border-radius 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.3s ease,
+    border-color 0.3s ease,
+    background-color 0.3s ease,
+    opacity 0.3s ease;
+  will-change: transform, width, height, border-radius;
 }
 
+@media (pointer: coarse) {
+  .input-container:not(.inactive) {
+    transition:
+      transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+      width 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0.18s,
+      height 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0.18s,
+      border-radius 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0.18s,
+      box-shadow 0.3s ease,
+      border-color 0.3s ease,
+      background-color 0.3s ease,
+      opacity 0.3s ease;
+  }
+}
+
+/* ── Inactive state (Slightly smaller, rectangular) ────────────────────── */
+.input-container.inactive {
+  width: clamp(240px, 30vw, 360px);
+  height: 46px;
+  border-radius: 14px;
+  cursor: pointer;
+  background: var(--overlay-background);
+}
+
+.input-container.inactive:hover {
+  opacity: 1;
+  background: var(--overlay-background);
+  box-shadow:
+    0 0 0 4px var(--accent-glow),
+    0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+/* ── Call mode base (non-stealth: small orb at bottom) ──────────────────── */
 .input-container.call-mode {
   width: 72px;
   height: 72px;
+  border-radius: 50%;
+  background: var(--overlay-background);
+  border: 1px solid var(--overlay-border);
+  overflow: visible; /* allows box-shadow rings to bleed outside */
 }
 
+.input-container.keyboard-visible {
+  transform: translateX(-50%)
+    translateY(calc(-1 * var(--keyboard-offset, 0px) + 30px));
+}
+
+/* ── Call mode fullscreen (stealth: orb flies to centre of screen) ───────── */
 .input-container.call-mode-fullscreen {
   width: 92px;
   height: 92px;
+  border-radius: 50%;
+  background: var(--overlay-background);
+  border: 1px solid var(--overlay-border);
+  overflow: visible;
   position: fixed;
   animation: callToCenter 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
@@ -55,18 +98,15 @@
     transform: translateX(-50%) scale(0.95);
     opacity: 0.6;
   }
-
   40% {
     bottom: 60%;
     transform: translateX(-50%) scale(1.08);
     opacity: 1;
   }
-
   70% {
     bottom: 48%;
     transform: translateX(-50%) scale(0.98);
   }
-
   100% {
     bottom: 50%;
     transform: translateX(-50%) scale(1);
@@ -79,18 +119,15 @@
     transform: translateX(-50%) scale(1);
     opacity: 1;
   }
-
   30% {
     bottom: 48%;
     transform: translateX(-50%) scale(0.98);
   }
-
   60% {
     bottom: 60%;
     transform: translateX(-50%) scale(1.08);
     opacity: 1;
   }
-
   100% {
     bottom: 0%;
     transform: translateX(-50%) scale(0.95);
@@ -98,38 +135,161 @@
   }
 }
 
-.input-container.call-mode,
-.input-container.call-mode-fullscreen {
+/* ── Phase-driven box-shadow rings ──────────────────────────────────────── */
+
+.input-container.call-mode::after,
+.input-container.call-mode-fullscreen::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
   border-radius: 50%;
-  background: var(--overlay-background);
-  border: 1px solid var(--overlay-border);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  pointer-events: none;
+  z-index: 0;
+  transition: opacity 0.3s ease;
 }
 
+/* Listening: slow breathing glow ring */
+.input-container.phase-listening::after {
+  animation: orbListening 3s ease-in-out infinite;
+}
+
+/* Thinking: fast spinning arc (border-top only) */
+.input-container.phase-thinking::after {
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--theme-active) 20%, transparent),
+    0 6px 18px rgba(0, 0, 0, 0.2);
+  border: 1px solid transparent;
+  border-top-color: var(--theme-active);
+  animation: orbSpin 1s linear infinite;
+}
+
+.input-container.phase-thinking {
+  border-color: transparent !important;
+}
+
+/* Speaking: warm energetic glow ring */
+.input-container.phase-speaking::after {
+  animation: orbSpeaking 0.75s ease-in-out infinite;
+}
+
+@keyframes orbSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes orbListening {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--theme-active) 20%, transparent),
+      0 4px 12px rgba(0, 0, 0, 0.12);
+  }
+  50% {
+    box-shadow:
+      0 0 0 4px color-mix(in srgb, var(--theme-active) 8%, transparent),
+      0 0 16px 2px color-mix(in srgb, var(--theme-active) 6%, transparent),
+      0 4px 12px rgba(0, 0, 0, 0.12);
+  }
+}
+
+@keyframes orbSpeaking {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 2px color-mix(in srgb, var(--theme-active) 30%, transparent),
+      0 0 12px 2px color-mix(in srgb, var(--theme-active) 10%, transparent),
+      0 4px 18px rgba(0, 0, 0, 0.12);
+  }
+
+  50% {
+    box-shadow:
+      0 0 0 4px color-mix(in srgb, var(--theme-active) 18%, transparent),
+      0 0 18px 4px color-mix(in srgb, var(--theme-active) 12%, transparent),
+      0 4px 18px rgba(0, 0, 0, 0.12);
+  }
+}
+
+/* Hide input text row in call mode */
 .input-container.call-mode .input-inner,
 .input-container.call-mode-fullscreen .input-inner {
   opacity: 0;
   pointer-events: none;
 }
 
-.input-container.call-mode .circle-icon,
-.input-container.call-mode-fullscreen .circle-icon {
-  opacity: 1;
-  transform: scale(1) rotate(0deg);
-}
+/* ── Call mode orb content ──────────────────────────────────────────────── */
 
-.input-container.call-mode .orbit-ring,
-.input-container.call-mode-fullscreen .orbit-ring {
-  opacity: 1;
-  animation: orbit 2.4s linear infinite;
-}
-
-.input-container.call-mode::before,
-.input-container.call-mode-fullscreen::before {
+.call-orb-content {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Hidden until call mode kicks in */
   opacity: 0;
-  transition: opacity 0.3s ease;
+  pointer-events: none;
+  transition: opacity 0.28s ease 0.3s;
+  z-index: 2;
 }
 
+.input-container.call-mode .call-orb-content,
+.input-container.call-mode-fullscreen .call-orb-content {
+  opacity: 1;
+}
+
+/* Icon inside the orb */
+.call-orb-icon {
+  width: 28px;
+  height: 28px;
+  stroke: var(--nav-btn);
+  fill: none;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: opacity 0.2s ease;
+}
+
+/* Thinking dots */
+.call-thinking-dots {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.call-thinking-dots span {
+  display: block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--nav-btn);
+  animation: thinkDot 1.2s ease-in-out infinite;
+}
+
+.call-thinking-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.call-thinking-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes thinkDot {
+  0%,
+  80%,
+  100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+/* ── Call background overlay (stealth only) ─────────────────────────────── */
 .call-background {
   position: absolute;
   top: 0;
@@ -148,10 +308,72 @@
   transition: opacity 2s ease;
   pointer-events: none;
 }
+
 .call-background.active {
   opacity: 1;
 }
 
+/* ── Call error message ─────────────────────────────────────────────────── */
+.call-error-message {
+  position: fixed;
+  left: 50%;
+  bottom: 120px;
+  transform: translateX(-50%);
+  z-index: 1002;
+  background: color-mix(
+    in srgb,
+    var(--overlay-background) 92%,
+    var(--error-color)
+  );
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid color-mix(in srgb, var(--error-color) 40%, transparent);
+  color: var(--error-color);
+  padding: 12px 22px;
+  border-radius: 16px;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
+  animation: errorSlideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+  width: max-content;
+  max-width: calc(100% - 40px);
+  text-align: center;
+}
+
+body.dark .call-error-message {
+  /* background: color-mix(in srgb, var(--overlay-background) 98%, var(--error-color)); */
+}
+
+.call-error-message--fullscreen {
+  bottom: 65%; /* Positioned above the 50% orb */
+}
+
+.error-icon {
+  width: 22px;
+  height: 22px;
+  stroke: currentColor;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  flex-shrink: 0;
+}
+
+@keyframes errorSlideUp {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+/* ── Input inner row ─────────────────────────────────────────────────────── */
 .input-inner {
   display: flex;
   align-items: center;
@@ -160,41 +382,7 @@
   transition: opacity 0.22s ease;
 }
 
-.circle-icon {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transform: scale(0.5) rotate(-30deg);
-  transition:
-    opacity 0.3s ease 0.35s,
-    transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0.35s;
-  pointer-events: none;
-}
-
-@keyframes softPulse {
-  0% {
-    opacity: 0.5;
-    transform: scale(0.85);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  100% {
-    opacity: 0.5;
-    transform: scale(0.85);
-  }
-}
-
-@keyframes orbit {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
+/* ── Focused / recording state ──────────────────────────────────────────── */
 .input-container::before {
   content: "";
   position: absolute;
@@ -209,13 +397,19 @@
   pointer-events: none;
 }
 
+.input-container.call-mode::before,
+.input-container.call-mode-fullscreen::before {
+  opacity: 0;
+}
+
 .input-container.focused,
 .input-container.recording-active {
   box-shadow:
-    0 0 0 2px rgba(167, 139, 250, 0.15),
-    0 6px 18px rgba(0, 0, 0, 0.25);
+    0 0 0 2px rgba(167, 139, 250, 0.12),
+    0 3px 10px rgba(0, 0, 0, 0.12);
 }
 
+/* ── Text input ─────────────────────────────────────────────────────────── */
 .input-container input {
   flex: 1;
   height: 100%;
@@ -239,6 +433,7 @@
   opacity: 0.5;
 }
 
+/* ── Buttons ────────────────────────────────────────────────────────────── */
 .input-container button {
   width: 36px;
   height: 36px;
@@ -298,11 +493,12 @@
   background: #fff;
 }
 
+/* ── Keyboard-visible offset ────────────────────────────────────────────── */
 .input-container.keyboard-visible {
-  transform: translateX(-50%)
-    translateY(calc(-1 * var(--keyboard-offset, 0px) + 30px));
+  animation: keyboard-active 0.25s ease-out forwards;
 }
 
+/* ── Mic button ─────────────────────────────────────────────────────────── */
 .mic-btn {
   background: transparent;
   display: flex;
@@ -373,6 +569,7 @@
   }
 }
 
+/* ── Action button wrapper (mic ↔ send swap) ────────────────────────────── */
 .action-btn-wrapper {
   position: relative;
   width: 36px;
@@ -416,4 +613,24 @@
   opacity: 1;
   transform: scale(1);
   pointer-events: auto;
+}
+
+.input-container:not(.inactive) {
+  animation: input-active 0.2s ease-out;
+}
+
+@keyframes input-active {
+  0% {
+    transform: translateX(-50%) scale(0.94);
+    opacity: 0.8;
+  }
+
+  70% {
+    transform: translateX(-50%) scale(1.03);
+  }
+
+  100% {
+    transform: translateX(-50%) scale(1);
+    opacity: 1;
+  }
 }

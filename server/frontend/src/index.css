@@ -3,6 +3,7 @@
   --overlay-background: #ffffff;
   --overlay-2-background: #f2f0f0;
   --overlay-border: #dddddd;
+  --overlay-hover: #e6e2e2;
 
   --nav-btn: #1c274c;
   --sub-btn: #1c274c;
@@ -28,6 +29,7 @@ body.dark {
   --overlay-background: #181a20;
   --overlay-2-background: #181a20;
   --overlay-border: #1f222a;
+  --overlay-hover: #22252d;
 
   --nav-btn: #5b7cff;
   --sub-btn: #4c6fff;

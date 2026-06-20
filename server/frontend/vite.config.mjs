@@ -45,6 +45,7 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": "http://localhost:8000",
+      "/transcribe": "http://localhost:8000",
     },
     allowedHosts: ["desktop-sf0tn88.tailc96c16.ts.net"],
   },
