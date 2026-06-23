@@ -480,20 +480,31 @@ async def record_leave_time():
 
     delay_minutes = random.randint(min_min, max_min)
     run_time = datetime.now() + timedelta(minutes=delay_minutes)
-    print(f"Scheduling welcome notification in {delay_minutes} minutes will be sent at {run_time}", flush=True)
 
-    leave_prompt = config.get("leave_notification_prompt", "the user left, generate a message for you to send to them")
-    response = get_ollama_response(leave_prompt)
+    print(
+        f"Scheduling leave notification in {delay_minutes} minutes "
+        f"to be sent at {run_time}",
+        flush=True
+    )
+
+    def send_leave_notification():
+        leave_prompt = config.get(
+            "leave_notification_prompt",
+            "the user left, generate a message for you to send to them"
+        )
+
+        response = get_ollama_response(leave_prompt)
+
+        send_push_internal(
+            title="Mia",
+            message=response,
+            url="/"
+        )
 
     job = scheduler_add_job(
-        send_push_internal,
+        send_leave_notification,
         trigger="date",
-        run_date=run_time,
-        kwargs={
-            "title": "Mia",
-            "message": response,
-            "url": "/"
-        }
+        run_date=run_time
     )
 
     leave_job_id = job.id
@@ -503,7 +514,8 @@ async def record_leave_time():
         "timestamp": last_seen_timestamp,
         "scheduled_in_minutes": delay_minutes,
         "job_id": job.id
-    }
+}
+
 @app.get("/api/welcome-check")
 async def welcome_check():
     global last_seen_timestamp, leave_job_id
@@ -515,7 +527,7 @@ async def welcome_check():
     threshold = config.get("welcome_threshold", 120)
 
     if leave_job_id:
-        # print(f"Canceling scheduled welcome notification with job ID: {leave_job_id}", flush=True)
+        print(f"Canceling scheduled welcome notification with job ID: {leave_job_id}", flush=True)
         scheduler_remove_job(leave_job_id)
         leave_job_id = None
 
