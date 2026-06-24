@@ -459,6 +459,19 @@ async def send_push_notification(request: Request):
 async def record_leave_time():
     global last_seen_timestamp, leave_job_id
 
+    reset_config = [
+        "free_cam_enabled",
+    ]
+
+    with open(CONFIG_PATH, "r") as f:
+        config = json.load(f)
+
+    for key in reset_config:
+        config[key] = False
+
+    with open(CONFIG_PATH, "w") as f:
+        json.dump(config, f, indent=4)
+
     last_seen_timestamp = time.time()
 
     if leave_job_id:

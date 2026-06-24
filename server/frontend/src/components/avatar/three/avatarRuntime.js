@@ -208,45 +208,35 @@ function createControls(camera, renderer) {
   controls.dampingFactor = 0.06;
   controls.enableZoom = true;
   controls.zoomSpeed = 0.6;
-  controls.minDistance = 1.1;
-  controls.maxDistance = 1.4;
   controls.enablePan = true;
   controls.panSpeed = 1;
   controls.rotateSpeed = 0.5;
-  controls.minPolarAngle = Math.PI * 0.4;
-  controls.maxPolarAngle = Math.PI * 0.65;
-  controls.minAzimuthAngle = -Math.PI * 0.2;
-  controls.maxAzimuthAngle = Math.PI * 0.2;
   controls.target.copy(DEFAULT_CAMERA_TARGET);
 
-  const panLimits = {
-    xMin: -0.4,
-    xMax: 0.2,
-    yMin: 0.9,
-    yMax: 1.4,
-    zMin: -0.3,
-    zMax: 0.3,
+  controls.updateLimits = (useLimits) => {
+    if (useLimits) {
+      controls.minDistance = 1.1;
+      controls.maxDistance = 1.4;
+
+      controls.minPolarAngle = Math.PI * 0.4;
+      controls.maxPolarAngle = Math.PI * 0.65;
+
+      controls.minAzimuthAngle = -Math.PI * 0.2;
+      controls.maxAzimuthAngle = Math.PI * 0.2;
+    } else {
+      controls.minDistance = 0;
+      controls.maxDistance = Infinity;
+
+      controls.minPolarAngle = 0;
+      controls.maxPolarAngle = Math.PI;
+
+      controls.minAzimuthAngle = -Infinity;
+      controls.maxAzimuthAngle = Infinity;
+    }
   };
 
-  controls.addEventListener("change", () => {
-    controls.target.x = clamp(
-      controls.target.x,
-      panLimits.xMin,
-      panLimits.xMax,
-    );
-    controls.target.y = clamp(
-      controls.target.y,
-      panLimits.yMin,
-      panLimits.yMax,
-    );
-    controls.target.z = clamp(
-      controls.target.z,
-      panLimits.zMin,
-      panLimits.zMax,
-    );
-  });
+  controls.updateLimits(true);
 
-  controls.update();
   return controls;
 }
 
@@ -952,10 +942,12 @@ function updateCameraReturn(
   defaultCameraTarget,
   delta,
   time,
+  config,
 ) {
   if (!controls) return;
 
   const shouldReturnCamera =
+    config?.free_cam_enabled !== true &&
     !cameraReturnState.isInteracting &&
     time - cameraReturnState.lastInteractionAt >= CAMERA_IDLE_RETURN_DELAY;
 
@@ -1207,6 +1199,7 @@ export function startAnimation(
   avatarCharacter,
   getLipSyncState,
   getEnableEffects,
+  getConfigRef,
 ) {
   let id;
   const clock = new THREE.Clock();
@@ -1225,6 +1218,14 @@ export function startAnimation(
     const delta = Math.min(clock.getDelta(), 0.1);
     const time = clock.getElapsedTime();
 
+    const config = getConfigRef?.();
+
+    if (config?.free_cam_enabled) {
+      controls.updateLimits(false);
+    } else {
+      controls.updateLimits(true);
+    }
+
     updateCameraReturn(
       camera,
       controls,
@@ -1233,6 +1234,7 @@ export function startAnimation(
       defaultCameraTarget,
       delta,
       time,
+      config,
     );
 
     avatarScene.renderer.domElement.style.pointerEvents = "auto";

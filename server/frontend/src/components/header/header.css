@@ -113,6 +113,10 @@
     color 0.2s ease;
 }
 
+.hamburger-manue-btn.dev-flash {
+  color: color-mix(in srgb, var(--nav-btn), var(--theme-active) 50%);
+}
+
 @media (hover: hover) and (pointer: fine) {
   .hamburger-manue-btn:hover {
     transform: scale(1.06);

@@ -117,6 +117,7 @@ function App() {
         orbitControlsEnabled={config.orbit_controls_enabled !== false}
         enableEffects={config.enable_effects}
         isDark={isDark}
+        config={config}
       />
 
       <PageTransitionWrapper path={location.pathname}>

@@ -16,11 +16,13 @@ export default function Avatar({
   orbitControlsEnabled = true,
   enableEffects = true,
   isDark = false,
+  config,
 }) {
   const mountRef = useRef(null);
 
   const sceneRef = useRef(null);
   const characterRef = useRef(new AvatarCharacter());
+  const configRef = useRef(config);
 
   const [loading, setLoading] = useState(Boolean(avatarModel));
   const [sceneReady, setSceneReady] = useState(false);
@@ -33,6 +35,10 @@ export default function Avatar({
   useEffect(() => {
     enableEffectsRef.current = enableEffects;
   }, [enableEffects]);
+
+  useEffect(() => {
+    configRef.current = config;
+  }, [config]);
 
   const lipSyncStateRef = useRef(lipSyncState);
   useEffect(() => {
@@ -180,6 +186,7 @@ export default function Avatar({
       character,
       () => lipSyncStateRef.current,
       () => enableEffectsRef.current,
+      () => configRef.current,
     );
 
     return () => stop?.();
