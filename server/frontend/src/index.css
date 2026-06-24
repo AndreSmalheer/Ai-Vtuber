@@ -16,7 +16,7 @@
   --h2-color: #1c1c1e;
   --h3-color: #363636;
 
-  --typing-dots-background: #eeeeee;
+  --typing-dots-background: #2a2d36;
 
   --theme-active: #5b7cff;
   --hamburger-btn-active: #c84cff;
@@ -43,7 +43,8 @@ body.dark {
   --h2-color: #cfcfd4;
   --h3-color: #9a9aa0;
 
-  --typing-dots-background: #2a2d36;
+  /* --typing-dots-background: #2a2d36; */
+  --typing-dots-background: #6f7480;
 
   --theme-active: #a9c1ff;
   --hamburger-btn-active: #d98cff;
