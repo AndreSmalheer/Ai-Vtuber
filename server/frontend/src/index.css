@@ -19,6 +19,7 @@
   --typing-dots-background: #eeeeee;
 
   --theme-active: #5b7cff;
+  --hamburger-btn-active: #c84cff;
 
   --success-color: #3fbf7f;
   --error-color: #ff6b81;
@@ -45,6 +46,7 @@ body.dark {
   --typing-dots-background: #2a2d36;
 
   --theme-active: #a9c1ff;
+  --hamburger-btn-active: #d98cff;
 
   --success-color: #4fd19a;
   --error-color: #ff5f7a;

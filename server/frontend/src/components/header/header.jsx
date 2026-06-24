@@ -50,19 +50,20 @@ function Header({
 
   const startDevHold = () => {
     const timer = setTimeout(() => {
+      setDevFlash(true);
+
       if (devMode) {
         setDevMode(false);
         console.log("dev mode disabled");
       } else {
         setDevMode(true);
-        setDevFlash(true);
-
-        setTimeout(() => {
-          setDevFlash(false);
-        }, 1000);
 
         console.log("dev mode enabled");
       }
+
+      setTimeout(() => {
+        setDevFlash(false);
+      }, 1000);
     }, 3000);
 
     setHoldTimer(timer);
