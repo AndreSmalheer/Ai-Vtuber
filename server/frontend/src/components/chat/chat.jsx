@@ -29,6 +29,11 @@ function Chat({
   const displayInterval = useRef(null);
   const scrollRef = useRef(null);
   const abortControllerRef = useRef(null);
+  const [ttsEnabled, setTtsEnabled] = useState(false);
+  const aiLoadingRef = useRef(true);
+  const streamCompleteRef = useRef(false);
+  const audioCompleteRef = useRef(false);
+  const revealTextRef = useRef(false);
 
   const [aiAnalyser, setAiAnalyser] = useState(null);
   const aiVolume = useVoiceAnimation(aiAnalyser);
@@ -62,6 +67,36 @@ function Chat({
     });
 
     finishChat();
+  };
+
+  const clearDisplayInterval = () => {
+    if (displayInterval.current) {
+      clearInterval(displayInterval.current);
+      displayInterval.current = null;
+    }
+  };
+
+  const startDisplayInterval = (speed, minSpeed = 0) => {
+    clearDisplayInterval();
+
+    const intervalSpeed = Math.max(speed, minSpeed);
+    if (intervalSpeed <= 0) return;
+
+    displayInterval.current = setInterval(() => {
+      if (streamQueue.current.length > 0) {
+        const char = streamQueue.current[0];
+        streamQueue.current = streamQueue.current.substring(1);
+        setAiResponse((prev) => prev + char);
+      } else {
+        clearDisplayInterval();
+      }
+    }, intervalSpeed);
+  };
+
+  const tryFinishChat = () => {
+    if (streamCompleteRef.current && audioCompleteRef.current) {
+      finishChat();
+    }
   };
 
   useEffect(() => {
@@ -111,6 +146,9 @@ function Chat({
         frequencyData: null,
         timeDomainData: null,
       });
+
+      audioCompleteRef.current = true;
+      tryFinishChat();
       return;
     }
 
@@ -122,7 +160,6 @@ function Chat({
     const audio = new Audio(`data:audio/wav;base64,${base64Audio}`);
     currentAudioRef.current = audio;
 
-    // Resume context BEFORE creating analyser/source
     const resumeAndPlay = async () => {
       if (audioContextRef.current?.state === "suspended") {
         await audioContextRef.current.resume();
@@ -163,7 +200,6 @@ function Chat({
   };
 
   useEffect(() => {
-    // Pre-initialize AudioContext on first user interaction if possible
     const initAudioContext = () => {
       if (!audioContextRef.current) {
         const AudioContextClass =
@@ -211,20 +247,37 @@ function Chat({
 
   async function fetchAiResponse(input) {
     setAiResponseLoading(true);
+    aiLoadingRef.current = true;
+
+    streamCompleteRef.current = false;
+    audioCompleteRef.current = false;
+    revealTextRef.current = false;
+
+    accumulatedResponseRef.current = "";
+    streamQueue.current = "";
+    clearDisplayInterval();
 
     abortControllerRef.current = new AbortController();
 
     let speed = 50;
+    let shouldWaitForAudio = false;
+
     try {
       const configRes = await fetch("/api/config");
       const configData = await configRes.json();
+
       speed = parseInt(configData.response_speed) || 0;
+      setTtsEnabled(configData.tts_enabled);
+      shouldWaitForAudio = !!configData.tts_enabled && !stealthMode;
     } catch (e) {
       console.error("Error fetching speed config:", e);
+      shouldWaitForAudio = false;
     }
 
+    audioCompleteRef.current = !shouldWaitForAudio;
+    revealTextRef.current = !shouldWaitForAudio;
+
     try {
-      // call api
       const response = await fetch("/api/ollama", {
         method: "POST",
         headers: {
@@ -238,21 +291,8 @@ function Chat({
       const decoder = new TextDecoder();
       let buffer = "";
 
-      if (displayInterval.current) clearInterval(displayInterval.current);
-
-      if (speed > 0) {
-        displayInterval.current = setInterval(() => {
-          if (streamQueue.current.length > 0) {
-            const char = streamQueue.current[0];
-            streamQueue.current = streamQueue.current.substring(1);
-            setAiResponse((prev) => prev + char);
-          }
-        }, speed);
-      }
-
       while (true) {
         const { value, done } = await reader.read();
-
         if (done) break;
 
         buffer += decoder.decode(value, { stream: true });
@@ -260,52 +300,79 @@ function Chat({
         buffer = lines.pop();
 
         for (const line of lines) {
-          if (line.startsWith("data: ")) {
-            try {
-              const jsonStr = line.replace("data: ", "");
-              const json = JSON.parse(jsonStr);
-              if (json.error) {
-                setAiResponseLoading(false);
-                setAiResponse(
-                  "I couldn’t get a response right now. Please check your connection or try again.",
-                );
-                console.error("Backend error:", json.error);
-                finishChat();
-                return;
-              }
-              if (json.text) {
-                setAiResponseLoading(false);
-                accumulatedResponseRef.current += json.text;
-                if (speed > 0) {
-                  streamQueue.current += json.text;
-                } else {
-                  setAiResponse((prev) => prev + json.text);
-                }
-              }
-              if (json.audio) {
-                audioQueue.current.push(json.audio);
-                if (!isAudioPlaying.current) {
-                  playNextAudio();
-                }
-              }
-            } catch (e) {
-              console.error("Error parsing stream:", e);
+          if (!line.startsWith("data: ")) continue;
+
+          try {
+            const jsonStr = line.replace("data: ", "");
+            const json = JSON.parse(jsonStr);
+
+            if (json.error) {
+              setAiResponseLoading(false);
+              console.error("Backend error:", json.error);
+              finishChat();
+              return;
             }
+
+            if (json.text) {
+              accumulatedResponseRef.current += json.text;
+
+              if (shouldWaitForAudio && !revealTextRef.current) {
+                streamQueue.current += json.text;
+              } else if (speed > 0) {
+                streamQueue.current += json.text;
+                if (!displayInterval.current) {
+                  startDisplayInterval(speed);
+                }
+              } else {
+                setAiResponse((prev) => prev + json.text);
+              }
+            }
+
+            if (json.audio) {
+              audioQueue.current.push(json.audio);
+
+              if (shouldWaitForAudio && !revealTextRef.current) {
+                revealTextRef.current = true;
+                aiLoadingRef.current = false;
+                setAiResponseLoading(false);
+
+                streamQueue.current = accumulatedResponseRef.current;
+                startDisplayInterval(speed, 16);
+              } else if (aiLoadingRef.current) {
+                aiLoadingRef.current = false;
+                setAiResponseLoading(false);
+              }
+
+              if (!isAudioPlaying.current) {
+                playNextAudio();
+              }
+            }
+          } catch (e) {
+            console.error("Error parsing stream:", e);
           }
         }
       }
 
-      if (speed > 0) {
-        const checkEmpty = setInterval(() => {
-          if (streamQueue.current.length === 0) {
-            clearInterval(checkEmpty);
-            clearInterval(displayInterval.current);
-            finishChat();
-          }
-        }, 100);
-      } else {
-        finishChat();
+      streamCompleteRef.current = true;
+
+      if (shouldWaitForAudio && !revealTextRef.current) {
+        revealTextRef.current = true;
+        aiLoadingRef.current = false;
+        setAiResponseLoading(false);
+
+        streamQueue.current = accumulatedResponseRef.current;
+        startDisplayInterval(speed, 16);
       }
+
+      if (
+        !shouldWaitForAudio &&
+        !isAudioPlaying.current &&
+        audioQueue.current.length === 0
+      ) {
+        audioCompleteRef.current = true;
+      }
+
+      tryFinishChat();
     } catch (err) {
       if (err.name === "AbortError") {
         console.log("AI response fetch aborted");
@@ -321,14 +388,13 @@ function Chat({
 
   function finishChat() {
     if (stealthMode) {
-      // In stealth mode, we don't fade out, we just add the message to history list
       const finalAiText = accumulatedResponseRef.current;
       if (finalAiText && finalAiText.trim()) {
         setMessages((prev) => [...prev, { role: "ai", text: finalAiText }]);
       }
       setAiResponse("");
       setChatmsg("");
-      setChatRole(""); // Hide current message divs
+      setChatRole("");
       setInputLocked(false);
       return;
     }
@@ -343,6 +409,12 @@ function Chat({
     if (!chatmsg) return;
 
     const message = chatmsg;
+
+    aiLoadingRef.current = true;
+    streamCompleteRef.current = false;
+    audioCompleteRef.current = false;
+    revealTextRef.current = false;
+    clearDisplayInterval();
 
     setInputLocked(true);
     setChatRole("user");
@@ -408,7 +480,9 @@ function Chat({
   }, [stealthMode, userName, aiName]);
 
   useEffect(() => {
-    window.dispatchEvent(new CustomEvent('ai-volume-change', { detail: aiVolume }));
+    window.dispatchEvent(
+      new CustomEvent("ai-volume-change", { detail: aiVolume }),
+    );
   }, [aiVolume]);
 
   const [showScrollBtn, setShowScrollBtn] = useState(false);
@@ -434,7 +508,10 @@ function Chat({
 
   const scrollToBottom = () => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
+      scrollRef.current.scrollTo({
+        top: scrollRef.current.scrollHeight,
+        behavior: "smooth",
+      });
     }
   };
 
