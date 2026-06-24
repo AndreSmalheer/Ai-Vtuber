@@ -25,11 +25,24 @@ export default function Avatar({
   const configRef = useRef(config);
 
   const [loading, setLoading] = useState(Boolean(avatarModel));
+  const [loaderVisible, setLoaderVisible] = useState(Boolean(avatarModel));
   const [sceneReady, setSceneReady] = useState(false);
   const [sceneError, setSceneError] = useState(null);
 
   const { state, setState, isWindowVisible, visibilityReloadKey } =
     useAvatarStateMachine();
+
+  useEffect(() => {
+    if (!loading) {
+      const timer = setTimeout(() => {
+        setLoaderVisible(false);
+      }, 500);
+
+      return () => clearTimeout(timer);
+    }
+
+    setLoaderVisible(true);
+  }, [loading]);
 
   const enableEffectsRef = useRef(enableEffects);
   useEffect(() => {
@@ -197,11 +210,9 @@ export default function Avatar({
       className={`three-js-container ${visible ? "" : "three-js-container--hidden"}`}
       ref={mountRef}
     >
-      {loading && (
-        <div className="avatar-loader">
-          <div className="avatar-loader__ring" />
-        </div>
-      )}
+      <div className={`avatar-loader ${loading ? "" : "avatar-loader--hide"}`}>
+        <div className="avatar-loader__ring" />
+      </div>
       {sceneError && <div className="avatar-error">{sceneError}</div>}
     </div>
   );
