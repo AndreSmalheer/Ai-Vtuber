@@ -139,6 +139,13 @@
   color: var(--h3-color);
 }
 
+.no-messages {
+  text-align: center;
+  margin-top: 40px;
+  color: var(--h2-color);
+  font-size: 24px;
+}
+
 /* loading */
 .loading {
   display: inline-flex;

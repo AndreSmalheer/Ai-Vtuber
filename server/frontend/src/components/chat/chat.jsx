@@ -518,6 +518,10 @@ function Chat({
   if (stealthMode) {
     return (
       <div className="chat-wrapper stealth" ref={scrollRef}>
+        {messages.length === 0 && (
+          <h1 className="no-messages">Start a conversation with {aiName}</h1>
+        )}
+
         {messages.map((m, i) => (
           <div key={i} className={`stealth-message ${m.role}`}>
             <span className="role">
@@ -526,6 +530,7 @@ function Chat({
             <p className="text">{m.text}</p>
           </div>
         ))}
+
         {chatRole === "ai" && (
           <div className="stealth-message ai current">
             <span className="role">{aiName}</span>
@@ -534,6 +539,7 @@ function Chat({
             </p>
           </div>
         )}
+
         <button
           className={`scroll-to-bottom-btn ${showScrollBtn ? "visible" : ""}`}
           onClick={scrollToBottom}
