@@ -439,13 +439,16 @@ function DownloadModels({ setCurrentStep }) {
   const [isOllamaDownloading, setIsOllamaDownloading] = useState(false);
   const [isPiperDownloading, setIsPiperDownloading] = useState(false);
 
-  const simulateDownload = (type) => {
+  const simulateDownload = async (type) => {
     if (type === "ollama") {
       if (isOllamaDownloading || ollamaProgress === 100) return;
+
       setIsOllamaDownloading(true);
+
       let p = 0;
       const interval = setInterval(() => {
         p += Math.floor(Math.random() * 15) + 5;
+
         if (p >= 100) {
           setOllamaProgress(100);
           setIsOllamaDownloading(false);
@@ -456,18 +459,60 @@ function DownloadModels({ setCurrentStep }) {
       }, 150);
     } else {
       if (isPiperDownloading || piperProgress === 100) return;
+
       setIsPiperDownloading(true);
-      let p = 0;
-      const interval = setInterval(() => {
-        p += Math.floor(Math.random() * 20) + 10;
-        if (p >= 100) {
-          setPiperProgress(100);
-          setIsPiperDownloading(false);
-          clearInterval(interval);
-        } else {
-          setPiperProgress(p);
+
+      try {
+        const response = await fetch("/Ai-Models/Piper/Mia-Piper-TTs.zip");
+
+        if (!response.ok) {
+          throw new Error("Download failed");
         }
-      }, 100);
+
+        const contentLength = response.headers.get("Content-Length");
+
+        if (!contentLength) {
+          console.log("No file size available");
+        }
+
+        const total = Number(contentLength);
+        let loaded = 0;
+
+        const reader = response.body.getReader();
+        const chunks = [];
+
+        while (true) {
+          const { done, value } = await reader.read();
+
+          if (done) break;
+
+          chunks.push(value);
+          loaded += value.length;
+
+          if (total) {
+            setPiperProgress(Math.round((loaded / total) * 100));
+          }
+        }
+
+        const blob = new Blob(chunks);
+
+        const url = window.URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "Mia-Piper-TTs.zip";
+        document.body.appendChild(a);
+        a.click();
+
+        a.remove();
+        window.URL.revokeObjectURL(url);
+
+        setPiperProgress(100);
+      } catch (error) {
+        console.error(error);
+      }
+
+      setIsPiperDownloading(false);
     }
   };
 
@@ -478,6 +523,7 @@ function DownloadModels({ setCurrentStep }) {
       <div className="onboarding-img-wrapper">
         <img
           className="onboarding-img-small"
+          style={{ maxHeight: "20vh" }}
           src="/onboarding/models-onboarding-img.png"
           alt=""
         />
@@ -537,7 +583,7 @@ function DownloadModels({ setCurrentStep }) {
           <div className="feature-content">
             <h1 className="feature-title">Piper Onyx</h1>
             <h2 className="feature-description">
-              65 MB • High-quality natural voice
+              60 MB • High-quality natural voice
             </h2>
             <div className="model-progress-bar">
               <div
