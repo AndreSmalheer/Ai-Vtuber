@@ -4,8 +4,10 @@ import {
   AvatarCharacter,
   AvatarScene,
   startAnimation,
+  CharacterState,
 } from "./three/avatarRuntime";
 
+import { useCharacterState } from "./AvatarStateContext";
 import { useAvatarStateMachine } from "./hooks/useAvatarStateMachine";
 import { AvatarState } from "./hooks/avatarState";
 
@@ -28,9 +30,9 @@ export default function Avatar({
   const [loaderVisible, setLoaderVisible] = useState(Boolean(avatarModel));
   const [sceneReady, setSceneReady] = useState(false);
   const [sceneError, setSceneError] = useState(null);
-
   const { state, setState, isWindowVisible, visibilityReloadKey } =
     useAvatarStateMachine();
+  const { characterState } = useCharacterState();
 
   useEffect(() => {
     if (!loading) {
@@ -183,6 +185,12 @@ export default function Avatar({
       Promise.resolve().then(() => setLoading(false));
     }
   }, [sceneReady, state]);
+
+  useEffect(() => {
+    const character = characterRef.current;
+
+    character.setCharacterState(characterState);
+  }, [characterState]);
 
   // ----------------------------
   // ANIMATION LOOP

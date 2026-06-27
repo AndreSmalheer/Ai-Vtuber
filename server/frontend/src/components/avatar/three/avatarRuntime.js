@@ -649,8 +649,8 @@ export class AvatarAnimator {
       smileState.isSmiling = true;
       smileState.timer = 0;
 
-lookAwayState.targetEye.set(0, 0);
-lookAwayState.targetHead.set(0, 0, 0);
+      lookAwayState.targetEye.set(0, 0);
+      lookAwayState.targetHead.set(0, 0, 0);
     }
 
     if (!smileState.isSmiling) return;
@@ -1417,6 +1417,16 @@ export class AvatarCharacter {
     return Boolean(this.vrm);
   }
 
+  setCharacterState(state) {
+    this.setState(state);
+  }
+
+  setState(nextState) {
+    if (this.state !== nextState) {
+      this.state = nextState;
+    }
+  }
+
   async load(scene, modelName, signal) {
     this.setState(CharacterState.LOADING);
 
@@ -1470,10 +1480,17 @@ export class AvatarCharacter {
     );
   }
 
+  setAvatarState(state) {
+    this.state = state;
+  }
+
   update({ delta, time, lipSyncState }) {
     if (!this.vrm) return;
 
-    this.updateState(lipSyncState);
+    if (lipSyncState?.isPlaying) {
+      this.setState(CharacterState.TALKING);
+    }
+
     this.AvatarAnimator.animate({
       vrm: this.vrm,
       expressionNames: this.expressionNames,
@@ -1488,6 +1505,7 @@ export class AvatarCharacter {
       tempQuaternion: this.tempQuaternion,
       blinkState: this.blinkState,
     });
+
     this.vrm.update(delta);
   }
 }

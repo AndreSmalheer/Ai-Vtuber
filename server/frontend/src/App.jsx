@@ -6,6 +6,7 @@ import GeneralSettings from "./pages/GeneralSettings/GeneralSettings";
 import ChatHistory from "./pages/ChatHistory/ChatHistory";
 import Header from "./components/header/header";
 import Avatar from "./components/avatar/avatar";
+import { AvatarStateProvider } from "./components/avatar/AvatarStateContext";
 
 const DEFAULT_AVATAR_MODEL = "Mia-casuel.vrm";
 
@@ -107,59 +108,71 @@ function App() {
   const avatarModel = config.avatar_model || DEFAULT_AVATAR_MODEL;
 
   return (
-    <div
-      className={`main-content ${location.pathname === "/" ? "main-content--locked" : "main-content--scroll"}`}
-    >
-      <Avatar
-        visible={showAvatar}
-        avatarModel={avatarModel}
-        lipSyncState={lipSyncState}
-        orbitControlsEnabled={config.orbit_controls_enabled !== false}
-        enableEffects={config.enable_effects}
-        isDark={isDark}
-        config={config}
-      />
+    <AvatarStateProvider>
+      <div
+        className={`main-content ${location.pathname === "/" ? "main-content--locked" : "main-content--scroll"}`}
+      >
+        <Avatar
+          visible={showAvatar}
+          avatarModel={avatarModel}
+          lipSyncState={lipSyncState}
+          orbitControlsEnabled={config.orbit_controls_enabled !== false}
+          enableEffects={config.enable_effects}
+          isDark={isDark}
+          config={config}
+        />
 
-      <PageTransitionWrapper path={location.pathname}>
-        <Routes location={location}>
-          <Route
-            path="/"
-            element={
-              <Home config={config} onAudioStateChange={setLipSyncState} />
-            }
-          />
-          {/* This route acts as the settings navigation menu */}
-          <Route
-            path="/settings-nav"
-            element={
-              <>
-                <Header backBtn={true} settingsBtn={false} config={config} />
-                <Settings /> {/* This component now acts as the menu */}
-              </>
-            }
-          />
-          {/* New routes for specific settings pages */}
-          <Route
-            path="/settings"
-            element={
-              <>
-                <Header backBtn={true} settingsBtn={false} fixed={true} config={config} />
-                <GeneralSettings />
-              </>
-            }
-          />
-          <Route
-            path="/chat-history"
-            element={
-              <>
-                <Header backBtn={true} settingsBtn={false} fixed={true} config={config} />
-                <ChatHistory />
-              </>
-            }
-          />{" "}
-        </Routes>
-      </PageTransitionWrapper>
-    </div>
+        <PageTransitionWrapper path={location.pathname}>
+          <Routes location={location}>
+            <Route
+              path="/"
+              element={
+                <Home config={config} onAudioStateChange={setLipSyncState} />
+              }
+            />
+            {/* This route acts as the settings navigation menu */}
+            <Route
+              path="/settings-nav"
+              element={
+                <>
+                  <Header backBtn={true} settingsBtn={false} config={config} />
+                  <Settings /> {/* This component now acts as the menu */}
+                </>
+              }
+            />
+            {/* New routes for specific settings pages */}
+            <Route
+              path="/settings"
+              element={
+                <>
+                  <Header
+                    backBtn={true}
+                    settingsBtn={false}
+                    fixed={true}
+                    config={config}
+                  />
+                  <GeneralSettings />
+                </>
+              }
+            />
+            <Route
+              path="/chat-history"
+              element={
+                <>
+                  <Header
+                    backBtn={true}
+                    settingsBtn={false}
+                    fixed={true}
+                    config={config}
+                  />
+                  <ChatHistory />
+                </>
+              }
+            />{" "}
+          </Routes>
+        </PageTransitionWrapper>
+      </div>
+    </AvatarStateProvider>
   );
 }
 
