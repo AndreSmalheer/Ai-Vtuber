@@ -22,6 +22,8 @@ export const CharacterState = {
   LOADING: "loading",
   IDLE: "idle",
   TALKING: "talking",
+  LISTENING: "listening",
+  THINKING: "thinking",
 };
 
 const motionStates = new WeakMap();
@@ -571,7 +573,23 @@ export class AvatarAnimator {
         });
         break;
 
-      // future state ideas, listening, thincing,
+      case CharacterState.LISTENING:
+        this.listening({
+          vrm,
+          expressionNames,
+          delta,
+          time,
+          mouthState,
+          expressionState,
+          tempEuler,
+          tempQuaternion,
+          smileState: this.smileState,
+        });
+        break;
+
+      case CharacterState.THINKING:
+        this.thinking();
+        break;
 
       default:
         break;
@@ -584,7 +602,10 @@ export class AvatarAnimator {
       blinkState,
     });
 
-    if (characterState !== CharacterState.TALKING) {
+    if (
+      characterState !== CharacterState.TALKING &&
+      characterState !== CharacterState.LISTENING
+    ) {
       this.smile({
         vrm,
         expressionNames,
@@ -1228,7 +1249,307 @@ export class AvatarAnimator {
     setExpression(vrm, expressionNames, "relaxed", expressionState.relaxed);
   }
 
-  listening() {}
+  thinking() {}
+
+  listening({
+    vrm,
+    expressionNames,
+    delta,
+    time,
+    mouthState,
+    expressionState,
+    tempEuler,
+    tempQuaternion,
+    smileState,
+  }) {
+    const state = getMotionState(vrm);
+    const la = this.lookAwayState;
+
+    // --------------------
+    // Mouth
+    // --------------------
+
+    mouthState.openness = smoothValue(mouthState.openness, 0, delta, 10, 10);
+    mouthState.aa = smoothValue(mouthState.aa, 0, delta, 10, 10);
+    mouthState.ih = smoothValue(mouthState.ih, 0, delta, 10, 10);
+    mouthState.ou = smoothValue(mouthState.ou, 0, delta, 10, 10);
+    mouthState.ee = smoothValue(mouthState.ee, 0, delta, 10, 10);
+    mouthState.oh = smoothValue(mouthState.oh, 0, delta, 10, 10);
+
+    setExpression(vrm, expressionNames, "aa", mouthState.aa);
+    setExpression(vrm, expressionNames, "ih", mouthState.ih);
+    setExpression(vrm, expressionNames, "ou", mouthState.ou);
+    setExpression(vrm, expressionNames, "ee", mouthState.ee);
+    setExpression(vrm, expressionNames, "oh", mouthState.oh);
+
+    // --------------------
+    // Look-around
+    // --------------------
+
+    if (
+      time >= la.nextLookAway &&
+      !smileState.isSmiling &&
+      expressionState.happy < 0.05
+    ) {
+      const currentX = la.currentEye.x;
+      const side =
+        currentX < 0 ? 1 : currentX > 0.05 ? -1 : Math.random() < 0.5 ? -1 : 1;
+      const isWide = Math.random() < 0.15;
+
+      la.targetEye.set(
+        side *
+          (isWide ? 0.07 + Math.random() * 0.05 : 0.02 + Math.random() * 0.04),
+        THREE.MathUtils.randFloatSpread(isWide ? 0.04 : 0.02),
+      );
+
+      la.targetHead.set(
+        la.targetEye.x * 0.14,
+        la.targetEye.y * 0.1,
+        la.targetEye.x * -0.015,
+      );
+
+      la.nextLookAway =
+        time + (isWide ? 9 + Math.random() * 7 : 6 + Math.random() * 7);
+    }
+
+    const isReturning =
+      Math.abs(la.targetEye.x) < 0.001 && Math.abs(la.targetHead.x) < 0.001;
+    const driftSpeed = isReturning ? 5.0 : 1.8 + Math.random() * 0.4;
+
+    la.currentEye.lerp(la.targetEye, 1 - Math.exp(-driftSpeed * delta));
+    la.currentHead.lerp(la.targetHead, 1 - Math.exp(-driftSpeed * delta));
+
+    // --------------------
+    // Gaze
+    // --------------------
+
+    if (time >= state.nextGazeShift) {
+      const isGlance = Math.random() < 0.08;
+      state.targetGaze.set(
+        isGlance
+          ? THREE.MathUtils.randFloatSpread(0.12)
+          : THREE.MathUtils.randFloatSpread(0.03),
+        isGlance
+          ? THREE.MathUtils.randFloatSpread(0.06)
+          : THREE.MathUtils.randFloat(0.0, 0.03),
+      );
+      state.nextGazeShift =
+        time +
+        (isGlance ? 0.35 + Math.random() * 0.45 : 1.5 + Math.random() * 2.5);
+    }
+
+    state.gaze.lerp(state.targetGaze, 1 - Math.exp(-4 * delta));
+
+    // --------------------
+    // Head drift
+    // --------------------
+
+    if (time >= state.nextDriftShift) {
+      state.targetHeadDrift.set(
+        THREE.MathUtils.randFloatSpread(0.03),
+        THREE.MathUtils.randFloatSpread(0.022),
+        THREE.MathUtils.randFloatSpread(0.014),
+      );
+      state.nextDriftShift = time + 1.5 + Math.random() * 2.8;
+    }
+
+    state.headDrift.lerp(state.targetHeadDrift, 1 - Math.exp(-1.4 * delta));
+
+    // --------------------
+    // Nodding layer
+    // --------------------
+
+    if (!this.nodState) {
+      this.nodState = {
+        isNodding: false,
+        nextNod: time + 3 + Math.random() * 5,
+        nodPhase: 0,
+        nodDuration: 0,
+        nodStrength: 0,
+      };
+    }
+
+    const nod = this.nodState;
+    let nodPitch = 0;
+
+    if (!nod.isNodding && time >= nod.nextNod) {
+      nod.isNodding = true;
+      nod.nodPhase = 0;
+
+      nod.nodDuration = 0.7 + Math.random() * 0.45;
+
+      nod.nodStrength = 0.025 + Math.random() * 0.035;
+    }
+
+    if (nod.isNodding) {
+      nod.nodPhase += delta;
+
+      const progress = nod.nodPhase / nod.nodDuration;
+
+      nodPitch = nod.nodStrength * Math.sin(progress * Math.PI);
+
+      if (nod.nodPhase >= nod.nodDuration) {
+        nod.isNodding = false;
+        nod.nextNod = time + 4 + Math.random() * 7;
+      }
+    }
+
+    // --------------------
+    // Body sway
+    // --------------------
+
+    const swayX = Math.sin(time * 1.17) * 0.01 + Math.sin(time * 2.83) * 0.005;
+    const swayY = Math.sin(time * 0.73) * 0.009 + Math.sin(time * 1.91) * 0.005;
+    const swayZ = Math.sin(time * 0.97) * 0.008 + Math.sin(time * 1.57) * 0.004;
+
+    const targetHead = new THREE.Vector3(
+      state.headDrift.x + swayX + la.currentHead.x + nodPitch,
+      state.headDrift.y + swayY + state.gaze.x * 0.06 + la.currentHead.y,
+      state.headDrift.z + swayZ + state.gaze.x * -0.035 + la.currentHead.z,
+    );
+
+    state.headMotion.lerp(targetHead, 1 - Math.exp(-5 * delta));
+    state.bodyMotion.lerp(state.headMotion, 1 - Math.exp(-2.5 * delta));
+    state.armMotion.lerp(state.bodyMotion, 1 - Math.exp(-1.8 * delta));
+
+    // --------------------
+    // Breathing
+    // --------------------
+
+    const breathing = Math.sin(time * 1.2) * 0.012 * 0.55;
+
+    // --------------------
+    // Arms
+    // --------------------
+
+    const armBreathing = Math.sin(time * 1.2) * 0.012 * 0.55;
+    const swayAmp = 0.0045;
+    const armSwayL =
+      Math.sin(time * 0.5) * swayAmp + Math.sin(time * 0.9) * swayAmp * 0.25;
+    const armSwayR =
+      Math.sin(time * 0.52 + 0.6) * swayAmp +
+      Math.sin(time * 0.88 + 0.3) * swayAmp * 0.25;
+
+    const upperArmX = state.armMotion.x * 0.1 + armBreathing * 0.25 + armSwayL;
+    const upperArmY = state.armMotion.y * 0.08;
+    const upperArmZ = state.armMotion.z * 0.12;
+
+    applyBoneRotation(
+      state.leftUpperArm,
+      state.baseLeftUpperArm,
+      upperArmX,
+      upperArmY + 0.1,
+      upperArmZ - 1.35,
+      tempEuler,
+      tempQuaternion,
+    );
+
+    applyBoneRotation(
+      state.rightUpperArm,
+      state.baseRightUpperArm,
+      upperArmX - armSwayL + armSwayR,
+      upperArmY - 0.1,
+      upperArmZ + 1.35,
+      tempEuler,
+      tempQuaternion,
+    );
+
+    // --------------------
+    // Body bones
+    // --------------------
+
+    applyBoneRotation(
+      state.spine,
+      state.baseSpine,
+      state.bodyMotion.x * 0.18 + breathing * 0.3,
+      state.bodyMotion.y * 0.15,
+      state.bodyMotion.z * 0.12,
+      tempEuler,
+      tempQuaternion,
+    );
+
+    applyBoneRotation(
+      state.chest,
+      state.baseChest,
+      state.bodyMotion.x * 0.25 + breathing,
+      state.bodyMotion.y * 0.22,
+      state.bodyMotion.z * 0.18,
+      tempEuler,
+      tempQuaternion,
+    );
+
+    applyBoneRotation(
+      state.neck,
+      state.baseNeck,
+      state.headMotion.x * 0.35,
+      state.headMotion.y * 0.35,
+      state.headMotion.z * 0.3,
+      tempEuler,
+      tempQuaternion,
+    );
+
+    applyBoneRotation(
+      state.head,
+      state.baseHead,
+      state.headMotion.x,
+      state.headMotion.y,
+      state.headMotion.z,
+      tempEuler,
+      tempQuaternion,
+    );
+
+    // --------------------
+    // Eyes
+    // --------------------
+
+    const eyeX =
+      (state.gaze.y + la.currentEye.y) * 0.3 + Math.sin(time * 2.7) * 0.006;
+    const eyeY =
+      (state.gaze.x + la.currentEye.x) * 0.42 + Math.sin(time * 1.8) * 0.008;
+
+    applyBoneRotation(
+      state.leftEye,
+      state.baseLeftEye,
+      eyeX,
+      eyeY,
+      0,
+      tempEuler,
+      tempQuaternion,
+    );
+
+    applyBoneRotation(
+      state.rightEye,
+      state.baseRightEye,
+      eyeX,
+      eyeY,
+      0,
+      tempEuler,
+      tempQuaternion,
+    );
+
+    // --------------------
+    // Expressions
+    // --------------------
+
+    expressionState.happy = smoothValue(
+      expressionState.happy,
+      time < state.smileUntil ? 0.32 : 0.1,
+      delta,
+      4,
+      2.5,
+    );
+
+    expressionState.relaxed = smoothValue(
+      expressionState.relaxed,
+      0.08,
+      delta,
+      4,
+      3,
+    );
+
+    setExpression(vrm, expressionNames, "happy", expressionState.happy);
+    setExpression(vrm, expressionNames, "relaxed", expressionState.relaxed);
+  }
 }
 
 /* =========================================================
