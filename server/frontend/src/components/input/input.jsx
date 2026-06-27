@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import "./input.css";
 import { useVoiceAnimation } from "../../hooks/useVoiceAnimation";
 import { useCallMode } from "../../hooks/useCallMode";
+import { useCharacterState } from "../avatar/AvatarStateContext";
+import { CharacterState } from "../avatar/three/avatarRuntime";
 
 const SILENCE_THRESHOLD = 0.01;
 
@@ -33,6 +35,8 @@ function Input({
   const audioContextRef = useRef(null);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [localMicError, setLocalMicError] = useState(null);
+
+  const { characterState, setCharacterState } = useCharacterState();
 
   // ── Regular (non-call-mode) mic volume animation ─────────────────────
   const analyserRef = useRef(null);
@@ -78,11 +82,7 @@ function Input({
 
   // ── Inactive state logic ──────────────────────────────────────────────
   const isInactive =
-    !isFocused &&
-    !inputmsg &&
-    !isRecording &&
-    !callMode &&
-    !inputLocked;
+    !isFocused && !inputmsg && !isRecording && !callMode && !inputLocked;
 
   // ── Keyboard / viewport handling ──────────────────────────────────────
   useEffect(() => {
@@ -109,6 +109,31 @@ function Input({
     };
   }, []);
 
+  useEffect(() => {
+    let targetState = CharacterState.IDLE;
+
+    if (callMode) {
+      if (callPhase === "listening") {
+        targetState = CharacterState.LISTENING;
+      } else if (callPhase === "thinking") {
+        targetState = CharacterState.THINKING;
+      } else if (callPhase === "speaking") {
+        targetState = CharacterState.TALKING;
+      } else {
+        targetState = isFocused ? CharacterState.LISTENING : CharacterState.IDLE;
+      }
+    } else if (isRecording) {
+      targetState = CharacterState.LISTENING;
+    } else if (inputLocked) {
+      targetState = CharacterState.THINKING;
+    } else if (isFocused) {
+      targetState = CharacterState.LISTENING;
+    }
+
+    setCharacterState(targetState);
+  }, [isFocused, isRecording, callMode, callPhase, inputLocked, setCharacterState]);
+
+  // Handle keyboard/viewport offset layout
   useEffect(() => {
     if (!isFocused) {
       document.documentElement.style.setProperty("--keyboard-offset", "0px");
@@ -312,7 +337,11 @@ function Input({
         className={`call-background ${callMode && stealthMode ? "active" : ""}`}
       />
 
-      {(callMicError || localMicError || sttError || ollamaError || piperError) && (
+      {(callMicError ||
+        localMicError ||
+        sttError ||
+        ollamaError ||
+        piperError) && (
         <div
           className={`call-error-message ${
             callMode && stealthMode ? "call-error-message--fullscreen" : ""
@@ -323,7 +352,11 @@ function Input({
             <line x1="12" y1="8" x2="12" y2="12" />
             <line x1="12" y1="16" x2="12.01" y2="16" />
           </svg>
-          {callMicError || localMicError || sttError || ollamaError || piperError}
+          {callMicError ||
+            localMicError ||
+            sttError ||
+            ollamaError ||
+            piperError}
         </div>
       )}
 

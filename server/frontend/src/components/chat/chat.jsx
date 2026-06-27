@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import "./chat.css";
 import { useVoiceAnimation } from "../../hooks/useVoiceAnimation";
+import { useCharacterState } from "../avatar/AvatarStateContext";
+import { CharacterState } from "../avatar/three/avatarRuntime";
 
 function Chat({
   chatmsg,
@@ -17,6 +19,7 @@ function Chat({
   callMode,
   setCallMode,
 }) {
+  const { setCharacterState } = useCharacterState();
   const [airesponse, setAiResponse] = useState("");
   const [aiResponseLoading, setAiResponseLoading] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -290,10 +293,16 @@ function Chat({
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
+      let hasStartedStreaming = false;
 
       while (true) {
         const { value, done } = await reader.read();
         if (done) break;
+
+        if (!hasStartedStreaming) {
+          hasStartedStreaming = true;
+          setCharacterState(CharacterState.TALKING);
+        }
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split("\n\n");

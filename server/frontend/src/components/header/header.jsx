@@ -147,7 +147,6 @@ function Header({
 
         {callBtn && !backBtn && (
           <button
-            className="hamburger-manue-btn"
             className={`hamburger-manue-btn ${devFlash ? "dev-flash" : ""}`}
             onClick={handleToggleMenu}
             onMouseDown={startDevHold}
