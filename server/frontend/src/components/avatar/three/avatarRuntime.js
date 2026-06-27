@@ -509,6 +509,137 @@ function updateLipSync(
    FACE / BODY ANIMATION SYSTEM
 ========================================================= */
 
+class AvatarExpressions {
+  constructor() {}
+
+  blink({ vrm, expressionNames, delta, blinkState }) {
+    blinkState.timer += delta;
+
+    if (
+      !blinkState.isBlinking &&
+      blinkState.timer >= blinkState.nextBlinkTime
+    ) {
+      blinkState.isBlinking = true;
+      blinkState.timer = 0;
+    }
+
+    if (!blinkState.isBlinking) return;
+
+    const blinkProgress = Math.min(blinkState.timer / blinkState.duration, 1);
+
+    const blinkValue =
+      blinkProgress <= 0.5 ? blinkProgress * 2 : 1 - (blinkProgress - 0.5) * 2;
+
+    setExpression(vrm, expressionNames, "blink", blinkValue);
+
+    setExpression(vrm, expressionNames, "blinkLeft", blinkValue);
+
+    setExpression(vrm, expressionNames, "blinkRight", blinkValue);
+
+    if (blinkState.timer >= blinkState.duration) {
+      blinkState.isBlinking = false;
+
+      blinkState.timer = 0;
+
+      blinkState.nextBlinkTime = 2 + Math.random() * 6;
+
+      setExpression(vrm, expressionNames, "blink", 0);
+
+      setExpression(vrm, expressionNames, "blinkLeft", 0);
+
+      setExpression(vrm, expressionNames, "blinkRight", 0);
+    }
+  }
+
+  smile({
+    vrm,
+    expressionNames,
+    expressionState,
+    smileState,
+    lookAwayState,
+    delta,
+    characterState,
+  }) {
+    if (
+      characterState === CharacterState.TALKING ||
+      characterState === CharacterState.LISTENING
+    ) {
+      return;
+    }
+    smileState.timer += delta;
+
+    if (!smileState.isSmiling && smileState.timer >= smileState.nextSmileTime) {
+      smileState.isSmiling = true;
+      smileState.timer = 0;
+
+      lookAwayState.targetEye.set(0, 0);
+      lookAwayState.targetHead.set(0, 0, 0);
+    }
+
+    if (!smileState.isSmiling) return;
+
+    const fadeTime = 0.35;
+    const holdTime = smileState.holdTime;
+    const totalTime = fadeTime + holdTime + fadeTime;
+
+    let smileAmount = 0;
+
+    if (smileState.timer < fadeTime) {
+      smileAmount = smileState.timer / fadeTime;
+    } else if (smileState.timer < fadeTime + holdTime) {
+      smileAmount = 1;
+    } else {
+      smileAmount = 1 - (smileState.timer - fadeTime - holdTime) / fadeTime;
+    }
+
+    expressionState.happy = Math.max(0, smileAmount) * 0.28;
+
+    setExpression(vrm, expressionNames, "happy", expressionState.happy);
+
+    if (smileState.timer >= totalTime) {
+      smileState.isSmiling = false;
+      smileState.timer = 0;
+      smileState.nextSmileTime = 8 + Math.random() * 12;
+
+      expressionState.happy = 0;
+
+      setExpression(vrm, expressionNames, "happy", 0);
+    }
+  }
+
+  reset() {}
+
+  animate({
+    vrm,
+    expressionNames,
+    characterState,
+    lipSyncState,
+    delta,
+    time,
+    mouthState,
+    readAudioShape,
+    expressionState,
+    tempEuler,
+    tempQuaternion,
+    blinkState,
+    smileState,
+    lookAwayState,
+  }) {
+    this.blink({ vrm, expressionNames, delta, blinkState });
+    this.smile({
+      vrm,
+      expressionNames,
+      expressionState,
+      smileState,
+      lookAwayState,
+      delta,
+      smileState,
+      lookAwayState,
+      characterState,
+    });
+  }
+}
+
 export class AvatarAnimator {
   constructor() {
     this.smileState = {
@@ -527,6 +658,8 @@ export class AvatarAnimator {
       currentEye: new THREE.Vector2(),
       currentHead: new THREE.Vector3(),
     };
+
+    this.AvatarExpressions = new AvatarExpressions();
   }
 
   animate({
@@ -595,114 +728,22 @@ export class AvatarAnimator {
         break;
     }
 
-    this.blink({
+    this.AvatarExpressions.animate({
       vrm,
       expressionNames,
+      characterState,
+      lipSyncState,
       delta,
+      time,
+      mouthState,
+      readAudioShape,
+      expressionState,
+      tempEuler,
+      tempQuaternion,
       blinkState,
+      smileState: this.smileState,
+      lookAwayState: this.lookAwayState,
     });
-
-    if (
-      characterState !== CharacterState.TALKING &&
-      characterState !== CharacterState.LISTENING
-    ) {
-      this.smile({
-        vrm,
-        expressionNames,
-        expressionState,
-        smileState: this.smileState,
-        lookAwayState: this.lookAwayState,
-        delta,
-      });
-    }
-  }
-
-  blink({ vrm, expressionNames, delta, blinkState }) {
-    blinkState.timer += delta;
-
-    if (
-      !blinkState.isBlinking &&
-      blinkState.timer >= blinkState.nextBlinkTime
-    ) {
-      blinkState.isBlinking = true;
-      blinkState.timer = 0;
-    }
-
-    if (!blinkState.isBlinking) return;
-
-    const blinkProgress = Math.min(blinkState.timer / blinkState.duration, 1);
-
-    const blinkValue =
-      blinkProgress <= 0.5 ? blinkProgress * 2 : 1 - (blinkProgress - 0.5) * 2;
-
-    setExpression(vrm, expressionNames, "blink", blinkValue);
-
-    setExpression(vrm, expressionNames, "blinkLeft", blinkValue);
-
-    setExpression(vrm, expressionNames, "blinkRight", blinkValue);
-
-    if (blinkState.timer >= blinkState.duration) {
-      blinkState.isBlinking = false;
-
-      blinkState.timer = 0;
-
-      blinkState.nextBlinkTime = 2 + Math.random() * 6;
-
-      setExpression(vrm, expressionNames, "blink", 0);
-
-      setExpression(vrm, expressionNames, "blinkLeft", 0);
-
-      setExpression(vrm, expressionNames, "blinkRight", 0);
-    }
-  }
-
-  smile({
-    vrm,
-    expressionNames,
-    expressionState,
-    smileState,
-    lookAwayState,
-    delta,
-  }) {
-    smileState.timer += delta;
-
-    if (!smileState.isSmiling && smileState.timer >= smileState.nextSmileTime) {
-      smileState.isSmiling = true;
-      smileState.timer = 0;
-
-      lookAwayState.targetEye.set(0, 0);
-      lookAwayState.targetHead.set(0, 0, 0);
-    }
-
-    if (!smileState.isSmiling) return;
-
-    const fadeTime = 0.35;
-    const holdTime = smileState.holdTime;
-    const totalTime = fadeTime + holdTime + fadeTime;
-
-    let smileAmount = 0;
-
-    if (smileState.timer < fadeTime) {
-      smileAmount = smileState.timer / fadeTime;
-    } else if (smileState.timer < fadeTime + holdTime) {
-      smileAmount = 1;
-    } else {
-      smileAmount = 1 - (smileState.timer - fadeTime - holdTime) / fadeTime;
-    }
-
-    expressionState.happy = Math.max(0, smileAmount) * 0.28;
-
-    setExpression(vrm, expressionNames, "happy", expressionState.happy);
-
-    if (smileState.timer >= totalTime) {
-      smileState.isSmiling = false;
-      smileState.timer = 0;
-      smileState.nextSmileTime = 8 + Math.random() * 12;
-
-      expressionState.happy = 0;
-
-      setExpression(vrm, expressionNames, "happy", 0);
-    }
   }
 
   idle({
