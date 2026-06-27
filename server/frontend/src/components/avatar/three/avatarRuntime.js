@@ -515,6 +515,16 @@ export class AvatarAnimator {
       isSmiling: false,
       holdTime: 1.5,
     };
+
+    this.lookAwayState = {
+      phase: "neutral",
+      nextLookAway: 10 + Math.random() * 15,
+      lookAwayUntil: 0,
+      targetEye: new THREE.Vector2(),
+      targetHead: new THREE.Vector3(),
+      currentEye: new THREE.Vector2(),
+      currentHead: new THREE.Vector3(),
+    };
   }
 
   animate({
@@ -542,6 +552,7 @@ export class AvatarAnimator {
           mouthState,
           tempEuler,
           tempQuaternion,
+          smileState: this.smileState,
         });
         break;
 
@@ -560,6 +571,8 @@ export class AvatarAnimator {
         });
         break;
 
+      // future state ideas, listening, thincing,
+
       default:
         break;
     }
@@ -577,6 +590,7 @@ export class AvatarAnimator {
         expressionNames,
         expressionState,
         smileState: this.smileState,
+        lookAwayState: this.lookAwayState,
         delta,
       });
     }
@@ -621,12 +635,22 @@ export class AvatarAnimator {
     }
   }
 
-  smile({ vrm, expressionNames, expressionState, smileState, delta }) {
+  smile({
+    vrm,
+    expressionNames,
+    expressionState,
+    smileState,
+    lookAwayState,
+    delta,
+  }) {
     smileState.timer += delta;
 
     if (!smileState.isSmiling && smileState.timer >= smileState.nextSmileTime) {
       smileState.isSmiling = true;
       smileState.timer = 0;
+
+lookAwayState.targetEye.set(0, 0);
+lookAwayState.targetHead.set(0, 0, 0);
     }
 
     if (!smileState.isSmiling) return;
@@ -669,11 +693,12 @@ export class AvatarAnimator {
     expressionState,
     tempEuler,
     tempQuaternion,
+    smileState,
   }) {
     const state = getMotionState(vrm);
+    const la = this.lookAwayState;
 
     mouthState.openness = smoothValue(mouthState.openness, 0, delta, 10, 10);
-
     mouthState.aa = smoothValue(mouthState.aa, 0, delta, 10, 10);
     mouthState.ih = smoothValue(mouthState.ih, 0, delta, 10, 10);
     mouthState.ou = smoothValue(mouthState.ou, 0, delta, 10, 10);
@@ -687,22 +712,60 @@ export class AvatarAnimator {
     setExpression(vrm, expressionNames, "oh", mouthState.oh);
 
     // --------------------
+    // Look-around head movement
+    // --------------------
+
+    if (
+      time >= la.nextLookAway &&
+      !smileState.isSmiling &&
+      expressionState.happy < 0.05
+    ) {
+      const currentX = la.currentEye.x;
+
+      const side =
+        currentX < 0 ? 1 : currentX > 0.05 ? -1 : Math.random() < 0.5 ? -1 : 1;
+
+      const isWide = Math.random() < 0.25;
+
+      la.targetEye.set(
+        side *
+          (isWide ? 0.09 + Math.random() * 0.07 : 0.03 + Math.random() * 0.05),
+        THREE.MathUtils.randFloatSpread(isWide ? 0.05 : 0.03),
+      );
+
+      la.targetHead.set(
+        la.targetEye.x * 0.18,
+        la.targetEye.y * 0.12,
+        la.targetEye.x * -0.02,
+      );
+
+      la.nextLookAway =
+        time + (isWide ? 8 + Math.random() * 8 : 5 + Math.random() * 8);
+    }
+
+    const isReturning =
+      Math.abs(la.targetEye.x) < 0.001 && Math.abs(la.targetHead.x) < 0.001;
+
+    const driftSpeed = isReturning ? 5.0 : 1.8 + Math.random() * 0.4;
+
+    la.currentEye.lerp(la.targetEye, 1 - Math.exp(-driftSpeed * delta));
+
+    la.currentHead.lerp(la.targetHead, 1 - Math.exp(-driftSpeed * delta));
+
+    // --------------------
     // Idle gaze movement
     // --------------------
 
     if (time >= state.nextGazeShift) {
       const isGlance = Math.random() < 0.16;
-
       state.targetGaze.set(
         isGlance
           ? THREE.MathUtils.randFloatSpread(0.18)
           : THREE.MathUtils.randFloatSpread(0.045),
-
         isGlance
           ? THREE.MathUtils.randFloatSpread(0.08)
           : THREE.MathUtils.randFloat(0.0, 0.045),
       );
-
       state.nextGazeShift =
         time +
         (isGlance ? 0.35 + Math.random() * 0.45 : 1.2 + Math.random() * 2.2);
@@ -720,7 +783,6 @@ export class AvatarAnimator {
         THREE.MathUtils.randFloatSpread(0.016),
         THREE.MathUtils.randFloatSpread(0.01),
       );
-
       state.nextDriftShift = time + 1.8 + Math.random() * 3.2;
     }
 
@@ -731,21 +793,17 @@ export class AvatarAnimator {
     // --------------------
 
     const swayX = Math.sin(time * 1.17) * 0.008 + Math.sin(time * 2.83) * 0.004;
-
     const swayY = Math.sin(time * 0.73) * 0.007 + Math.sin(time * 1.91) * 0.004;
-
     const swayZ = Math.sin(time * 0.97) * 0.006 + Math.sin(time * 1.57) * 0.003;
 
     const targetHead = new THREE.Vector3(
-      state.headDrift.x + swayX,
-      state.headDrift.y + swayY + state.gaze.x * 0.06,
-      state.headDrift.z + swayZ + state.gaze.x * -0.035,
+      state.headDrift.x + swayX + la.currentHead.x,
+      state.headDrift.y + swayY + state.gaze.x * 0.06 + la.currentHead.y,
+      state.headDrift.z + swayZ + state.gaze.x * -0.035 + la.currentHead.z,
     );
 
     state.headMotion.lerp(targetHead, 1 - Math.exp(-5 * delta));
-
     state.bodyMotion.lerp(state.headMotion, 1 - Math.exp(-2.5 * delta));
-
     state.armMotion.lerp(state.bodyMotion, 1 - Math.exp(-1.8 * delta));
 
     // --------------------
@@ -759,20 +817,15 @@ export class AvatarAnimator {
     // --------------------
 
     const armBreathing = Math.sin(time * 1.2) * 0.012 * 0.55;
-
     const swayAmp = 0.0035;
-
     const armSwayL =
       Math.sin(time * 0.5) * swayAmp + Math.sin(time * 0.9) * swayAmp * 0.25;
-
     const armSwayR =
       Math.sin(time * 0.52 + 0.6) * swayAmp +
       Math.sin(time * 0.88 + 0.3) * swayAmp * 0.25;
 
     const upperArmX = state.armMotion.x * 0.1 + armBreathing * 0.25 + armSwayL;
-
     const upperArmY = state.armMotion.y * 0.08;
-
     const upperArmZ = state.armMotion.z * 0.12;
 
     applyBoneRotation(
@@ -843,9 +896,10 @@ export class AvatarAnimator {
     // Eyes
     // --------------------
 
-    const eyeX = state.gaze.y * 0.3 + Math.sin(time * 2.7) * 0.006;
-
-    const eyeY = state.gaze.x * 0.42 + Math.sin(time * 1.8) * 0.008;
+    const eyeX =
+      (state.gaze.y + la.currentEye.y) * 0.3 + Math.sin(time * 2.7) * 0.006;
+    const eyeY =
+      (state.gaze.x + la.currentEye.x) * 0.42 + Math.sin(time * 1.8) * 0.008;
 
     applyBoneRotation(
       state.leftEye,
@@ -888,7 +942,6 @@ export class AvatarAnimator {
     );
 
     setExpression(vrm, expressionNames, "happy", expressionState.happy);
-
     setExpression(vrm, expressionNames, "relaxed", expressionState.relaxed);
   }
 
@@ -1174,6 +1227,8 @@ export class AvatarAnimator {
 
     setExpression(vrm, expressionNames, "relaxed", expressionState.relaxed);
   }
+
+  listening() {}
 }
 
 /* =========================================================
