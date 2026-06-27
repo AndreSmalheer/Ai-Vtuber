@@ -506,372 +506,393 @@ function updateLipSync(
 /* =========================================================
    FACE / BODY ANIMATION SYSTEM
 ========================================================= */
-function updateBlink(blinkState, vrm, expressionNames, delta) {
-  blinkState.timer += delta;
 
-  if (!blinkState.isBlinking && blinkState.timer >= blinkState.nextBlinkTime) {
-    blinkState.isBlinking = true;
-    blinkState.timer = 0;
+export class AvatarAnimator {
+  constructor() {
+    this.smileState = {
+      timer: 0,
+      nextSmileTime: 5 + Math.random() * 10,
+      isSmiling: false,
+      holdTime: 1.5,
+    };
   }
 
-  if (!blinkState.isBlinking) return;
+  animate({
+    vrm,
+    expressionNames,
+    characterState,
+    lipSyncState,
+    delta,
+    time,
+    mouthState,
+    readAudioShape,
+    expressionState,
+    tempEuler,
+    tempQuaternion,
+    blinkState,
+  }) {
+    switch (characterState) {
+      case CharacterState.IDLE:
+        this.idle({
+          vrm,
+          expressionNames,
+          delta,
+          time,
+          expressionState,
+          mouthState,
+          tempEuler,
+          tempQuaternion,
+        });
+        break;
 
-  const blinkProgress = Math.min(blinkState.timer / blinkState.duration, 1);
-  const blinkValue =
-    blinkProgress <= 0.5 ? blinkProgress * 2 : 1 - (blinkProgress - 0.5) * 2;
+      case CharacterState.TALKING:
+        this.talking({
+          vrm,
+          expressionNames,
+          lipSyncState,
+          delta,
+          time,
+          mouthState,
+          readAudioShape,
+          expressionState,
+          tempEuler,
+          tempQuaternion,
+        });
+        break;
 
-  setExpression(vrm, expressionNames, "blink", blinkValue);
-  setExpression(vrm, expressionNames, "blinkLeft", blinkValue);
-  setExpression(vrm, expressionNames, "blinkRight", blinkValue);
+      default:
+        break;
+    }
 
-  if (blinkState.timer >= blinkState.duration) {
-    blinkState.isBlinking = false;
-    blinkState.timer = 0;
-    blinkState.nextBlinkTime = 2 + Math.random() * 6;
+    this.blink({
+      vrm,
+      expressionNames,
+      delta,
+      blinkState,
+    });
 
-    setExpression(vrm, expressionNames, "blink", 0);
-    setExpression(vrm, expressionNames, "blinkLeft", 0);
-    setExpression(vrm, expressionNames, "blinkRight", 0);
+    if (characterState !== CharacterState.TALKING) {
+      this.smile({
+        vrm,
+        expressionNames,
+        expressionState,
+        smileState: this.smileState,
+        delta,
+      });
+    }
   }
-}
 
-function updateFaceMotion(
-  vrm,
-  expressionNames,
-  characterState,
-  lipSyncState,
-  audio,
-  delta,
-  time,
-  expressionState,
-  tempEuler,
-  tempQuaternion,
-) {
-  const state = getMotionState(vrm);
-  const speaking = Boolean(lipSyncState?.isPlaying);
-  const isIdle = characterState === CharacterState.IDLE;
-  const speechEnergy = speaking ? audio.volume : 0;
+  blink({ vrm, expressionNames, delta, blinkState }) {
+    blinkState.timer += delta;
 
-  if (time >= state.nextGazeShift) {
-    if (speaking) {
-      const isGlance = Math.random() < 0.06;
-      state.targetGaze.set(
-        isGlance
-          ? THREE.MathUtils.randFloatSpread(0.04)
-          : THREE.MathUtils.randFloatSpread(0.015),
-        isGlance
-          ? THREE.MathUtils.randFloatSpread(0.02)
-          : THREE.MathUtils.randFloat(-0.008, 0.016),
-      );
-      state.nextGazeShift =
-        time +
-        (isGlance ? 0.35 + Math.random() * 0.5 : 1.0 + Math.random() * 1.4);
+    if (
+      !blinkState.isBlinking &&
+      blinkState.timer >= blinkState.nextBlinkTime
+    ) {
+      blinkState.isBlinking = true;
+      blinkState.timer = 0;
+    }
+
+    if (!blinkState.isBlinking) return;
+
+    const blinkProgress = Math.min(blinkState.timer / blinkState.duration, 1);
+
+    const blinkValue =
+      blinkProgress <= 0.5 ? blinkProgress * 2 : 1 - (blinkProgress - 0.5) * 2;
+
+    setExpression(vrm, expressionNames, "blink", blinkValue);
+
+    setExpression(vrm, expressionNames, "blinkLeft", blinkValue);
+
+    setExpression(vrm, expressionNames, "blinkRight", blinkValue);
+
+    if (blinkState.timer >= blinkState.duration) {
+      blinkState.isBlinking = false;
+
+      blinkState.timer = 0;
+
+      blinkState.nextBlinkTime = 2 + Math.random() * 6;
+
+      setExpression(vrm, expressionNames, "blink", 0);
+
+      setExpression(vrm, expressionNames, "blinkLeft", 0);
+
+      setExpression(vrm, expressionNames, "blinkRight", 0);
+    }
+  }
+
+  smile({ vrm, expressionNames, expressionState, smileState, delta }) {
+    smileState.timer += delta;
+
+    if (!smileState.isSmiling && smileState.timer >= smileState.nextSmileTime) {
+      smileState.isSmiling = true;
+      smileState.timer = 0;
+    }
+
+    if (!smileState.isSmiling) return;
+
+    const fadeTime = 0.35;
+    const holdTime = smileState.holdTime;
+    const totalTime = fadeTime + holdTime + fadeTime;
+
+    let smileAmount = 0;
+
+    if (smileState.timer < fadeTime) {
+      smileAmount = smileState.timer / fadeTime;
+    } else if (smileState.timer < fadeTime + holdTime) {
+      smileAmount = 1;
     } else {
+      smileAmount = 1 - (smileState.timer - fadeTime - holdTime) / fadeTime;
+    }
+
+    expressionState.happy = Math.max(0, smileAmount) * 0.28;
+
+    setExpression(vrm, expressionNames, "happy", expressionState.happy);
+
+    if (smileState.timer >= totalTime) {
+      smileState.isSmiling = false;
+      smileState.timer = 0;
+      smileState.nextSmileTime = 8 + Math.random() * 12;
+
+      expressionState.happy = 0;
+
+      setExpression(vrm, expressionNames, "happy", 0);
+    }
+  }
+
+  idle({
+    vrm,
+    expressionNames,
+    delta,
+    time,
+    mouthState,
+    expressionState,
+    tempEuler,
+    tempQuaternion,
+  }) {
+    const state = getMotionState(vrm);
+
+    mouthState.openness = smoothValue(mouthState.openness, 0, delta, 10, 10);
+
+    mouthState.aa = smoothValue(mouthState.aa, 0, delta, 10, 10);
+    mouthState.ih = smoothValue(mouthState.ih, 0, delta, 10, 10);
+    mouthState.ou = smoothValue(mouthState.ou, 0, delta, 10, 10);
+    mouthState.ee = smoothValue(mouthState.ee, 0, delta, 10, 10);
+    mouthState.oh = smoothValue(mouthState.oh, 0, delta, 10, 10);
+
+    setExpression(vrm, expressionNames, "aa", mouthState.aa);
+    setExpression(vrm, expressionNames, "ih", mouthState.ih);
+    setExpression(vrm, expressionNames, "ou", mouthState.ou);
+    setExpression(vrm, expressionNames, "ee", mouthState.ee);
+    setExpression(vrm, expressionNames, "oh", mouthState.oh);
+
+    // --------------------
+    // Idle gaze movement
+    // --------------------
+
+    if (time >= state.nextGazeShift) {
       const isGlance = Math.random() < 0.16;
+
       state.targetGaze.set(
         isGlance
           ? THREE.MathUtils.randFloatSpread(0.18)
           : THREE.MathUtils.randFloatSpread(0.045),
+
         isGlance
           ? THREE.MathUtils.randFloatSpread(0.08)
           : THREE.MathUtils.randFloat(0.0, 0.045),
       );
+
       state.nextGazeShift =
         time +
         (isGlance ? 0.35 + Math.random() * 0.45 : 1.2 + Math.random() * 2.2);
     }
-  }
 
-  if (time >= state.nextSmile && isIdle) {
-    const now = Math.max(time, 0);
-    if (state.nextSmile === 0) {
-      state.nextSmile = now + 5.0 + Math.random() * 5.0;
-    } else {
-      state.smileUntil = now + 0.7 + Math.random() * 1.2;
-      state.nextSmile = state.smileUntil + 8.0 + Math.random() * 12.0;
-    }
-  }
+    state.gaze.lerp(state.targetGaze, 1 - Math.exp(-4 * delta));
 
-  if (!isIdle && time < state.smileUntil) {
-    state.smileUntil = time;
-  }
+    // --------------------
+    // Idle head drift
+    // --------------------
 
-  if (state.smileUntil > time + 5.0) {
-    state.smileUntil = time;
-  }
-
-  const gazeEase = 1 - Math.exp(-(speaking ? 10 : 4) * delta);
-  state.gaze.lerp(state.targetGaze, gazeEase);
-
-  if (time >= state.nextDriftShift) {
-    if (speaking) {
-      state.targetHeadDrift.set(
-        THREE.MathUtils.randFloatSpread(0.01),
-        THREE.MathUtils.randFloatSpread(0.008),
-        THREE.MathUtils.randFloatSpread(0.006),
-      );
-      state.nextDriftShift = time + 1.9 + Math.random() * 2.3;
-    } else {
+    if (time >= state.nextDriftShift) {
       state.targetHeadDrift.set(
         THREE.MathUtils.randFloatSpread(0.022),
         THREE.MathUtils.randFloatSpread(0.016),
         THREE.MathUtils.randFloatSpread(0.01),
       );
+
       state.nextDriftShift = time + 1.8 + Math.random() * 3.2;
     }
+
+    state.headDrift.lerp(state.targetHeadDrift, 1 - Math.exp(-1.4 * delta));
+
+    // --------------------
+    // Idle body movement
+    // --------------------
+
+    const swayX = Math.sin(time * 1.17) * 0.008 + Math.sin(time * 2.83) * 0.004;
+
+    const swayY = Math.sin(time * 0.73) * 0.007 + Math.sin(time * 1.91) * 0.004;
+
+    const swayZ = Math.sin(time * 0.97) * 0.006 + Math.sin(time * 1.57) * 0.003;
+
+    const targetHead = new THREE.Vector3(
+      state.headDrift.x + swayX,
+      state.headDrift.y + swayY + state.gaze.x * 0.06,
+      state.headDrift.z + swayZ + state.gaze.x * -0.035,
+    );
+
+    state.headMotion.lerp(targetHead, 1 - Math.exp(-5 * delta));
+
+    state.bodyMotion.lerp(state.headMotion, 1 - Math.exp(-2.5 * delta));
+
+    state.armMotion.lerp(state.bodyMotion, 1 - Math.exp(-1.8 * delta));
+
+    // --------------------
+    // Breathing
+    // --------------------
+
+    const breathing = Math.sin(time * 1.2) * 0.012 * 0.55;
+
+    // --------------------
+    // Arms
+    // --------------------
+
+    const armBreathing = Math.sin(time * 1.2) * 0.012 * 0.55;
+
+    const swayAmp = 0.0035;
+
+    const armSwayL =
+      Math.sin(time * 0.5) * swayAmp + Math.sin(time * 0.9) * swayAmp * 0.25;
+
+    const armSwayR =
+      Math.sin(time * 0.52 + 0.6) * swayAmp +
+      Math.sin(time * 0.88 + 0.3) * swayAmp * 0.25;
+
+    const upperArmX = state.armMotion.x * 0.1 + armBreathing * 0.25 + armSwayL;
+
+    const upperArmY = state.armMotion.y * 0.08;
+
+    const upperArmZ = state.armMotion.z * 0.12;
+
+    applyBoneRotation(
+      state.leftUpperArm,
+      state.baseLeftUpperArm,
+      upperArmX,
+      upperArmY + 0.1,
+      upperArmZ - 1.35,
+      tempEuler,
+      tempQuaternion,
+    );
+
+    applyBoneRotation(
+      state.rightUpperArm,
+      state.baseRightUpperArm,
+      upperArmX - armSwayL + armSwayR,
+      upperArmY - 0.1,
+      upperArmZ + 1.35,
+      tempEuler,
+      tempQuaternion,
+    );
+
+    // --------------------
+    // Body bones
+    // --------------------
+
+    applyBoneRotation(
+      state.spine,
+      state.baseSpine,
+      state.bodyMotion.x * 0.18 + breathing * 0.3,
+      state.bodyMotion.y * 0.15,
+      state.bodyMotion.z * 0.12,
+      tempEuler,
+      tempQuaternion,
+    );
+
+    applyBoneRotation(
+      state.chest,
+      state.baseChest,
+      state.bodyMotion.x * 0.25 + breathing,
+      state.bodyMotion.y * 0.22,
+      state.bodyMotion.z * 0.18,
+      tempEuler,
+      tempQuaternion,
+    );
+
+    applyBoneRotation(
+      state.neck,
+      state.baseNeck,
+      state.headMotion.x * 0.35,
+      state.headMotion.y * 0.35,
+      state.headMotion.z * 0.3,
+      tempEuler,
+      tempQuaternion,
+    );
+
+    applyBoneRotation(
+      state.head,
+      state.baseHead,
+      state.headMotion.x,
+      state.headMotion.y,
+      state.headMotion.z,
+      tempEuler,
+      tempQuaternion,
+    );
+
+    // --------------------
+    // Eyes
+    // --------------------
+
+    const eyeX = state.gaze.y * 0.3 + Math.sin(time * 2.7) * 0.006;
+
+    const eyeY = state.gaze.x * 0.42 + Math.sin(time * 1.8) * 0.008;
+
+    applyBoneRotation(
+      state.leftEye,
+      state.baseLeftEye,
+      eyeX,
+      eyeY,
+      0,
+      tempEuler,
+      tempQuaternion,
+    );
+
+    applyBoneRotation(
+      state.rightEye,
+      state.baseRightEye,
+      eyeX,
+      eyeY,
+      0,
+      tempEuler,
+      tempQuaternion,
+    );
+
+    // --------------------
+    // Expressions
+    // --------------------
+
+    expressionState.happy = smoothValue(
+      expressionState.happy,
+      time < state.smileUntil ? 0.28 : 0.05,
+      delta,
+      4,
+      2.5,
+    );
+
+    expressionState.relaxed = smoothValue(
+      expressionState.relaxed,
+      0.12,
+      delta,
+      4,
+      3,
+    );
+
+    setExpression(vrm, expressionNames, "happy", expressionState.happy);
+
+    setExpression(vrm, expressionNames, "relaxed", expressionState.relaxed);
   }
 
-  state.headDrift.lerp(
-    state.targetHeadDrift,
-    1 - Math.exp(-(speaking ? 2.0 : 1.4) * delta),
-  );
-
-  state.energySmooth = THREE.MathUtils.lerp(
-    state.energySmooth,
-    speechEnergy,
-    1 - Math.exp(-8 * delta),
-  );
-
-  const nodTarget = speaking
-    ? state.energySmooth * 0.028 + speechEnergy * 0.01
-    : 0;
-  state.speechNod = THREE.MathUtils.lerp(
-    state.speechNod,
-    nodTarget,
-    1 - Math.exp(-6.5 * delta),
-  );
-
-  const tiltTarget = speaking
-    ? Math.sin(time * 1.15) * 0.01 * state.energySmooth +
-      state.energySmooth * 0.006
-    : 0;
-  state.speechTilt = THREE.MathUtils.lerp(
-    state.speechTilt,
-    tiltTarget,
-    1 - Math.exp(-4.5 * delta),
-  );
-
-  const swayX = Math.sin(time * 1.17) * 0.008 + Math.sin(time * 2.83) * 0.004;
-  const swayY = Math.sin(time * 0.73) * 0.007 + Math.sin(time * 1.91) * 0.004;
-  const swayZ = Math.sin(time * 0.97) * 0.006 + Math.sin(time * 1.57) * 0.003;
-
-  const speechFlow = speaking
-    ? new THREE.Vector3(
-        Math.sin(time * 2.1) * 0.006 * (0.4 + state.energySmooth),
-        Math.sin(time * 1.7 + 0.8) * 0.004 * (0.35 + state.energySmooth),
-        Math.sin(time * 2.6 + 1.4) * 0.003 * (0.35 + state.energySmooth),
-      )
-    : new THREE.Vector3(0, 0, 0);
-
-  const targetHead = new THREE.Vector3(
-    state.headDrift.x + swayX + state.speechNod + speechFlow.x,
-    state.headDrift.y + swayY + state.gaze.x * 0.06 + speechFlow.y,
-    state.headDrift.z +
-      swayZ +
-      state.gaze.x * -0.035 +
-      state.speechTilt +
-      speechFlow.z,
-  );
-
-  state.headMotion.lerp(
-    targetHead,
-    1 - Math.exp(-(speaking ? 9.0 : 5.0) * delta),
-  );
-  state.bodyMotion.lerp(
-    state.headMotion,
-    1 - Math.exp(-(speaking ? 4.0 : 2.5) * delta),
-  );
-  state.armMotion.lerp(
-    state.bodyMotion,
-    1 - Math.exp(-(speaking ? 2.8 : 1.8) * delta),
-  );
-  state.handMotion.lerp(
-    state.armMotion,
-    1 - Math.exp(-((speaking ? 2.8 : 1.8) * 0.8) * delta),
-  );
-
-  const breathing =
-    Math.sin(time * (speaking ? 1.5 : 1.2)) * 0.012 * (speaking ? 0.65 : 0.55);
-
-  state.shoulderMotion = THREE.MathUtils.lerp(
-    state.shoulderMotion,
-    speaking ? speechEnergy * 0.025 : 0,
-    1 - Math.exp(-6 * delta),
-  );
-
-  const shoulderX = state.shoulderMotion + state.bodyMotion.x * 0.08;
-  const shoulderZ = state.bodyMotion.z * 0.15;
-
-  applyBoneRotation(
-    state.spine,
-    state.baseSpine,
-    state.bodyMotion.x * 0.18 + breathing * 0.3,
-    state.bodyMotion.y * 0.15,
-    state.bodyMotion.z * 0.12,
-    tempEuler,
-    tempQuaternion,
-  );
-  applyBoneRotation(
-    state.chest,
-    state.baseChest,
-    state.bodyMotion.x * 0.25 + breathing,
-    state.bodyMotion.y * 0.22,
-    state.bodyMotion.z * 0.18,
-    tempEuler,
-    tempQuaternion,
-  );
-  applyBoneRotation(
-    state.leftShoulder,
-    state.baseLeftShoulder,
-    shoulderX,
-    0,
-    shoulderZ,
-    tempEuler,
-    tempQuaternion,
-  );
-  applyBoneRotation(
-    state.rightShoulder,
-    state.baseRightShoulder,
-    shoulderX,
-    0,
-    shoulderZ,
-    tempEuler,
-    tempQuaternion,
-  );
-  applyBoneRotation(
-    state.neck,
-    state.baseNeck,
-    state.headMotion.x * 0.35,
-    state.headMotion.y * 0.35,
-    state.headMotion.z * 0.3,
-    tempEuler,
-    tempQuaternion,
-  );
-  applyBoneRotation(
-    state.head,
-    state.baseHead,
-    state.headMotion.x,
-    state.headMotion.y,
-    state.headMotion.z,
-    tempEuler,
-    tempQuaternion,
-  );
-
-  const eyeX = state.gaze.y * 0.3 + Math.sin(time * 2.7) * 0.006;
-  const eyeY = state.gaze.x * 0.42 + Math.sin(time * 1.8) * 0.008;
-
-  applyBoneRotation(
-    state.leftEye,
-    state.baseLeftEye,
-    eyeX,
-    eyeY,
-    0,
-    tempEuler,
-    tempQuaternion,
-  );
-  applyBoneRotation(
-    state.rightEye,
-    state.baseRightEye,
-    eyeX,
-    eyeY,
-    0,
-    tempEuler,
-    tempQuaternion,
-  );
-
-  setExpression(
-    vrm,
-    expressionNames,
-    "lookLeft",
-    Math.max(0, state.gaze.x) * 0.55,
-  );
-  setExpression(
-    vrm,
-    expressionNames,
-    "lookRight",
-    Math.max(0, -state.gaze.x) * 0.55,
-  );
-  setExpression(
-    vrm,
-    expressionNames,
-    "lookUp",
-    Math.max(0, state.gaze.y) * 0.5,
-  );
-  setExpression(
-    vrm,
-    expressionNames,
-    "lookDown",
-    Math.max(0, -state.gaze.y) * 0.42,
-  );
-
-  expressionState.happy = smoothValue(
-    expressionState.happy,
-    isIdle ? (time < state.smileUntil ? 0.28 : 0.05) : 0,
-    delta,
-    4,
-    2.5,
-  );
-  expressionState.relaxed = smoothValue(
-    expressionState.relaxed,
-    speaking ? 0.06 : 0.12,
-    delta,
-    4,
-    3,
-  );
-
-  setExpression(vrm, expressionNames, "happy", expressionState.happy);
-  setExpression(vrm, expressionNames, "relaxed", expressionState.relaxed);
-}
-
-function updateBodyPose(vrm, time, tempEuler, tempQuaternion) {
-  const state = getMotionState(vrm);
-  const armBreathing = Math.sin(time * 1.2) * 0.012 * 0.55;
-  const swayAmp = 0.0035;
-  const armSwayL =
-    Math.sin(time * 0.5) * swayAmp + Math.sin(time * 0.9) * swayAmp * 0.25;
-  const armSwayR =
-    Math.sin(time * 0.52 + 0.6) * swayAmp +
-    Math.sin(time * 0.88 + 0.3) * swayAmp * 0.25;
-  const upperArmX = state.armMotion.x * 0.1 + armBreathing * 0.25 + armSwayL;
-  const upperArmY = state.armMotion.y * 0.08;
-  const upperArmZ = state.armMotion.z * 0.12;
-
-  applyBoneRotation(
-    state.leftUpperArm,
-    state.baseLeftUpperArm,
-    upperArmX,
-    upperArmY + 0.1,
-    upperArmZ - 1.35,
-    tempEuler,
-    tempQuaternion,
-  );
-  applyBoneRotation(
-    state.rightUpperArm,
-    state.baseRightUpperArm,
-    upperArmX - armSwayL + armSwayR,
-    upperArmY - 0.1,
-    upperArmZ + 1.35,
-    tempEuler,
-    tempQuaternion,
-  );
-}
-
-function updateVrmFrame({
-  vrm,
-  expressionNames,
-  characterState,
-  lipSyncState,
-  delta,
-  time,
-  mouthState,
-  readAudioShape,
-  expressionState,
-  tempEuler,
-  tempQuaternion,
-}) {
-  if (!vrm.expressionManager) return;
-
-  const audio = updateLipSync(
+  talking({
     vrm,
     expressionNames,
     lipSyncState,
@@ -879,21 +900,280 @@ function updateVrmFrame({
     time,
     mouthState,
     readAudioShape,
-  );
-
-  updateFaceMotion(
-    vrm,
-    expressionNames,
-    characterState,
-    lipSyncState,
-    audio,
-    delta,
-    time,
     expressionState,
     tempEuler,
     tempQuaternion,
-  );
-  updateBodyPose(vrm, time, tempEuler, tempQuaternion);
+  }) {
+    const audio = updateLipSync(
+      vrm,
+      expressionNames,
+      lipSyncState,
+      delta,
+      time,
+      mouthState,
+      readAudioShape,
+    );
+
+    const state = getMotionState(vrm);
+    const speechEnergy = audio.volume;
+
+    if (time >= state.nextGazeShift) {
+      const isGlance = Math.random() < 0.06;
+
+      state.targetGaze.set(
+        isGlance
+          ? THREE.MathUtils.randFloatSpread(0.04)
+          : THREE.MathUtils.randFloatSpread(0.015),
+
+        isGlance
+          ? THREE.MathUtils.randFloatSpread(0.02)
+          : THREE.MathUtils.randFloat(-0.008, 0.016),
+      );
+
+      state.nextGazeShift =
+        time +
+        (isGlance ? 0.35 + Math.random() * 0.5 : 1.0 + Math.random() * 1.4);
+    }
+
+    state.gaze.lerp(state.targetGaze, 1 - Math.exp(-10 * delta));
+
+    if (time >= state.nextDriftShift) {
+      state.targetHeadDrift.set(
+        THREE.MathUtils.randFloatSpread(0.01),
+        THREE.MathUtils.randFloatSpread(0.008),
+        THREE.MathUtils.randFloatSpread(0.006),
+      );
+
+      state.nextDriftShift = time + 1.9 + Math.random() * 2.3;
+    }
+
+    state.headDrift.lerp(state.targetHeadDrift, 1 - Math.exp(-2.0 * delta));
+
+    state.energySmooth = THREE.MathUtils.lerp(
+      state.energySmooth,
+      speechEnergy,
+      1 - Math.exp(-8 * delta),
+    );
+
+    const nodTarget = state.energySmooth * 0.028 + speechEnergy * 0.01;
+
+    state.speechNod = THREE.MathUtils.lerp(
+      state.speechNod,
+      nodTarget,
+      1 - Math.exp(-6.5 * delta),
+    );
+
+    const tiltTarget =
+      Math.sin(time * 1.15) * 0.01 * state.energySmooth +
+      state.energySmooth * 0.006;
+
+    state.speechTilt = THREE.MathUtils.lerp(
+      state.speechTilt,
+      tiltTarget,
+      1 - Math.exp(-4.5 * delta),
+    );
+
+    const swayX = Math.sin(time * 1.17) * 0.008 + Math.sin(time * 2.83) * 0.004;
+
+    const swayY = Math.sin(time * 0.73) * 0.007 + Math.sin(time * 1.91) * 0.004;
+
+    const swayZ = Math.sin(time * 0.97) * 0.006 + Math.sin(time * 1.57) * 0.003;
+
+    const speechFlow = new THREE.Vector3(
+      Math.sin(time * 2.1) * 0.006 * (0.4 + state.energySmooth),
+      Math.sin(time * 1.7 + 0.8) * 0.004 * (0.35 + state.energySmooth),
+      Math.sin(time * 2.6 + 1.4) * 0.003 * (0.35 + state.energySmooth),
+    );
+
+    const targetHead = new THREE.Vector3(
+      state.headDrift.x + swayX + state.speechNod + speechFlow.x,
+      state.headDrift.y + swayY + state.gaze.x * 0.06 + speechFlow.y,
+      state.headDrift.z +
+        swayZ +
+        state.gaze.x * -0.035 +
+        state.speechTilt +
+        speechFlow.z,
+    );
+
+    state.headMotion.lerp(targetHead, 1 - Math.exp(-9 * delta));
+
+    state.bodyMotion.lerp(state.headMotion, 1 - Math.exp(-4 * delta));
+
+    state.armMotion.lerp(state.bodyMotion, 1 - Math.exp(-2.8 * delta));
+
+    state.handMotion.lerp(state.armMotion, 1 - Math.exp(-(2.8 * 0.8) * delta));
+
+    const breathing = Math.sin(time * 1.5) * 0.012 * 0.65;
+
+    state.shoulderMotion = THREE.MathUtils.lerp(
+      state.shoulderMotion,
+      speechEnergy * 0.025,
+      1 - Math.exp(-6 * delta),
+    );
+
+    const shoulderX = state.shoulderMotion + state.bodyMotion.x * 0.08;
+
+    const shoulderZ = state.bodyMotion.z * 0.15;
+
+    applyBoneRotation(
+      state.spine,
+      state.baseSpine,
+      state.bodyMotion.x * 0.18 + breathing * 0.3,
+      state.bodyMotion.y * 0.15,
+      state.bodyMotion.z * 0.12,
+      tempEuler,
+      tempQuaternion,
+    );
+
+    applyBoneRotation(
+      state.chest,
+      state.baseChest,
+      state.bodyMotion.x * 0.25 + breathing,
+      state.bodyMotion.y * 0.22,
+      state.bodyMotion.z * 0.18,
+      tempEuler,
+      tempQuaternion,
+    );
+
+    applyBoneRotation(
+      state.leftShoulder,
+      state.baseLeftShoulder,
+      shoulderX,
+      0,
+      shoulderZ,
+      tempEuler,
+      tempQuaternion,
+    );
+
+    applyBoneRotation(
+      state.rightShoulder,
+      state.baseRightShoulder,
+      shoulderX,
+      0,
+      shoulderZ,
+      tempEuler,
+      tempQuaternion,
+    );
+
+    applyBoneRotation(
+      state.neck,
+      state.baseNeck,
+      state.headMotion.x * 0.35,
+      state.headMotion.y * 0.35,
+      state.headMotion.z * 0.3,
+      tempEuler,
+      tempQuaternion,
+    );
+
+    applyBoneRotation(
+      state.head,
+      state.baseHead,
+      state.headMotion.x,
+      state.headMotion.y,
+      state.headMotion.z,
+      tempEuler,
+      tempQuaternion,
+    );
+
+    const armBreathing = Math.sin(time * 1.2) * 0.012 * 0.55;
+
+    const swayAmp = 0.0035;
+
+    const armSwayL =
+      Math.sin(time * 0.5) * swayAmp + Math.sin(time * 0.9) * swayAmp * 0.25;
+
+    const armSwayR =
+      Math.sin(time * 0.52 + 0.6) * swayAmp +
+      Math.sin(time * 0.88 + 0.3) * swayAmp * 0.25;
+
+    const upperArmX = state.armMotion.x * 0.1 + armBreathing * 0.25 + armSwayL;
+
+    const upperArmY = state.armMotion.y * 0.08;
+
+    const upperArmZ = state.armMotion.z * 0.12;
+
+    applyBoneRotation(
+      state.leftUpperArm,
+      state.baseLeftUpperArm,
+      upperArmX,
+      upperArmY + 0.1,
+      upperArmZ - 1.35,
+      tempEuler,
+      tempQuaternion,
+    );
+
+    applyBoneRotation(
+      state.rightUpperArm,
+      state.baseRightUpperArm,
+      upperArmX - armSwayL + armSwayR,
+      upperArmY - 0.1,
+      upperArmZ + 1.35,
+      tempEuler,
+      tempQuaternion,
+    );
+
+    const eyeX = state.gaze.y * 0.3 + Math.sin(time * 2.7) * 0.006;
+
+    const eyeY = state.gaze.x * 0.42 + Math.sin(time * 1.8) * 0.008;
+
+    applyBoneRotation(
+      state.leftEye,
+      state.baseLeftEye,
+      eyeX,
+      eyeY,
+      0,
+      tempEuler,
+      tempQuaternion,
+    );
+
+    applyBoneRotation(
+      state.rightEye,
+      state.baseRightEye,
+      eyeX,
+      eyeY,
+      0,
+      tempEuler,
+      tempQuaternion,
+    );
+
+    setExpression(
+      vrm,
+      expressionNames,
+      "lookLeft",
+      Math.max(0, state.gaze.x) * 0.55,
+    );
+
+    setExpression(
+      vrm,
+      expressionNames,
+      "lookRight",
+      Math.max(0, -state.gaze.x) * 0.55,
+    );
+
+    setExpression(
+      vrm,
+      expressionNames,
+      "lookUp",
+      Math.max(0, state.gaze.y) * 0.5,
+    );
+
+    setExpression(
+      vrm,
+      expressionNames,
+      "lookDown",
+      Math.max(0, -state.gaze.y) * 0.42,
+    );
+
+    expressionState.relaxed = smoothValue(
+      expressionState.relaxed,
+      0.06,
+      delta,
+      4,
+      3,
+    );
+
+    setExpression(vrm, expressionNames, "relaxed", expressionState.relaxed);
+  }
 }
 
 /* =========================================================
@@ -1075,6 +1355,7 @@ export class AvatarCharacter {
     this.readAudioShape = createAudioReader();
     this.tempEuler = new THREE.Euler();
     this.tempQuaternion = new THREE.Quaternion();
+    this.AvatarAnimator = new AvatarAnimator();
   }
 
   get isLoaded() {
@@ -1134,48 +1415,11 @@ export class AvatarCharacter {
     );
   }
 
-  blink(delta) {
-    if (!this.vrm) return;
-    updateBlink(this.blinkState, this.vrm, this.expressionNames, delta);
-  }
-
   update({ delta, time, lipSyncState }) {
     if (!this.vrm) return;
 
     this.updateState(lipSyncState);
-    this.blink(delta);
-    this.runStateAnimation({ delta, time, lipSyncState });
-    this.vrm.update(delta);
-  }
-
-  runStateAnimation(context) {
-    switch (this.state) {
-      case CharacterState.TALKING:
-        this.animateTalking(context);
-        break;
-      case CharacterState.IDLE:
-        this.animateIdle(context);
-        break;
-      default:
-        this.animateUnloaded(context);
-        break;
-    }
-  }
-
-  animateIdle(context) {
-    this.applyCurrentMotion(context);
-  }
-
-  animateTalking(context) {
-    this.applyCurrentMotion(context);
-  }
-
-  animateUnloaded() {
-    // Placeholder for future unloaded/loading transitions.
-  }
-
-  applyCurrentMotion({ delta, time, lipSyncState }) {
-    updateVrmFrame({
+    this.AvatarAnimator.animate({
       vrm: this.vrm,
       expressionNames: this.expressionNames,
       characterState: this.state,
@@ -1187,7 +1431,9 @@ export class AvatarCharacter {
       expressionState: this.expressionState,
       tempEuler: this.tempEuler,
       tempQuaternion: this.tempQuaternion,
+      blinkState: this.blinkState,
     });
+    this.vrm.update(delta);
   }
 }
 
