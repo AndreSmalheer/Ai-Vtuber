@@ -244,11 +244,11 @@ function createControls(camera, renderer) {
    VISUALS / LIGHTING / THEME
 ========================================================= */
 function updateThemeVisuals(renderer, scene, isDark, enableEffects) {
-  const bgColor = isDark ? 0x0b0b0f : 0xf5f5f5;
+  const bgColor = isDark ? 0x0b0b0f : 0xe8e6e2;
 
   renderer.setClearColor(bgColor, 1);
   scene.fog = enableEffects
-    ? new THREE.FogExp2(bgColor, isDark ? 0.03 : 0.015)
+    ? new THREE.FogExp2(bgColor, isDark ? 0.03 : 0.025)
     : null;
 
   scene.children
@@ -258,7 +258,7 @@ function updateThemeVisuals(renderer, scene, isDark, enableEffects) {
   const ambientLight = new THREE.AmbientLight(0xffffff, isDark ? 0.24 : 0.4);
 
   const keyLight = new THREE.DirectionalLight(
-    isDark ? 0xffddc8 : 0xffffff,
+    isDark ? 0xffddc8 : 0xffead6,
     isDark ? 0.38 : 0.5,
   );
   keyLight.position.set(0.9, 2.0, 1.7);
