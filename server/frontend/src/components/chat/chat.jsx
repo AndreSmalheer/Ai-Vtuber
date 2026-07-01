@@ -23,6 +23,11 @@ function Chat({
   const [airesponse, setAiResponse] = useState("");
   const [aiResponseLoading, setAiResponseLoading] = useState(false);
   const [messages, setMessages] = useState([]);
+  const [error, setError] = useState(null);
+  const errorRef = useRef(null);
+  useEffect(() => {
+    errorRef.current = error;
+  }, [error]);
   const streamQueue = useRef("");
   const accumulatedResponseRef = useRef("");
   const audioQueue = useRef([]);
@@ -54,7 +59,6 @@ function Chat({
       displayInterval.current = null;
     }
 
-    // Stop audio
     if (currentAudioRef.current) {
       currentAudioRef.current.pause();
       currentAudioRef.current = null;
@@ -107,6 +111,27 @@ function Chat({
     window.addEventListener("ai-stop-generation", handleStop);
     return () => window.removeEventListener("ai-stop-generation", handleStop);
   }, [stealthMode]); // stealthMode is a dependency of finishChat
+
+  useEffect(() => {
+    const handleFallbackResponse = (e) => {
+      const { text, error } = e.detail;
+      setAiResponse(text);
+      setError("Piper tts timeout");
+      setChatRole("ai");
+      setChathidden(false);
+      setInputLocked(false);
+      setAiResponseLoading(false);
+    };
+    window.addEventListener(
+      "ai-show-fallback-response",
+      handleFallbackResponse,
+    );
+    return () =>
+      window.removeEventListener(
+        "ai-show-fallback-response",
+        handleFallbackResponse,
+      );
+  }, []);
 
   const createLipSyncAnalyser = (audio) => {
     try {
@@ -251,6 +276,7 @@ function Chat({
   async function fetchAiResponse(input) {
     setAiResponseLoading(true);
     aiLoadingRef.current = true;
+    setError(null);
 
     streamCompleteRef.current = false;
     audioCompleteRef.current = false;
@@ -316,10 +342,28 @@ function Chat({
             const json = JSON.parse(jsonStr);
 
             if (json.error) {
-              setAiResponseLoading(false);
               console.error("Backend error:", json.error);
-              finishChat();
-              return;
+              setError("Somting went wrong");
+              if (
+                json.error.toLowerCase().includes("piper") ||
+                json.error.toLowerCase().includes("tts")
+              ) {
+                audioCompleteRef.current = true;
+                revealTextRef.current = true;
+                aiLoadingRef.current = false;
+                setAiResponseLoading(false);
+                if (
+                  !displayInterval.current &&
+                  accumulatedResponseRef.current
+                ) {
+                  streamQueue.current = accumulatedResponseRef.current;
+                  startDisplayInterval(speed, 16);
+                }
+              } else {
+                setAiResponseLoading(false);
+                finishChat();
+                return;
+              }
             }
 
             if (json.text) {
@@ -387,6 +431,7 @@ function Chat({
         console.log("AI response fetch aborted");
       } else {
         console.error("Fetch error:", err);
+        setError("Failed to connect to Ollama.");
         setAiResponseLoading(false);
         finishChat();
       }
@@ -408,7 +453,9 @@ function Chat({
       return;
     }
     setTimeout(() => {
-      setChathidden(true);
+      if (!errorRef.current) {
+        setChathidden(true);
+      }
       setInputLocked(false);
       setChatRole("");
     }, 1500);
@@ -540,12 +587,15 @@ function Chat({
           </div>
         ))}
 
-        {chatRole === "ai" && (
+        {(chatRole === "ai" || error) && (
           <div className="stealth-message ai current">
             <span className="role">{aiName}</span>
-            <p className={`text ${aiResponseLoading ? "loading" : ""}`}>
-              {airesponse}
-            </p>
+            {airesponse && (
+              <p className={`text ${aiResponseLoading ? "loading" : ""}`}>
+                {airesponse}
+              </p>
+            )}
+            {error && <div className="error-message">{error}</div>}
           </div>
         )}
 
@@ -563,34 +613,42 @@ function Chat({
   }
 
   return (
-    <div className={`chat-wrapper ${callMode ? "hidden" : ""}`}>
-      <div
-        className={`chat-container ${
-          !chatmsg && !chatRole && !airesponse
-            ? "hidden"
-            : chathidden
-              ? "hidden-animation"
-              : "show-animation"
-        }`}
-      >
-        <div className="message user-message">
-          <h1 className="user-name">
-            {chatRole === "user" ? userName : aiName}
-          </h1>
-          <p className={`message-text ${aiResponseLoading ? "loading" : ""}`}>
-            {displayText}
-          </p>
+    <>
+      <div className={`chat-wrapper ${callMode ? "hidden" : ""}`}>
+        {error && <div className="error-message above-chat">{error}</div>}
 
-          {aiResponseLoading && (
-            <span className="typing-dots">
-              <span></span>
-              <span></span>
-              <span></span>
-            </span>
-          )}
+        <div
+          className={`chat-container ${
+            !chatmsg && !chatRole && !airesponse && !error
+              ? "hidden"
+              : chathidden
+                ? "hidden-animation"
+                : "show-animation"
+          }`}
+        >
+          <div className="message user-message">
+            <h1 className="user-name">
+              {chatRole === "user" ? userName : aiName}
+            </h1>
+            {displayText && (
+              <p
+                className={`message-text ${aiResponseLoading ? "loading" : ""}`}
+              >
+                {displayText}
+              </p>
+            )}
+
+            {aiResponseLoading && (
+              <span className="typing-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+              </span>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 

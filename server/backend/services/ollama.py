@@ -129,17 +129,29 @@ def ollama_event_generator(user_message):
                     if text_to_speak.strip():
                         audio_data, tts_error = get_piper_audio(text_to_speak, piper_url)
                         sentence_buffer = parts[-1] if parts[-1] else ""
+                        if tts_error:
+                            can_speak = False
 
-            yield f"data: {json.dumps({'text': chunk, 'audio': audio_data})}\n\n"
+            res_data = {'text': chunk, 'audio': audio_data}
+            if tts_error:
+                res_data['error'] = tts_error
+            yield f"data: {json.dumps(res_data)}\n\n"
 
         if data.get("done"):
             audio_data = None
+            tts_error = None
             if can_speak and sentence_buffer.strip():
-                audio_data, _ = get_piper_audio(sentence_buffer, piper_url)
+                audio_data, tts_error = get_piper_audio(sentence_buffer, piper_url)
 
             add_history(user_message, full_response)
+            
+            res_data = {}
             if audio_data:
-                yield f"data: {json.dumps({'audio': audio_data})}\n\n"
+                res_data['audio'] = audio_data
+            if tts_error:
+                res_data['error'] = tts_error
+            if res_data:
+                yield f"data: {json.dumps(res_data)}\n\n"
 
             yield f"data: {json.dumps({'finish_reason': 'stop'})}\n\n"
 

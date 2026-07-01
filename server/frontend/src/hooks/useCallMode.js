@@ -245,11 +245,11 @@ export function useCallMode({
         signal: ctrl.signal,
       });
 
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let buf = "";
+      let accumulatedText = "";
+      let hasError = false;
 
       while (true) {
+        if (hasError) break;
         const { value, done } = await reader.read();
         if (done) break;
         if (!activeRef.current) {
@@ -265,6 +265,28 @@ export function useCallMode({
           if (!line.startsWith("data: ")) continue;
           try {
             const json = JSON.parse(line.slice(6));
+            if (json.text) {
+              accumulatedText += json.text;
+            }
+            if (json.error) {
+              console.error("[useCallMode] Stream error:", json.error);
+              if (json.error.toLowerCase().includes("piper") || json.error.toLowerCase().includes("tts")) {
+                setPiperError(json.error);
+                window.dispatchEvent(
+                  new CustomEvent("ai-show-fallback-response", {
+                    detail: {
+                      text: accumulatedText,
+                      error: json.error
+                    }
+                  })
+                );
+              } else {
+                setOllamaError(json.error);
+              }
+              hasError = true;
+              reader.cancel();
+              break;
+            }
             if (json.audio) {
               hasAudio = true;
               audioQueueRef.current.push(json.audio);
@@ -464,6 +486,9 @@ export function useCallMode({
   useEffect(() => {
     if (active) {
       setMicError(null);
+      setSttError(null);
+      setOllamaError(null);
+      setPiperError(null);
       // Small delay so the orb entrance animation has time to settle
       const t = setTimeout(() => startListeningRef.current?.(), 700);
       return () => clearTimeout(t);

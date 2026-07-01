@@ -24,6 +24,8 @@ from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from backend.services.push_notifaction import send_push_internal, VAPID_PUBLIC_KEY_BACKEND, load_subscriptions, save_subscriptions
 from backend.services.scheduler import scheduler_add_job, scheduler_get_jobs, scheduler_get_job, scheduler_remove_job
+# import sqlite3
+# import mysql.connector
 
 model = whisper.load_model("base")
 
@@ -41,6 +43,7 @@ CONFIG_PATH = os.path.join(SCRIPT_DIR, 'data', 'config.json')
 USER_STATE_PATH = os.path.join(SCRIPT_DIR, 'data', 'user_state.json')
 SUBSCRIPTIONS_path = os.path.join(SCRIPT_DIR, 'data', 'subscriptions.json')
 HISTORY_PATH = os.path.join(SCRIPT_DIR, 'data', 'history.json')
+DB_PATH = "./data/database.db"
 
 if not os.path.exists(SUBSCRIPTIONS_path):
     with open(SUBSCRIPTIONS_path, "w", encoding="utf-8") as f:
@@ -60,6 +63,18 @@ def save_user_state(state):
     os.makedirs(os.path.dirname(USER_STATE_PATH), exist_ok=True)
     with open(USER_STATE_PATH, "w") as f:
         json.dump(state, f, indent=4)
+
+def get_db_connection():
+    if os.path.exists(DB_PATH):
+        return sqlite3.connect(DB_PATH)
+
+    return mysql.connector.connect(
+        host=os.getenv("MYSQL_HOST"),
+        port=int(os.getenv("MYSQL_PORT", 3306)),
+        user=os.getenv("MYSQL_USER"),
+        password=os.getenv("MYSQL_PASSWORD"),
+        database=os.getenv("MYSQL_DATABASE")
+    )
 
 last_seen_timestamp = 0
 last_seen_timestamp = 0
