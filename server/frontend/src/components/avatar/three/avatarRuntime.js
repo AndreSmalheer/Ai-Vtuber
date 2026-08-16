@@ -6,6 +6,7 @@ import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass";
 import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass";
 import { VRMLoaderPlugin } from "@pixiv/three-vrm";
+import { VRMHumanBoneName } from "@pixiv/three-vrm";
 
 /* =========================================================
    CONSTANTS & GLOBAL STATE
@@ -508,9 +509,10 @@ function updateLipSync(
 /* =========================================================
    FACE / BODY ANIMATION SYSTEM
 ========================================================= */
-
 class AvatarExpressions {
-  constructor() {}
+  constructor(avatarMood) {
+    this.mood = avatarMood;
+  }
 
   blink({ vrm, expressionNames, delta, blinkState }) {
     blinkState.timer += delta;
@@ -559,6 +561,7 @@ class AvatarExpressions {
     lookAwayState,
     delta,
     characterState,
+    expressionOverrideActive,
   }) {
     if (
       characterState === CharacterState.TALKING ||
@@ -566,6 +569,11 @@ class AvatarExpressions {
     ) {
       return;
     }
+
+    if (expressionOverrideActive) {
+      return;
+    }
+
     smileState.timer += delta;
 
     if (!smileState.isSmiling && smileState.timer >= smileState.nextSmileTime) {
@@ -624,6 +632,7 @@ class AvatarExpressions {
     blinkState,
     smileState,
     lookAwayState,
+    expressionOverrideActive,
   }) {
     this.blink({ vrm, expressionNames, delta, blinkState });
     this.smile({
@@ -636,12 +645,193 @@ class AvatarExpressions {
       smileState,
       lookAwayState,
       characterState,
+      expressionOverrideActive,
     });
   }
 }
 
-export class AvatarAnimator {
+export class AvatarMoodAnimator {
   constructor() {
+    this.active = false;
+    this.mood = null;
+    this.elapsed = 0;
+    this.duration = 0.8;
+  }
+
+  start(mood) {
+    this.active = true;
+    this.mood = mood;
+    this.elapsed = 0;
+  }
+
+  update({ vrm, delta }) {
+    if (!this.active) return false;
+    this.elapsed += delta;
+    switch (this.mood) {
+      case "happy":
+        return this.happy({ vrm, delta });
+      case "sad":
+        return this.sad({ vrm, delta });
+      case "angry":
+        return this.angry({ vrm, delta });
+      case "surprised":
+        return this.surprised({ vrm, delta });
+      default:
+        console.log("[MoodAnimator] Unknown mood:", this.mood);
+        return this.finish();
+    }
+  }
+
+  finish() {
+    this.active = false;
+    this.mood = null;
+    this.elapsed = 0;
+    this._startRotations = {};
+    return true;
+  }
+
+  //   helpers
+
+  getHead(vrm) {
+    return vrm.humanoid.getNormalizedBoneNode(VRMHumanBoneName.Head);
+  }
+
+  captureHeadRotation(head, key) {
+    if (!this._startRotations) this._startRotations = {};
+    if (!this._startRotations[key]) {
+      this._startRotations[key] = {
+        x: head.rotation.x,
+        y: head.rotation.y,
+        z: head.rotation.z,
+      };
+    }
+    return this._startRotations[key];
+  }
+
+  resetHeadRotation(head, key) {
+    const start = this._startRotations?.[key];
+    if (!start) return;
+    head.rotation.x = start.x;
+    head.rotation.y = start.y;
+    head.rotation.z = start.z;
+    delete this._startRotations[key];
+  }
+
+  easeInOutCubic(t) {
+    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  }
+
+  interpolateKeyframes(time, keyframes) {
+    for (let i = 0; i < keyframes.length - 1; i++) {
+      const a = keyframes[i];
+      const b = keyframes[i + 1];
+      if (time >= a.t && time <= b.t) {
+        const localT = b.t - a.t > 0 ? (time - a.t) / (b.t - a.t) : 1;
+        const eased = this.easeInOutCubic(localT);
+        return THREE.MathUtils.lerp(a.value, b.value, eased);
+      }
+    }
+    return keyframes[keyframes.length - 1].value;
+  }
+
+  resolveExpressionName(vrm, candidates) {
+    if (!vrm.expressionManager) return null;
+    for (const name of candidates) {
+      try {
+        if (vrm.expressionManager.getExpression?.(name)) return name;
+        if (
+          typeof vrm.expressionManager.getValue === "function" &&
+          vrm.expressionManager.getValue(name) !== undefined
+        ) {
+          return name;
+        }
+      } catch {}
+    }
+    return null;
+  }
+
+  setExpression(vrm, candidates, value) {
+    if (!vrm.expressionManager) return null;
+    const name = this.resolveExpressionName(vrm, candidates);
+    if (name) vrm.expressionManager.setValue(name, value);
+    return name;
+  }
+
+  resetExpression(vrm, candidates) {
+    if (!vrm.expressionManager) return;
+    const name = this.resolveExpressionName(vrm, candidates);
+    if (name) vrm.expressionManager.setValue(name, 0);
+  }
+
+  //   Animations
+
+  happy({ vrm: t }) {
+    const e = this.getHead(t);
+    if (!e) return this.finish();
+
+    const s = Math.min(this.elapsed / 5.5, 1);
+    const a = this.captureHeadRotation(e, "happy");
+    const r = THREE.MathUtils.degToRad(10);
+    const i = THREE.MathUtils.degToRad(1.6);
+    const n = THREE.MathUtils.degToRad(7);
+    const o = Math.min(this.elapsed, 5.5);
+
+    const h = this.interpolateKeyframes(o, [
+      { t: 0, value: 0 },
+      { t: 0.8, value: 1 },
+      { t: 1.8, value: 0.85 },
+      { t: 2.8, value: -0.25 },
+      { t: 4, value: 0.3 },
+      { t: 5.5, value: 0 },
+    ]);
+    const u = this.interpolateKeyframes(o, [
+      { t: 0, value: 0 },
+      { t: 1.2, value: 1 },
+      { t: 4.2, value: 0.85 },
+      { t: 5.5, value: 0 },
+    ]);
+    const l = this.interpolateKeyframes(o, [
+      { t: 0, value: 0 },
+      { t: 0.7, value: 1 },
+      { t: 4.6, value: 0.95 },
+      { t: 5.5, value: 0 },
+    ]);
+
+    const p = h * r;
+    const d = Math.abs(h) * i * Math.sin(1.1 * o);
+    const v = u * n;
+
+    e.rotation.y = a.y + p;
+    e.rotation.x = a.x + d;
+    e.rotation.z = a.z + v;
+
+    this.setExpression(t, ["happy", "joy"], 0.2 * l);
+    this.setExpression(t, ["eyeWide", "wide"], 0.85 * l);
+    t.expressionManager?.update?.();
+
+    if (s >= 1) {
+      this.resetHeadRotation(e, "happy");
+      this.resetExpression(t, ["happy", "joy"]);
+      this.resetExpression(t, ["eyeWide", "wide"]);
+      t.expressionManager?.update?.();
+      return this.finish();
+    }
+    return false;
+  }
+
+  sad({ vrm, delta }) {
+    return false;
+  }
+  angry({ vrm, delta }) {
+    return false;
+  }
+  surprised({ vrm, delta }) {
+    return false;
+  }
+}
+
+export class AvatarAnimator {
+  constructor(avatarMood) {
     this.smileState = {
       timer: 0,
       nextSmileTime: 5 + Math.random() * 10,
@@ -659,7 +849,20 @@ export class AvatarAnimator {
       currentHead: new THREE.Vector3(),
     };
 
-    this.AvatarExpressions = new AvatarExpressions();
+    this.AvatarExpressions = new AvatarExpressions(avatarMood);
+
+    this.expressionOverrideActive = false;
+    this.moodAnimator = new AvatarMoodAnimator();
+  }
+
+  setExpressionOverrideActive(active) {
+    this.expressionOverrideActive = active;
+  }
+
+  startMoodAnimation(mood) {
+    this.setExpressionOverrideActive(true);
+
+    this.moodAnimator.start(mood);
   }
 
   animate({
@@ -728,6 +931,19 @@ export class AvatarAnimator {
         break;
     }
 
+    const moodFinished = this.moodAnimator.update({
+      vrm,
+      delta,
+    });
+
+    if (moodFinished) {
+      this.setExpressionOverrideActive(false);
+
+      console.log(
+        "[AvatarAnimator] Mood animation finished - expression override disabled",
+      );
+    }
+
     this.AvatarExpressions.animate({
       vrm,
       expressionNames,
@@ -743,6 +959,7 @@ export class AvatarAnimator {
       blinkState,
       smileState: this.smileState,
       lookAwayState: this.lookAwayState,
+      expressionOverrideActive: this.expressionOverrideActive,
     });
   }
 
@@ -934,77 +1151,79 @@ export class AvatarAnimator {
       tempQuaternion,
     );
 
-    applyBoneRotation(
-      state.neck,
-      state.baseNeck,
-      state.headMotion.x * 0.35,
-      state.headMotion.y * 0.35,
-      state.headMotion.z * 0.3,
-      tempEuler,
-      tempQuaternion,
-    );
+    if (!this.expressionOverrideActive) {
+      applyBoneRotation(
+        state.neck,
+        state.baseNeck,
+        state.headMotion.x * 0.35,
+        state.headMotion.y * 0.35,
+        state.headMotion.z * 0.3,
+        tempEuler,
+        tempQuaternion,
+      );
 
-    applyBoneRotation(
-      state.head,
-      state.baseHead,
-      state.headMotion.x,
-      state.headMotion.y,
-      state.headMotion.z,
-      tempEuler,
-      tempQuaternion,
-    );
+      applyBoneRotation(
+        state.head,
+        state.baseHead,
+        state.headMotion.x,
+        state.headMotion.y,
+        state.headMotion.z,
+        tempEuler,
+        tempQuaternion,
+      );
 
-    // --------------------
-    // Eyes
-    // --------------------
+      // --------------------
+      // Eyes
+      // --------------------
 
-    const eyeX =
-      (state.gaze.y + la.currentEye.y) * 0.3 + Math.sin(time * 2.7) * 0.006;
-    const eyeY =
-      (state.gaze.x + la.currentEye.x) * 0.42 + Math.sin(time * 1.8) * 0.008;
+      const eyeX =
+        (state.gaze.y + la.currentEye.y) * 0.3 + Math.sin(time * 2.7) * 0.006;
+      const eyeY =
+        (state.gaze.x + la.currentEye.x) * 0.42 + Math.sin(time * 1.8) * 0.008;
 
-    applyBoneRotation(
-      state.leftEye,
-      state.baseLeftEye,
-      eyeX,
-      eyeY,
-      0,
-      tempEuler,
-      tempQuaternion,
-    );
+      applyBoneRotation(
+        state.leftEye,
+        state.baseLeftEye,
+        eyeX,
+        eyeY,
+        0,
+        tempEuler,
+        tempQuaternion,
+      );
 
-    applyBoneRotation(
-      state.rightEye,
-      state.baseRightEye,
-      eyeX,
-      eyeY,
-      0,
-      tempEuler,
-      tempQuaternion,
-    );
+      applyBoneRotation(
+        state.rightEye,
+        state.baseRightEye,
+        eyeX,
+        eyeY,
+        0,
+        tempEuler,
+        tempQuaternion,
+      );
 
-    // --------------------
-    // Expressions
-    // --------------------
+      // --------------------
+      // Expressions
+      // --------------------
 
-    expressionState.happy = smoothValue(
-      expressionState.happy,
-      time < state.smileUntil ? 0.28 : 0.05,
-      delta,
-      4,
-      2.5,
-    );
+      expressionState.happy = smoothValue(
+        expressionState.happy,
+        time < state.smileUntil ? 0.28 : 0.05,
+        delta,
+        4,
+        2.5,
+      );
 
-    expressionState.relaxed = smoothValue(
-      expressionState.relaxed,
-      0.12,
-      delta,
-      4,
-      3,
-    );
+      expressionState.relaxed = smoothValue(
+        expressionState.relaxed,
+        0.12,
+        delta,
+        4,
+        3,
+      );
 
-    setExpression(vrm, expressionNames, "happy", expressionState.happy);
-    setExpression(vrm, expressionNames, "relaxed", expressionState.relaxed);
+      setExpression(vrm, expressionNames, "happy", expressionState.happy);
+      setExpression(vrm, expressionNames, "relaxed", expressionState.relaxed);
+    }
   }
 
   talking({
@@ -1170,25 +1389,27 @@ export class AvatarAnimator {
       tempQuaternion,
     );
 
-    applyBoneRotation(
-      state.neck,
-      state.baseNeck,
-      state.headMotion.x * 0.35,
-      state.headMotion.y * 0.35,
-      state.headMotion.z * 0.3,
-      tempEuler,
-      tempQuaternion,
-    );
+    if (!this.expressionOverrideActive) {
+      applyBoneRotation(
+        state.neck,
+        state.baseNeck,
+        state.headMotion.x * 0.35,
+        state.headMotion.y * 0.35,
+        state.headMotion.z * 0.3,
+        tempEuler,
+        tempQuaternion,
+      );
 
-    applyBoneRotation(
-      state.head,
-      state.baseHead,
-      state.headMotion.x,
-      state.headMotion.y,
-      state.headMotion.z,
-      tempEuler,
-      tempQuaternion,
-    );
+      applyBoneRotation(
+        state.head,
+        state.baseHead,
+        state.headMotion.x,
+        state.headMotion.y,
+        state.headMotion.z,
+        tempEuler,
+        tempQuaternion,
+      );
+    }
 
     const armBreathing = Math.sin(time * 1.2) * 0.012 * 0.55;
 
@@ -1227,67 +1448,69 @@ export class AvatarAnimator {
       tempQuaternion,
     );
 
-    const eyeX = state.gaze.y * 0.3 + Math.sin(time * 2.7) * 0.006;
+    if (!this.expressionOverrideActive) {
+      const eyeX = state.gaze.y * 0.3 + Math.sin(time * 2.7) * 0.006;
 
-    const eyeY = state.gaze.x * 0.42 + Math.sin(time * 1.8) * 0.008;
+      const eyeY = state.gaze.x * 0.42 + Math.sin(time * 1.8) * 0.008;
 
-    applyBoneRotation(
-      state.leftEye,
-      state.baseLeftEye,
-      eyeX,
-      eyeY,
-      0,
-      tempEuler,
-      tempQuaternion,
-    );
+      applyBoneRotation(
+        state.leftEye,
+        state.baseLeftEye,
+        eyeX,
+        eyeY,
+        0,
+        tempEuler,
+        tempQuaternion,
+      );
 
-    applyBoneRotation(
-      state.rightEye,
-      state.baseRightEye,
-      eyeX,
-      eyeY,
-      0,
-      tempEuler,
-      tempQuaternion,
-    );
+      applyBoneRotation(
+        state.rightEye,
+        state.baseRightEye,
+        eyeX,
+        eyeY,
+        0,
+        tempEuler,
+        tempQuaternion,
+      );
 
-    setExpression(
-      vrm,
-      expressionNames,
-      "lookLeft",
-      Math.max(0, state.gaze.x) * 0.55,
-    );
+      setExpression(
+        vrm,
+        expressionNames,
+        "lookLeft",
+        Math.max(0, state.gaze.x) * 0.55,
+      );
 
-    setExpression(
-      vrm,
-      expressionNames,
-      "lookRight",
-      Math.max(0, -state.gaze.x) * 0.55,
-    );
+      setExpression(
+        vrm,
+        expressionNames,
+        "lookRight",
+        Math.max(0, -state.gaze.x) * 0.55,
+      );
 
-    setExpression(
-      vrm,
-      expressionNames,
-      "lookUp",
-      Math.max(0, state.gaze.y) * 0.5,
-    );
+      setExpression(
+        vrm,
+        expressionNames,
+        "lookUp",
+        Math.max(0, state.gaze.y) * 0.5,
+      );
 
-    setExpression(
-      vrm,
-      expressionNames,
-      "lookDown",
-      Math.max(0, -state.gaze.y) * 0.42,
-    );
+      setExpression(
+        vrm,
+        expressionNames,
+        "lookDown",
+        Math.max(0, -state.gaze.y) * 0.42,
+      );
 
-    expressionState.relaxed = smoothValue(
-      expressionState.relaxed,
-      0.06,
-      delta,
-      4,
-      3,
-    );
+      expressionState.relaxed = smoothValue(
+        expressionState.relaxed,
+        0.06,
+        delta,
+        4,
+        3,
+      );
 
-    setExpression(vrm, expressionNames, "relaxed", expressionState.relaxed);
+      setExpression(vrm, expressionNames, "relaxed", expressionState.relaxed);
+    }
   }
 
   thinking() {}
@@ -1519,77 +1742,79 @@ export class AvatarAnimator {
       tempQuaternion,
     );
 
-    applyBoneRotation(
-      state.neck,
-      state.baseNeck,
-      state.headMotion.x * 0.35,
-      state.headMotion.y * 0.35,
-      state.headMotion.z * 0.3,
-      tempEuler,
-      tempQuaternion,
-    );
+    if (!this.expressionOverrideActive) {
+      applyBoneRotation(
+        state.neck,
+        state.baseNeck,
+        state.headMotion.x * 0.35,
+        state.headMotion.y * 0.35,
+        state.headMotion.z * 0.3,
+        tempEuler,
+        tempQuaternion,
+      );
 
-    applyBoneRotation(
-      state.head,
-      state.baseHead,
-      state.headMotion.x,
-      state.headMotion.y,
-      state.headMotion.z,
-      tempEuler,
-      tempQuaternion,
-    );
+      applyBoneRotation(
+        state.head,
+        state.baseHead,
+        state.headMotion.x,
+        state.headMotion.y,
+        state.headMotion.z,
+        tempEuler,
+        tempQuaternion,
+      );
 
-    // --------------------
-    // Eyes
-    // --------------------
+      // --------------------
+      // Eyes
+      // --------------------
 
-    const eyeX =
-      (state.gaze.y + la.currentEye.y) * 0.3 + Math.sin(time * 2.7) * 0.006;
-    const eyeY =
-      (state.gaze.x + la.currentEye.x) * 0.42 + Math.sin(time * 1.8) * 0.008;
+      const eyeX =
+        (state.gaze.y + la.currentEye.y) * 0.3 + Math.sin(time * 2.7) * 0.006;
+      const eyeY =
+        (state.gaze.x + la.currentEye.x) * 0.42 + Math.sin(time * 1.8) * 0.008;
 
-    applyBoneRotation(
-      state.leftEye,
-      state.baseLeftEye,
-      eyeX,
-      eyeY,
-      0,
-      tempEuler,
-      tempQuaternion,
-    );
+      applyBoneRotation(
+        state.leftEye,
+        state.baseLeftEye,
+        eyeX,
+        eyeY,
+        0,
+        tempEuler,
+        tempQuaternion,
+      );
 
-    applyBoneRotation(
-      state.rightEye,
-      state.baseRightEye,
-      eyeX,
-      eyeY,
-      0,
-      tempEuler,
-      tempQuaternion,
-    );
+      applyBoneRotation(
+        state.rightEye,
+        state.baseRightEye,
+        eyeX,
+        eyeY,
+        0,
+        tempEuler,
+        tempQuaternion,
+      );
 
-    // --------------------
-    // Expressions
-    // --------------------
+      // --------------------
+      // Expressions
+      // --------------------
 
-    expressionState.happy = smoothValue(
-      expressionState.happy,
-      time < state.smileUntil ? 0.32 : 0.1,
-      delta,
-      4,
-      2.5,
-    );
+      expressionState.happy = smoothValue(
+        expressionState.happy,
+        time < state.smileUntil ? 0.32 : 0.1,
+        delta,
+        4,
+        2.5,
+      );
 
-    expressionState.relaxed = smoothValue(
-      expressionState.relaxed,
-      0.08,
-      delta,
-      4,
-      3,
-    );
+      expressionState.relaxed = smoothValue(
+        expressionState.relaxed,
+        0.08,
+        delta,
+        4,
+        3,
+      );
 
-    setExpression(vrm, expressionNames, "happy", expressionState.happy);
-    setExpression(vrm, expressionNames, "relaxed", expressionState.relaxed);
+      setExpression(vrm, expressionNames, "happy", expressionState.happy);
+      setExpression(vrm, expressionNames, "relaxed", expressionState.relaxed);
+    }
   }
 }
 
@@ -1772,7 +1997,11 @@ export class AvatarCharacter {
     this.readAudioShape = createAudioReader();
     this.tempEuler = new THREE.Euler();
     this.tempQuaternion = new THREE.Quaternion();
-    this.AvatarAnimator = new AvatarAnimator();
+
+    this.mood = new AvatarMood();
+
+    this.AvatarAnimator = new AvatarAnimator(this.mood);
+    this.mood.setAnimator(this.AvatarAnimator);
   }
 
   get isLoaded() {
@@ -1781,6 +2010,12 @@ export class AvatarCharacter {
 
   setCharacterState(state) {
     this.setState(state);
+  }
+
+  setMood(mood) {
+    if (this.mood) {
+      this.mood.setMood(mood);
+    }
   }
 
   setState(nextState) {
@@ -1869,6 +2104,33 @@ export class AvatarCharacter {
     });
 
     this.vrm.update(delta);
+  }
+}
+
+// Avatar mood class
+export class AvatarMood {
+  constructor() {
+    this.mood = "neutral";
+    this.animator = null;
+  }
+
+  setAnimator(animator) {
+    this.animator = animator;
+  }
+
+  setMood(mood) {
+    console.log(`Setting mood to: ${mood}`);
+
+    if (this.animator) {
+      this.animator.setExpressionOverrideActive(true);
+      this.animator.startMoodAnimation(mood);
+    }
+
+    this.mood = mood;
+  }
+
+  logMood() {
+    console.log(`Current mood: ${this.mood}`);
   }
 }
 
