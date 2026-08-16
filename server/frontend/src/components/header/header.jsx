@@ -5,6 +5,8 @@ import { useVoiceAnimation } from "../../hooks/useVoiceAnimation";
 import { useCharacterState } from "../avatar/AvatarStateContext";
 import { CharacterState } from "../avatar/three/avatarRuntime";
 
+const moods = ["neutral", "happy", "sad", "angry", "surprised"];
+
 function Header({
   backBtn,
   settingsBtn,
@@ -21,7 +23,8 @@ function Header({
   const location = useLocation();
   const currentPagePath = location.pathname;
   const volume = useVoiceAnimation(analyser);
-  const { characterState, setCharacterState } = useCharacterState();
+  const { characterState, setCharacterState, mood, setMood } =
+    useCharacterState();
 
   const [isMenuOpenInternal, setIsMenuOpenInternal] = useState(false);
   const isMenuOpen =
@@ -31,6 +34,17 @@ function Header({
   const [devMode, setDevMode] = useState(false);
   const [holdTimer, setHoldTimer] = useState(null);
   const [devFlash, setDevFlash] = useState(false);
+
+  function handleMoodChange(nextMood) {
+    setMood(nextMood);
+  }
+
+  function handleToggleMood() {
+    const currentIndex = moods.indexOf(mood);
+    const nextIndex = (currentIndex + 1) % moods.length;
+
+    setMood(moods[nextIndex]);
+  }
 
   const handleBackClick = () => {
     if (
@@ -133,6 +147,8 @@ function Header({
 
     setCharacterState(modes[nextIndex]);
   }
+
+  function handleToggleExpressionOverride() {}
 
   return (
     <>
@@ -364,6 +380,27 @@ function Header({
                     </div>
 
                     <span>Mode: {characterState}</span>
+                  </button>
+
+                  <button className="menu-item" onClick={handleToggleMood}>
+                    <div
+                      className="menu-item-icon"
+                      style={{
+                        color: "var(--theme-active)",
+                      }}
+                    >
+                      <svg
+                        fill="currentColor"
+                        width="800px"
+                        height="800px"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path d="M1.293,11.293l4-4A1,1,0,1,1,6.707,8.707L3.414,12l3.293,3.293a1,1,0,1,1-1.414,1.414l-4-4A1,1,0,0,1,1.293,11.293Zm17.414-4a1,1,0,1,0-1.414,1.414L20.586,12l-3.293,3.293a1,1,0,0,0-1.414,1.414l4-4a1,1,0,0,0,0-1.414ZM13.039,4.726l-4,14a1,1,0,0,0,.686,1.236A1.053,1.053,0,0,0,10,20a1,1,0,0,0,.961-.726l4-14a1,1,0,1,0-1.922-.548Z" />
+                      </svg>
+                    </div>
+
+                    <span>Mood: {mood}</span>
                   </button>
                 </>
               )}

@@ -288,27 +288,28 @@ database_type = initialize_database()
 
 # default_host = "host.docker.internal" if is_docker() else "localhost"
 
-# data = {
-#     "ollama_url": f"http://{default_host}:11434",
-#     "ollama_model": "tinyllama:latest",
-#     "base_prompt": "You are a helpful AI assistant.",
-#     "avatar_model": "Mia-casuel.vrm",
-#     "tts_enabled": True,
-#     "piper_url": f"http://{default_host}:10200",
-#     "response_speed": 50,
-#     "stealth_mode": False,
-#     "enable_effects": True,
-#     "auto_silence_detection": False,
-#     "auto_send_on_mic_stop": False,
-#     "silence_delay_ms": 2000,
-#     "enable_welcome_message": True,
-#     "welcome_threshold": 120,
-#     "enable_leave_notifications": True,
-#     "leave_notification_min_min": 10,
-#     "leave_notification_max_min": 60,
-#     "is_dark": False,
-#     "orbit_controls_enabled": False,
-# }
+data = {
+    "welcome_threshold": 120,
+    "leave_notification_min_min": 10,
+    "leave_notification_max_min": 60,
+    "leave_notification_prompt": "the user left, generate a message for you to send to them",
+    "welcome_message_prompt": "Give a very short (1 sentence) welcome back greeting to the user who just returned.",
+    "is_dark": False,
+    "stealth_mode": False,
+    "enable_effects": True,
+    "orbit_controls_enabled": False,
+    "tts_enabled": False,
+    "enable_welcome_message": False,
+    "avatar_model": "Mia-casuel.vrm",
+    "ollama_url": "http://127.0.0.1:11434",
+    "ollama_model": "tinyllama-lora-demo:latest",
+    "base_prompt": "",
+    "auto_silence_detection": False,
+    "auto_send_on_mic_stop": False,
+    "silence_delay_ms": 2000,
+    "piper_url": "http://localhost:10200",
+    "free_cam_enabled": False,
+}
 
 # if not os.path.exists(CONFIG_PATH):
 #     with open(CONFIG_PATH, "w") as f:

@@ -32,7 +32,13 @@ export default function Avatar({
   const [sceneError, setSceneError] = useState(null);
   const { state, setState, isWindowVisible, visibilityReloadKey } =
     useAvatarStateMachine();
-  const { characterState } = useCharacterState();
+  const { characterState, mood } = useCharacterState();
+
+  useEffect(() => {
+    const character = characterRef.current;
+
+    character.setMood(mood);
+  }, [mood]);
 
   useEffect(() => {
     if (!loading) {
