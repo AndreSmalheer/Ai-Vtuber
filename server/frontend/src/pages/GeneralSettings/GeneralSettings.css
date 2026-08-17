@@ -444,13 +444,42 @@ textarea.general-settings__input {
 }
 
 .error-message {
-  padding: 10px 12px;
-  border: 1px solid rgba(224, 85, 85, 0.35);
-  border-radius: 8px;
-  background: rgba(224, 85, 85, 0.08);
-  color: #e05555;
-  font-size: 13px;
-  line-height: 1.45;
+  position: fixed;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 120px);
+  transform: translateX(-50%);
+  z-index: 1002;
+
+  background: color-mix(
+    in srgb,
+    var(--overlay-background) 92%,
+    var(--error-color)
+  );
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+
+  border: 1px solid color-mix(in srgb, var(--error-color) 40%, transparent);
+
+  color: var(--error-color);
+  padding: 12px 22px;
+  border-radius: 16px;
+
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.4;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
+
+  animation: errorSlideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+
+  width: clamp(240px, 20vw, 300px);
+  text-align: center;
+  overflow: hidden;
 }
 
 .save-message {

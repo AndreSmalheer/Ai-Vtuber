@@ -23,24 +23,26 @@
     width 0.35s cubic-bezier(0.4, 0, 0.2, 1),
     height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
     border-radius 0.35s cubic-bezier(0.4, 0, 0.2, 1),
-    box-shadow 0.3s ease,
-    border-color 0.3s ease,
-    background-color 0.3s ease,
-    opacity 0.3s ease;
+    box-shadow 0.3s,
+    border-color 0.3s,
+    background-color 0.3s,
+    opacity 0.3s,
+    --keyboard-offset 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   will-change: transform, width, height, border-radius;
 }
 
 @media (pointer: coarse) {
   .input-container:not(.inactive) {
     transition:
-      transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+      transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
       width 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0.18s,
       height 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0.18s,
       border-radius 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0.18s,
-      box-shadow 0.3s ease,
-      border-color 0.3s ease,
-      background-color 0.3s ease,
-      opacity 0.3s ease;
+      box-shadow 0.3s,
+      border-color 0.3s,
+      background-color 0.3s,
+      opacity 0.3s,
+      --keyboard-offset 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
 
@@ -48,7 +50,7 @@
 .input-container.inactive {
   width: clamp(240px, 30vw, 360px);
   height: 46px;
-  border-radius: 14px;
+
   cursor: pointer;
   background: var(--overlay-background);
 }
@@ -338,9 +340,8 @@
   gap: 12px;
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
   animation: errorSlideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1);
-  width: max-content;
-  max-width: calc(100% - 40px);
   text-align: center;
+  width: clamp(240px, 20vw, 300px);
 }
 
 body.dark .call-error-message {
@@ -493,9 +494,10 @@ body.dark .call-error-message {
   background: #fff;
 }
 
-/* ── Keyboard-visible offset ────────────────────────────────────────────── */
-.input-container.keyboard-visible {
-  animation: keyboard-active 0.25s ease-out forwards;
+@property --keyboard-offset {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
 }
 
 /* ── Mic button ─────────────────────────────────────────────────────────── */
@@ -615,8 +617,8 @@ body.dark .call-error-message {
   pointer-events: auto;
 }
 
-.input-container:not(.inactive) {
-  animation: input-active 0.2s ease-out;
+.input-container:not(.inactive):not(.keyboard-visible) {
+  animation: 0.2s ease-out input-active;
 }
 
 @keyframes input-active {

@@ -364,6 +364,7 @@ function Chat({
                 }
               } else {
                 setAiResponseLoading(false);
+                setChathidden(true);
                 finishChat();
                 return;
               }
@@ -436,6 +437,7 @@ function Chat({
         console.error("Fetch error:", err);
         setError("Failed to connect to Ollama.");
         setAiResponseLoading(false);
+        setChathidden(true);
         finishChat();
       }
     } finally {
