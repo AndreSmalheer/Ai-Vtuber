@@ -580,7 +580,24 @@ function Chat({
     return (
       <div className="chat-wrapper stealth" ref={scrollRef}>
         {messages.length === 0 && (
-          <h1 className="no-messages">Start a conversation with {aiName}</h1>
+          <div className="chat-empty-state">
+            <div className="empty-avatar">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.6"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M8 10h8M8 14h5M21 12c0 4.4-4 8-9 8-1.4 0-2.7-.2-3.9-.6L3 21l1.7-4.1C3.6 15.4 3 13.8 3 12c0-4.4 4-8 9-8s9 3.6 9 8Z"
+                />
+              </svg>
+            </div>
+            <h1>Start a conversation with {aiName}</h1>
+            <p>Send a message below to get things going.</p>
+          </div>
         )}
 
         {messages.map((m, i) => (
