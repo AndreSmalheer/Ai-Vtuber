@@ -241,7 +241,10 @@ export function useCallMode({
       const res = await fetch("/api/ollama", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: transcript }),
+        body: JSON.stringify({
+          prompt: transcript,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        }),
         signal: ctrl.signal,
       });
 

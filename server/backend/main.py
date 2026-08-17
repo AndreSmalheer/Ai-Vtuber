@@ -229,9 +229,10 @@ async def get_models_api(url: str):
 async def ollama_stream_api(request: Request):
     data = await request.json()
     user_message = data.get("prompt", "")
+    timezone = data.get("timezone", "UTC")
 
     return StreamingResponse(
-        ollama_event_generator(user_message),
+        ollama_event_generator(user_message, timezone),
         media_type="text/event-stream"
     )
 

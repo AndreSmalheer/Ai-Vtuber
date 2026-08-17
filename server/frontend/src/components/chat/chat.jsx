@@ -312,7 +312,10 @@ function Chat({
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ prompt: input }),
+        body: JSON.stringify({
+          prompt: input,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        }),
         signal: abortControllerRef.current.signal,
       });
 

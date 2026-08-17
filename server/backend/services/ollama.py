@@ -4,8 +4,10 @@ import re
 import base64
 import os
 from backend.core.config import load_config as load_runtime_config
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
-def generate_prompt(user_message):
+def generate_prompt(user_message, timezone="UTC"):
     from backend.core.history import get_history, add_history
 
     config = load_runtime_config() or {}
@@ -15,12 +17,22 @@ def generate_prompt(user_message):
 
     prompt_context = get_history() or ""
 
+    now = datetime.now(ZoneInfo(timezone))
+
+    runtime_context = (
+        "[Runtime Context]\n"
+        f"Current date: {now.strftime('%Y-%m-%d')}\n"
+        f"Current time: {now.strftime('%H:%M:%S')}\n"
+        f"Timezone: {timezone}\n"
+        "[/Runtime Context]\n\n"
+    )
+
     if base_prompt:
-        result = base_prompt + prompt_context + f"{user_name}: {user_message}\n{ai_name}:"
+        result = base_prompt + prompt_context + runtime_context + f"{user_name}: {user_message}\n{ai_name}:"
         print("[DEBUG] Using base_prompt | Final prompt:", result, flush=True)
         return result
     else:
-        result = prompt_context + f"{user_name}: {user_message}\n{ai_name}:"
+        result = prompt_context + runtime_context + f"{user_name}: {user_message}\n{ai_name}:"
         print("[DEBUG] No base_prompt | Final prompt:", result, flush=True)
         return result
 
@@ -64,7 +76,7 @@ def get_piper_audio(text, piper_url):
         print(err_msg, flush=True)
         return None, err_msg
 
-def ollama_event_generator(user_message):
+def ollama_event_generator(user_message, timezone="UTC"):
     from backend.core.history import get_history, add_history
     config = load_runtime_config()
 
@@ -81,7 +93,7 @@ def ollama_event_generator(user_message):
 
     print(f"Streaming request: tts_enabled={tts_enabled}, stealth_mode={stealth_mode}, can_speak={can_speak}", flush=True)
 
-    prompt = generate_prompt(user_message)
+    prompt = generate_prompt(user_message, timezone)
 
     payload = {
         "model": ollama_model,
@@ -144,7 +156,7 @@ def ollama_event_generator(user_message):
                 audio_data, tts_error = get_piper_audio(sentence_buffer, piper_url)
 
             add_history(user_message, full_response)
-            
+
             res_data = {}
             if audio_data:
                 res_data['audio'] = audio_data
