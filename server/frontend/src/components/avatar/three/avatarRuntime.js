@@ -1900,14 +1900,20 @@ function updateCameraReturn(
 export class AvatarScene {
   constructor(container, { orbitControlsEnabled, enableEffects, isDark }) {
     this.container = container;
+    this.isDark = isDark;
+
     this.renderer = createRenderer(container);
     this.scene = createScene();
     this.camera = createCamera(container);
     this.controls = createControls(this.camera, this.renderer);
     this.controls.enabled = orbitControlsEnabled;
 
+    this.textureLoader = new THREE.TextureLoader();
+
     this.composer = new EffectComposer(this.renderer);
     this.composer.addPass(new RenderPass(this.scene, this.camera));
+
+    this.setBackground(isDark);
 
     this.bloomPass = new UnrealBloomPass(
       new THREE.Vector2(container.clientWidth, container.clientHeight),
@@ -1918,18 +1924,48 @@ export class AvatarScene {
 
     this.composer.addPass(this.bloomPass);
     this.composer.addPass(new OutputPass());
+
     this.lights = updateThemeVisuals(
       this.renderer,
       this.scene,
       isDark,
       enableEffects,
     );
+
     this.cleanupResize = handleResize(
       container,
       this.camera,
       this.renderer,
       this.composer,
     );
+
+    this.handleBackgroundResize = () => {
+      this.setBackground(this.isDark);
+    };
+
+    window.addEventListener("resize", this.handleBackgroundResize);
+  }
+
+  setBackground(isDark) {
+    this.isDark = isDark;
+
+    const isMobile = window.innerWidth <= 768;
+
+    const image = isMobile
+      ? isDark
+        ? "/backgrounds/mobile/night.png"
+        : "/backgrounds/mobile/day.png"
+      : isDark
+        ? "/backgrounds/night.png"
+        : "/backgrounds/day.png";
+
+    this.textureLoader.load(image, (texture) => {
+      if (this.isDark === isDark) {
+        this.scene.background = texture;
+      }
+
+      texture.colorSpace = THREE.SRGBColorSpace;
+    });
   }
 
   setOrbitControlsEnabled(enabled) {
@@ -1939,6 +1975,10 @@ export class AvatarScene {
   }
 
   setVisuals({ isDark, enableEffects }) {
+    this.isDark = isDark;
+
+    this.setBackground(isDark);
+
     this.lights = updateThemeVisuals(
       this.renderer,
       this.scene,
@@ -1960,6 +2000,8 @@ export class AvatarScene {
     this.cleanupResize?.();
     this.controls?.dispose();
     this.renderer?.dispose();
+
+    window.removeEventListener("resize", this.handleBackgroundResize);
 
     if (this.renderer?.domElement?.parentElement === this.container) {
       this.container.removeChild(this.renderer.domElement);
