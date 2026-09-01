@@ -7,6 +7,10 @@ import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPa
 import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass";
 import { VRMLoaderPlugin } from "@pixiv/three-vrm";
 import { VRMHumanBoneName } from "@pixiv/three-vrm";
+import {
+  VRMAnimationLoaderPlugin,
+  createVRMAnimationClip,
+} from "@pixiv/three-vrm-animation";
 
 /* =========================================================
    CONSTANTS & GLOBAL STATE
@@ -853,6 +857,43 @@ export class AvatarAnimator {
 
     this.expressionOverrideActive = false;
     this.moodAnimator = new AvatarMoodAnimator();
+
+    this.mixer = null;
+    this.currentAction = null;
+    this.vrmaLoader = new GLTFLoader();
+    this.vrmaLoader.register((parser) => new VRMAnimationLoaderPlugin(parser));
+    this.vrmaLoadState = "idle";
+    this.vrmaUrl = "/Animations/Mia-animations.vrma";
+  }
+
+  _ensureVRMALoaded(vrm, url = this.vrmaUrl, opts = {}) {
+    if (this.vrmaLoadState !== "idle") return;
+    this.vrmaLoadState = "loading";
+
+    this.vrmaLoader
+      .loadAsync(url)
+      .then((gltf) => {
+        const vrmAnimation = gltf.userData.vrmAnimations?.[0];
+        if (!vrmAnimation) {
+          throw new Error(`No VRM animation found in ${url}`);
+        }
+        const clip = createVRMAnimationClip(vrmAnimation, vrm);
+
+        this.mixer = new THREE.AnimationMixer(vrm.scene);
+        this.currentAction = this.mixer.clipAction(clip);
+        this.currentAction.setLoop(
+          opts.loop === false ? THREE.LoopOnce : THREE.LoopRepeat,
+          Infinity,
+        );
+        this.currentAction.clampWhenFinished = opts.loop === false;
+        this.currentAction.play();
+
+        this.vrmaLoadState = "loaded";
+      })
+      .catch((err) => {
+        console.error("[AvatarAnimator] Failed to load VRMA:", err);
+        this.vrmaLoadState = "error";
+      });
   }
 
   setExpressionOverrideActive(active) {
@@ -879,88 +920,13 @@ export class AvatarAnimator {
     tempQuaternion,
     blinkState,
   }) {
-    switch (characterState) {
-      case CharacterState.IDLE:
-        this.idle({
-          vrm,
-          expressionNames,
-          delta,
-          time,
-          expressionState,
-          mouthState,
-          tempEuler,
-          tempQuaternion,
-          smileState: this.smileState,
-        });
-        break;
+    if (!vrm) return;
 
-      case CharacterState.TALKING:
-        this.talking({
-          vrm,
-          expressionNames,
-          lipSyncState,
-          delta,
-          time,
-          mouthState,
-          readAudioShape,
-          expressionState,
-          tempEuler,
-          tempQuaternion,
-        });
-        break;
+    this._ensureVRMALoaded(vrm);
 
-      case CharacterState.LISTENING:
-        this.listening({
-          vrm,
-          expressionNames,
-          delta,
-          time,
-          mouthState,
-          expressionState,
-          tempEuler,
-          tempQuaternion,
-          smileState: this.smileState,
-        });
-        break;
-
-      case CharacterState.THINKING:
-        this.thinking();
-        break;
-
-      default:
-        break;
+    if (this.mixer) {
+      this.mixer.update(delta);
     }
-
-    const moodFinished = this.moodAnimator.update({
-      vrm,
-      delta,
-    });
-
-    if (moodFinished) {
-      this.setExpressionOverrideActive(false);
-
-      console.log(
-        "[AvatarAnimator] Mood animation finished - expression override disabled",
-      );
-    }
-
-    this.AvatarExpressions.animate({
-      vrm,
-      expressionNames,
-      characterState,
-      lipSyncState,
-      delta,
-      time,
-      mouthState,
-      readAudioShape,
-      expressionState,
-      tempEuler,
-      tempQuaternion,
-      blinkState,
-      smileState: this.smileState,
-      lookAwayState: this.lookAwayState,
-      expressionOverrideActive: this.expressionOverrideActive,
-    });
   }
 
   idle({
